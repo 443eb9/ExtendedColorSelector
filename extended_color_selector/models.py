@@ -7,6 +7,7 @@ components: dict[str, str] = {}
 class ColorSpace(Enum):
     Rgb = 0
     Hsv = 1
+    Hsl = 2
 
     def getShaderComponent(self) -> str:
         name = self.shaderComponentName()
@@ -28,6 +29,8 @@ class ColorSpace(Enum):
                 return "rgb"
             case ColorSpace.Hsv:
                 return "hsv"
+            case ColorSpace.Hsl:
+                return "hsl"
 
     def modifyShader(self, shader: str) -> str:
         component = self.getShaderComponent()
@@ -39,6 +42,8 @@ class ColorSpace(Enum):
                 return "RGB"
             case ColorSpace.Hsv:
                 return "HSV"
+            case ColorSpace.Hsl:
+                return "HSL"
 
     def channels(self) -> list[str]:
         return list(self.displayName())
@@ -48,4 +53,6 @@ class ColorSpace(Enum):
             case ColorSpace.Rgb:
                 return 1, 1, 1
             case ColorSpace.Hsv:
+                return 360, 1, 1
+            case ColorSpace.Hsl:
                 return 360, 1, 1
