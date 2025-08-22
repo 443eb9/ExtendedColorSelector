@@ -115,7 +115,7 @@ class ExtendedColorSelector(DockWidget):
     def updateVariableChannelsValue(self, variables: tuple[float, float]):
         match self.lockedChannel:
             case 0:
-                self.color = self.color[0], variables[1], self.color[2]
+                self.color = self.color[0], variables[0], variables[1]
             case 1:
                 self.color = variables[0], self.color[1], variables[1]
             case 2:

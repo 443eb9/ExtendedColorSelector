@@ -67,14 +67,11 @@ class ColorWheel(QOpenGLWidget):
         self.colorSpace = ColorSpace.Rgb
         self.shape = WheelShape.Square
         self.compileShader()
-        self.constant = 0.0
         self.constantPos = 0
         self.color = 0, 0, 0
-        self.cursorPos = 0, 0
 
     def updateColor(self, color: tuple[float, float, float]):
         self.color = color
-        self.constant = color[self.constantPos]
         self.update()
 
     def updateColorSpace(self, colorSpace: ColorSpace):
@@ -109,9 +106,7 @@ class ColorWheel(QOpenGLWidget):
 
         x = max(min(event.pos().x(), self.res), 0)
         y = max(min(event.pos().y(), self.res), 0)
-        val = x / self.res, 1.0 - y / self.res
-        self.variablesChanged.emit(val)
-        self.cursorPos = x, y
+        self.variablesChanged.emit((x / self.res, 1.0 - y / self.res))
         self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None):
@@ -125,15 +120,18 @@ class ColorWheel(QOpenGLWidget):
         painter = QPainter(self)
         painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
 
-        a, b = self.cursorPos
+        x, y = (
+            self.color[(self.constantPos + 1) % 3] * self.width(),
+            (1.0 - self.color[(self.constantPos + 2) % 3]) * self.height(),
+        )
         painter.drawArc(
-            QRectF(a - 4, b - 4, 8, 8),
+            QRectF(x - 4, y - 4, 8, 8),
             0,
             360 * 16,
         )
         painter.setBrush(QBrush(QColor(0, 0, 0, 255)))
         painter.drawArc(
-            QRectF(a - 5, b - 5, 10, 10),
+            QRectF(x - 5, y - 5, 10, 10),
             0,
             360 * 16,
         )
@@ -176,7 +174,7 @@ class ColorWheel(QOpenGLWidget):
         self.program.bind()
 
         self.program.setUniformValue("res", int(self.res))
-        self.program.setUniformValue("constant", float(self.constant))
+        self.program.setUniformValue("constant", float(self.color[self.constantPos]))
         self.program.setUniformValue("constantPos", int(self.constantPos))
         x, y, z = self.colorSpace.scales()
         self.program.setUniformValue("scales", x, y, z)
@@ -201,17 +199,11 @@ class LockedChannelBar(QOpenGLWidget):
         self.colorSpace = ColorSpace.Rgb
         self.shape = WheelShape.Square
         self.compileShader()
-        self.variables = 0, 0
         self.constantPos = 0
         self.color = 0, 0, 0
-        self.cursorPos = 0
 
     def updateColor(self, color: tuple[float, float, float]):
         self.color = color
-        self.variables = (
-            color[(self.constantPos + 1) % 3],
-            color[(self.constantPos + 2) % 3],
-        )
         self.update()
 
     def updateColorSpace(self, colorSpace: ColorSpace):
@@ -221,10 +213,6 @@ class LockedChannelBar(QOpenGLWidget):
 
     def updateLockedChannel(self, lockedChannel: int):
         self.constantPos = lockedChannel
-        self.variables = (
-            self.color[(self.constantPos + 1) % 3],
-            self.color[(self.constantPos + 2) % 3],
-        )
         self.update()
 
     def resizeEvent(self, e: QResizeEvent | None):
@@ -242,7 +230,6 @@ class LockedChannelBar(QOpenGLWidget):
 
         x = max(min(event.pos().x(), self.res), 0)
         self.constantChanged.emit(x / self.res)
-        self.cursorPos = x
         self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None):
@@ -262,7 +249,7 @@ class LockedChannelBar(QOpenGLWidget):
         painter = QPainter(self)
         painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
 
-        x = self.cursorPos
+        x = int(self.color[self.constantPos] * self.width())
         drawHollowRect(painter, x - 4, 0, 8, self.height())
         painter.setBrush(QBrush(QColor(0, 0, 0, 255)))
         drawHollowRect(painter, x - 5, 0, 10, self.height())
@@ -306,7 +293,9 @@ class LockedChannelBar(QOpenGLWidget):
 
         self.program.setUniformValue("res", int(self.res))
         self.program.setUniformValue(
-            "variables", float(self.variables[0]), float(self.variables[1])
+            "variables",
+            float(self.color[(self.constantPos + 1) % 3]),
+            float(self.color[(self.constantPos + 2) % 3]),
         )
         self.program.setUniformValue("constantPos", int(self.constantPos))
         x, y, z = self.colorSpace.scales()
