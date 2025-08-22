@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtCore import QSize, QTimer, Qt
 from PyQt5.QtGui import (
     QOpenGLVersionProfile,
     QResizeEvent,
@@ -35,7 +35,7 @@ class WheelShape(Enum):
 
         if not name in components:
             components[name] = open(
-                Path(__file__).parent / "shader_components" / "wheels" / f"{name}.glsl"
+                Path(__file__).parent / "shader_components" / "shapes" / f"{name}.glsl"
             ).read()[
                 18:
             ]  # To strip the version directive
@@ -59,14 +59,25 @@ class ColorWheel(QOpenGLWidget):
         self.compileShader()
         self.constant = 0.0
         self.constantPos = 0
+        self.setMinimumHeight(200)
 
     def updateColorSpace(self, colorSpace: ColorSpace):
         self.colorSpace = colorSpace
         self.compileShader()
+        self.update()
 
     def updateShape(self, shape: WheelShape):
         self.shape = shape
         self.compileShader()
+        self.update()
+
+    def updateLockedChannel(self, lockedChannel: int):
+        self.constantPos = lockedChannel
+        self.update()
+    
+    def updateLockedChannelValue(self, lockedChannelValue: float):
+        self.constant = lockedChannelValue
+        self.update()
 
     def resizeEvent(self, e: QResizeEvent | None):
         super().resizeEvent(e)
@@ -75,8 +86,6 @@ class ColorWheel(QOpenGLWidget):
             return
 
         size = min(e.size().width(), e.size().height())
-        self.setFixedWidth(size)
-        self.setFixedHeight(size)
         self.res = size
 
     def initializeGL(self):
@@ -93,11 +102,9 @@ class ColorWheel(QOpenGLWidget):
         vert = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Vertex)
         vert.compileSourceCode(vertex)
         frag = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Fragment)
-        frag.setProperty("SQUARE_WHEEL", True)
-
-        fragCode = self.shape.modifyShader(self.colorSpace.modifyShader(fragment))
-        print(fragCode)
-        frag.compileSourceCode(fragCode)
+        frag.compileSourceCode(
+            self.shape.modifyShader(self.colorSpace.modifyShader(fragment))
+        )
         self.program = QOpenGLShaderProgram(self.context())
         self.program.addShader(vert)
         self.program.addShader(frag)
@@ -124,6 +131,6 @@ class ColorWheel(QOpenGLWidget):
         gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)
 
     def resizeGL(self, w, h):
-        if self.gl == None:
+        if self.gl is None:
             return
         self.gl.glViewport(0, 0, w, h)
