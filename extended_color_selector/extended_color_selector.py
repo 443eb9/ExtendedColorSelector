@@ -1,5 +1,5 @@
 from PyQt5.QtCore import pyqtSignal, QTimer
-from PyQt5.QtGui import QResizeEvent, QColor
+from PyQt5.QtGui import QResizeEvent, QColor, QMouseEvent
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -11,7 +11,8 @@ from PyQt5.QtWidgets import (
 from krita import *  # type: ignore
 
 from .color_wheel import ColorWheel, LockedChannelBar
-from .models import ColorSpace, colorSpaceFromKritaModel
+from .models import ColorSpace, colorSpaceFromKritaModel, transferColorSpace
+from .config import SYNC_INTERVAL_MS
 
 DOCKER_NAME = "Extended Color Selector"
 DOCKER_ID = "pyKrita_extended_color_selector"
@@ -48,7 +49,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.syncColor)
-        self.timer.start(100)
+        # self.timer.start(SYNC_INTERVAL_MS)
 
     def updateColorSpaceSwitchers(self):
         while True:
@@ -92,12 +93,14 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         if colorSpace == self.colorSpace:
             return
 
+        self.color = transferColorSpace(self.color, self.colorSpace, colorSpace)
         self.colorSpace = colorSpace
         self.colorWheel.updateColorSpace(colorSpace)
         self.lockedChannelBar.updateColorSpace(colorSpace)
         # TODO remember the locked channel
         self.lockedChannel = 0
         self.updateLockers()
+        self.propagateColor()
 
     def updateLockedChannel(self, channel: int):
         if channel == self.lockedChannel:
@@ -106,6 +109,12 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.colorWheel.updateLockedChannel(channel)
         self.lockedChannelBar.updateLockedChannel(channel)
         self.lockedChannel = channel
+
+    # def mousePressEvent(self, a0: QMouseEvent | None) -> None:
+    #     self.timer.stop()
+
+    # def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
+    #     self.timer.start(SYNC_INTERVAL_MS)
 
     def propagateColor(self):
         self.colorWheel.updateColor(self.color)
@@ -119,7 +128,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         if kritaView == None:
             return
 
-        r, g, b = self.colorSpace.toRgb(self.color)
+        r, g, b = transferColorSpace(self.color, self.colorSpace, ColorSpace.Rgb)
         color = ManagedColor.fromQColor(  # type: ignore
             QColor(int(r * 255), int(g * 255), int(b * 255)), kritaView.canvas()
         )
@@ -140,8 +149,9 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             return
 
         components = mc.componentsOrdered()
-        self.updateColorSpace(colorSpace)
-        color = self.colorSpace.fromRgb((components[0], components[1], components[2]))
+        color = transferColorSpace(
+            (components[0], components[1], components[2]), colorSpace, self.colorSpace
+        )
 
         self.color = color
         self.propagateColor()

@@ -115,15 +115,21 @@ class ColorWheel(QOpenGLWidget):
     def mouseMoveEvent(self, a0: QMouseEvent | None):
         self.handleMouse(a0)
 
-    def paintEvent(self, e: QPaintEvent | None) -> None:
+    def paintEvent(self, e: QPaintEvent | None):
         super().paintEvent(e)
         painter = QPainter(self)
         painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
 
-        x, y = (
-            self.color[(self.constantPos + 1) % 3] * self.width(),
-            (1.0 - self.color[(self.constantPos + 2) % 3]) * self.height(),
-        )
+        ix, iy = 0, 0
+        match self.constantPos:
+            case 0:
+                ix, iy = 1, 2
+            case 1:
+                ix, iy = 0, 2
+            case 2:
+                ix, iy = 0, 1
+        x, y = self.color[ix] * self.width(), (1 - self.color[iy]) * self.height()
+
         painter.drawArc(
             QRectF(x - 4, y - 4, 8, 8),
             0,
@@ -291,11 +297,20 @@ class LockedChannelBar(QOpenGLWidget):
 
         self.program.bind()
 
+        ix, iy = 0, 0
+        match self.constantPos:
+            case 0:
+                ix, iy = 1, 2
+            case 1:
+                ix, iy = 0, 2
+            case 2:
+                ix, iy = 0, 1
+
         self.program.setUniformValue("res", int(self.res))
         self.program.setUniformValue(
             "variables",
-            float(self.color[(self.constantPos + 1) % 3]),
-            float(self.color[(self.constantPos + 2) % 3]),
+            float(self.color[ix]),
+            float(self.color[iy]),
         )
         self.program.setUniformValue("constantPos", int(self.constantPos))
         x, y, z = self.colorSpace.scales()

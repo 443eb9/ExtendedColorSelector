@@ -57,23 +57,11 @@ class ColorSpace(Enum):
             case ColorSpace.Hsl:
                 return 360, 1, 1
 
-    def fromRgb(self, value: tuple[float, float, float]) -> tuple[float, float, float]:
-        match self:
-            case ColorSpace.Rgb:
-                return value
-            case ColorSpace.Hsv:
-                return rgbToHsv(value)
-            case ColorSpace.Hsl:
-                return rgbToHsl(value)
-
-    def toRgb(self, value: tuple[float, float, float]) -> tuple[float, float, float]:
-        match self:
-            case ColorSpace.Rgb:
-                return value
-            case ColorSpace.Hsv:
-                return hsvToRgb(value)
-            case ColorSpace.Hsl:
-                return hslToRgb(value)
+    def normalize(
+        self, color: tuple[float, float, float]
+    ) -> tuple[float, float, float]:
+        scales = self.scales()
+        return color[0] / scales[0], color[1] / scales[1], color[2] / scales[2]
 
 
 def colorSpaceFromKritaModel(model: str) -> ColorSpace | None:
@@ -82,6 +70,27 @@ def colorSpaceFromKritaModel(model: str) -> ColorSpace | None:
             return ColorSpace.Rgb
         case _:
             return None
+
+
+def transferColorSpace(
+    color: tuple[float, float, float], fromSpace: ColorSpace, toSpace: ColorSpace
+) -> tuple[float, float, float]:
+    rgb = None
+    match fromSpace:
+        case ColorSpace.Rgb:
+            rgb = color
+        case ColorSpace.Hsv:
+            rgb = hsvToRgb(color)
+        case ColorSpace.Hsl:
+            rgb = hslToRgb(color)
+
+    match toSpace:
+        case ColorSpace.Rgb:
+            return rgb
+        case ColorSpace.Hsv:
+            return ColorSpace.Hsv.normalize(rgbToHsv(rgb))
+        case ColorSpace.Hsl:
+            return ColorSpace.Hsl.normalize(rgbToHsl(rgb))
 
 
 def rgbToHwb(color: tuple[float, float, float]) -> tuple[float, float, float]:
@@ -123,7 +132,7 @@ def hsvToRgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
     v = color[2]
     w = (1 - color[1]) * v
 
-    h = color[0] / 60
+    h = color[0] * 6
     i = int(h)
     f = h - float(i)
     if i % 2 == 1:
@@ -156,7 +165,7 @@ def hslToRgb(hsl: tuple[float, float, float]) -> tuple[float, float, float]:
     v = color[2]
     w = (1 - color[1]) * v
 
-    h = color[1] / 60
+    h = color[0] * 6
     i = int(h)
     f = h - float(i)
     if i % 2 == 1:
