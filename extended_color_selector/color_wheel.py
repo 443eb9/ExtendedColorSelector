@@ -182,8 +182,9 @@ class ColorWheel(QOpenGLWidget):
         self.program.setUniformValue("res", int(self.res))
         self.program.setUniformValue("constant", float(self.color[self.constantPos]))
         self.program.setUniformValue("constantPos", int(self.constantPos))
-        x, y, z = self.colorSpace.scales()
-        self.program.setUniformValue("scales", x, y, z)
+        mn, mx = self.colorSpace.limits()
+        self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
+        self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
 
         gl = self.gl
         gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)
@@ -313,8 +314,9 @@ class LockedChannelBar(QOpenGLWidget):
             float(self.color[iy]),
         )
         self.program.setUniformValue("constantPos", int(self.constantPos))
-        x, y, z = self.colorSpace.scales()
-        self.program.setUniformValue("scales", x, y, z)
+        mn, mx = self.colorSpace.limits()
+        self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
+        self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
 
         gl = self.gl
         gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)

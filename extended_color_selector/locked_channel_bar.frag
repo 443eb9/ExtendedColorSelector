@@ -2,7 +2,8 @@
 
 uniform vec2 variables;
 uniform int constantPos;
-uniform vec3 scales;
+uniform vec3 lim_min;
+uniform vec3 lim_max;
 uniform int res;
 out vec4 out_color;
 
@@ -11,7 +12,7 @@ vec3 colorToRgb(vec3 color);
 void main(void) {
     float colorCoord = gl_FragCoord.x / res;
 
-    vec3 color = scales;
+    vec3 color = lim_max - lim_min;
     switch(constantPos) {
         case 0:
             color *= vec3(colorCoord, variables.x, variables.y);
@@ -24,6 +25,7 @@ void main(void) {
             break;
     }
 
+    color += lim_min;
     color = colorToRgb(color);
     out_color = vec4(color, 1.0);
 }

@@ -1,5 +1,6 @@
 from enum import Enum
 from pathlib import Path
+import math
 
 components: dict[str, str] = {}
 
@@ -8,6 +9,7 @@ class ColorSpace(Enum):
     Rgb = 0
     Hsv = 1
     Hsl = 2
+    Oklab = 3
 
     def getShaderComponent(self) -> str:
         name = self.shaderComponentName()
@@ -31,6 +33,8 @@ class ColorSpace(Enum):
                 return "hsv"
             case ColorSpace.Hsl:
                 return "hsl"
+            case ColorSpace.Oklab:
+                return "oklab"
 
     def modifyShader(self, shader: str) -> str:
         component = self.getShaderComponent()
@@ -44,24 +48,50 @@ class ColorSpace(Enum):
                 return "HSV"
             case ColorSpace.Hsl:
                 return "HSL"
+            case ColorSpace.Oklab:
+                return "OkLab"
 
     def channels(self) -> list[str]:
-        return list(self.displayName())
-
-    def scales(self) -> tuple[float, float, float]:
         match self:
             case ColorSpace.Rgb:
-                return 1, 1, 1
+                return ["R", "G", "B"]
             case ColorSpace.Hsv:
-                return 360, 1, 1
+                return ["H", "S", "V"]
             case ColorSpace.Hsl:
-                return 360, 1, 1
+                return ["H", "S", "L"]
+            case ColorSpace.Oklab:
+                return ["L", "A", "B"]
+
+    def limits(self) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
+        match self:
+            case ColorSpace.Rgb:
+                return (0, 0, 0), (1, 1, 1)
+            case ColorSpace.Hsv:
+                return (0, 0, 0), (360, 1, 1)
+            case ColorSpace.Hsl:
+                return (0, 0, 0), (360, 1, 1)
+            case ColorSpace.Oklab:
+                return (0, -1, -1), (1, 1, 1)
 
     def normalize(
         self, color: tuple[float, float, float]
     ) -> tuple[float, float, float]:
-        scales = self.scales()
-        return color[0] / scales[0], color[1] / scales[1], color[2] / scales[2]
+        mn, mx = self.limits()
+        return (
+            (color[0] - mn[0]) / (mx[0] - mn[0]),
+            (color[1] - mn[1]) / (mx[1] - mn[1]),
+            (color[2] - mn[2]) / (mx[2] - mn[2]),
+        )
+
+    def unnormalize(
+        self, color: tuple[float, float, float]
+    ) -> tuple[float, float, float]:
+        mn, mx = self.limits()
+        return (
+            color[0] * (mx[0] - mn[0]) + mn[0],
+            color[1] * (mx[1] - mn[1]) + mn[1],
+            color[2] * (mx[2] - mn[2]) + mn[2],
+        )
 
 
 def colorSpaceFromKritaModel(model: str) -> ColorSpace | None:
@@ -75,25 +105,53 @@ def colorSpaceFromKritaModel(model: str) -> ColorSpace | None:
 def transferColorSpace(
     color: tuple[float, float, float], fromSpace: ColorSpace, toSpace: ColorSpace
 ) -> tuple[float, float, float]:
+    color = fromSpace.unnormalize(color)
     rgb = None
     match fromSpace:
         case ColorSpace.Rgb:
             rgb = color
         case ColorSpace.Hsv:
-            rgb = hsvToRgb(color)
+            rgb = hsvToRSrgb(color)
         case ColorSpace.Hsl:
-            rgb = hslToRgb(color)
+            rgb = hslToSrgb(color)
+        case ColorSpace.Oklab:
+            rgb = oklabToSrgb(color)
 
-    match toSpace:
-        case ColorSpace.Rgb:
-            return rgb
-        case ColorSpace.Hsv:
-            return ColorSpace.Hsv.normalize(rgbToHsv(rgb))
-        case ColorSpace.Hsl:
-            return ColorSpace.Hsl.normalize(rgbToHsl(rgb))
+    def unnormalized():
+        match toSpace:
+            case ColorSpace.Rgb:
+                return rgb
+            case ColorSpace.Hsv:
+                return srgbToHsv(rgb)
+            case ColorSpace.Hsl:
+                return srgbToHsl(rgb)
+            case ColorSpace.Oklab:
+                return oklabToSrgb(color)
+
+    return toSpace.normalize(unnormalized())
 
 
-def rgbToHwb(color: tuple[float, float, float]) -> tuple[float, float, float]:
+def srgbToLinear(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    def f(x: float) -> float:
+        if x <= 0:
+            return x
+        if x <= 0.04045:
+            return x / 12.92
+        return (x + 0.055) / 1.055**2.4
+
+    return f(color[0]), f(color[1]), f(color[2])
+
+
+def linearToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    def f(x: float) -> float:
+        if x <= 0.0031308:
+            return x * 12.92
+        return 1.055 * x**-2.4 - 0.055
+
+    return f(color[0]), f(color[1]), f(color[2])
+
+
+def srgbToHwb(color: tuple[float, float, float]) -> tuple[float, float, float]:
     xMax = max(color)
     xMin = min(color)
 
@@ -115,24 +173,17 @@ def rgbToHwb(color: tuple[float, float, float]) -> tuple[float, float, float]:
     return hue, whiteness, blackness
 
 
-def rgbToHsv(color: tuple[float, float, float]) -> tuple[float, float, float]:
-    h, w, b = rgbToHwb(color)
+def srgbToHsv(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    h, w, b = srgbToHwb(color)
     v = 1 - b
     return h, 1 - (w / v) if v != 0 else 0, v
 
 
-def rgbToHsl(color: tuple[float, float, float]) -> tuple[float, float, float]:
-    h, s, v = rgbToHsv(color)
-    l = v * (1 - s / 2)
-    s = 0 if l == 0 or l == 1 else (v - l) / min(l, 1 - l)
-    return h, s, l
-
-
-def hsvToRgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
+def hsvToRSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
     v = color[2]
     w = (1 - color[1]) * v
 
-    h = color[0] * 6
+    h = color[0] / 60
     i = int(h)
     f = h - float(i)
     if i % 2 == 1:
@@ -157,7 +208,7 @@ def hsvToRgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
             return 0, 0, 0
 
 
-def hslToRgb(hsl: tuple[float, float, float]) -> tuple[float, float, float]:
+def hslToSrgb(hsl: tuple[float, float, float]) -> tuple[float, float, float]:
     value = hsl[2] + hsl[1] * min(hsl[2], 1 - hsl[2])
     saturation = 0 if value == 0 else 2 * (1 - hsl[2] / value)
     color = hsl[0], saturation, value
@@ -165,7 +216,7 @@ def hslToRgb(hsl: tuple[float, float, float]) -> tuple[float, float, float]:
     v = color[2]
     w = (1 - color[1]) * v
 
-    h = color[0] * 6
+    h = color[0] / 60
     i = int(h)
     f = h - float(i)
     if i % 2 == 1:
@@ -188,3 +239,49 @@ def hslToRgb(hsl: tuple[float, float, float]) -> tuple[float, float, float]:
             return v, w, n
         case _:
             return 0, 0, 0
+
+
+def srgbToHsl(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    h, s, v = srgbToHsv(color)
+    l = v * (1 - s / 2)
+    s = 0 if l == 0 or l == 1 else (v - l) / min(l, 1 - l)
+    return h, s, l
+
+
+def oklabToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    lightness = color[0]
+    a = color[1]
+    b = color[2]
+
+    l_ = lightness + 0.3963377774 * a + 0.2158037573 * b
+    m_ = lightness - 0.1055613458 * a - 0.0638541728 * b
+    s_ = lightness - 0.0894841775 * a - 1.2914855480 * b
+
+    l = l_ * l_ * l_
+    m = m_ * m_ * m_
+    s = s_ * s_ * s_
+
+    red = 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s
+    green = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s
+    blue = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+
+    return linearToSrgb((red, green, blue))
+
+
+def srgbToOklab(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    red, green, blue = srgbToLinear(color)
+    l = 0.4122214708 * red + 0.5363325363 * green + 0.0514459929 * blue
+    m = 0.2119034982 * red + 0.6806995451 * green + 0.1073969566 * blue
+    s = 0.0883024619 * red + 0.2817188376 * green + 0.6299787005 * blue
+    l_ = l ** (1.0 / 3)
+    m_ = m ** (1.0 / 3)
+    s_ = s ** (1.0 / 3)
+    l = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
+    a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
+    b = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
+    return l, a, b
+
+
+# print(srgbToLinear((0.2, 0.5, 0.8)))
+# print(srgbToOklab((0.2, 0.5, 0.8)))
+print(oklabToSrgb((0.76, 0.34, 0.38)))
