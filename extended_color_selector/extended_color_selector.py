@@ -1,5 +1,5 @@
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QResizeEvent
+from PyQt5.QtCore import pyqtSignal, QTimer
+from PyQt5.QtGui import QResizeEvent, QColor
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -8,16 +8,16 @@ from PyQt5.QtWidgets import (
     QRadioButton,
     QButtonGroup,
 )
-from krita import DockWidget, DockWidgetFactory, DockWidgetFactoryBase  # type: ignore
+from krita import *  # type: ignore
 
 from .color_wheel import ColorWheel, LockedChannelBar
-from .models import ColorSpace
+from .models import ColorSpace, colorSpaceFromKritaModel
 
 DOCKER_NAME = "Extended Color Selector"
 DOCKER_ID = "pyKrita_extended_color_selector"
 
 
-class ExtendedColorSelector(DockWidget):
+class ExtendedColorSelector(DockWidget):  # type: ignore
     def __init__(self):
         super().__init__()
         self.setWindowTitle(DOCKER_NAME)
@@ -45,6 +45,10 @@ class ExtendedColorSelector(DockWidget):
         self.mainLayout.addLayout(self.colorSpaceSwitchers)
         self.mainLayout.addLayout(self.lockers)
         self.mainLayout.addStretch(1)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.syncColor)
+        self.timer.start(100)
 
     def updateColorSpaceSwitchers(self):
         while True:
@@ -85,6 +89,9 @@ class ExtendedColorSelector(DockWidget):
         self.update()
 
     def updateColorSpace(self, colorSpace: ColorSpace):
+        if colorSpace == self.colorSpace:
+            return
+
         self.colorSpace = colorSpace
         self.colorWheel.updateColorSpace(colorSpace)
         self.lockedChannelBar.updateColorSpace(colorSpace)
@@ -93,13 +100,51 @@ class ExtendedColorSelector(DockWidget):
         self.updateLockers()
 
     def updateLockedChannel(self, channel: int):
+        if channel == self.lockedChannel:
+            return
+
         self.colorWheel.updateLockedChannel(channel)
         self.lockedChannelBar.updateLockedChannel(channel)
         self.lockedChannel = channel
 
-    def syncColor(self):
+    def propagateColor(self):
         self.colorWheel.updateColor(self.color)
         self.lockedChannelBar.updateColor(self.color)
+
+    def sendColor(self):
+        kritaWindow = Krita.instance().activeWindow()  # type: ignore
+        if kritaWindow == None:
+            return
+        kritaView = kritaWindow.activeView()  # type: ignore
+        if kritaView == None:
+            return
+
+        r, g, b = self.colorSpace.toRgb(self.color)
+        color = ManagedColor.fromQColor(  # type: ignore
+            QColor(int(r * 255), int(g * 255), int(b * 255)), kritaView.canvas()
+        )
+        kritaView.setForeGroundColor(color)
+
+    def syncColor(self):
+        kritaWindow = Krita.instance().activeWindow()  # type: ignore
+        if kritaWindow == None:
+            return
+        kritaView = kritaWindow.activeView()  # type: ignore
+        if kritaView == None:
+            return
+        mc = kritaView.foregroundColor()
+        if mc == None:
+            return
+        colorSpace = colorSpaceFromKritaModel(mc.colorModel())
+        if colorSpace == None:
+            return
+
+        components = mc.componentsOrdered()
+        self.updateColorSpace(colorSpace)
+        color = self.colorSpace.fromRgb((components[0], components[1], components[2]))
+
+        self.color = color
+        self.propagateColor()
 
     def updateLockedChannelValue(self, value: float):
         match self.lockedChannel:
@@ -110,7 +155,8 @@ class ExtendedColorSelector(DockWidget):
             case 2:
                 self.color = self.color[0], self.color[1], value
 
-        self.syncColor()
+        self.propagateColor()
+        self.sendColor()
 
     def updateVariableChannelsValue(self, variables: tuple[float, float]):
         match self.lockedChannel:
@@ -121,18 +167,19 @@ class ExtendedColorSelector(DockWidget):
             case 2:
                 self.color = variables[0], variables[1], self.color[2]
 
-        self.syncColor()
+        self.propagateColor()
+        self.sendColor()
 
     def resizeEvent(self, e: QResizeEvent):
         self.colorWheel.resizeEvent(e)
 
     def canvasChanged(self, canvas):
-        pass
+        self.syncColor()
 
 
 instance = Krita.instance()  # type: ignore
-dock_widget_factory = DockWidgetFactory(
-    DOCKER_ID, DockWidgetFactoryBase.DockRight, ExtendedColorSelector
+dock_widget_factory = DockWidgetFactory(  # type: ignore
+    DOCKER_ID, DockWidgetFactoryBase.DockRight, ExtendedColorSelector  # type: ignore
 )
 
 instance.addDockWidgetFactory(dock_widget_factory)
