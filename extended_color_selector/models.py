@@ -43,9 +43,7 @@ class ColorSpace(Enum):
     def channels(self) -> list[str]:
         return list(self.displayName())
 
-    def computeScales(
-        self, color: tuple[float, float, float]
-    ) -> tuple[float, float, float]:
+    def scales(self) -> tuple[float, float, float]:
         match self:
             case ColorSpace.Rgb:
                 return 1, 1, 1

@@ -1,10 +1,15 @@
-from PyQt5.QtCore import QSize, QTimer, Qt
+from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal, QRectF, QLineF
 from PyQt5.QtGui import (
+    QMouseEvent,
     QOpenGLVersionProfile,
+    QPaintEvent,
     QResizeEvent,
     QSurfaceFormat,
     QOpenGLShader,
     QOpenGLShaderProgram,
+    QPainter,
+    QBrush,
+    QColor,
 )
 from PyQt5.QtWidgets import (
     QOpenGLWidget,
@@ -52,6 +57,8 @@ bar_fragment = open(Path(__file__).parent / "locked_channel_bar.frag").read()
 
 
 class ColorWheel(QOpenGLWidget):
+    variablesChanged = pyqtSignal(object)
+
     def __init__(self, parent: QWidget):
         super().__init__(parent)
         self.setMinimumHeight(200)
@@ -63,6 +70,7 @@ class ColorWheel(QOpenGLWidget):
         self.constant = 0.0
         self.constantPos = 0
         self.color = 0, 0, 0
+        self.cursorPos = 0, 0
 
     def updateColor(self, color: tuple[float, float, float]):
         self.color = color
@@ -84,10 +92,6 @@ class ColorWheel(QOpenGLWidget):
         self.constantPos = lockedChannel
         self.update()
 
-    def updateLockedChannelValue(self, lockedChannelValue: float):
-        self.constant = lockedChannelValue
-        self.update()
-
     def resizeEvent(self, e: QResizeEvent | None):
         super().resizeEvent(e)
 
@@ -98,6 +102,41 @@ class ColorWheel(QOpenGLWidget):
         self.setFixedHeight(size)
         self.res = size
         self.update()
+
+    def handleMouse(self, event: QMouseEvent | None):
+        if event == None:
+            return
+
+        x = max(min(event.pos().x(), self.res), 0)
+        y = max(min(event.pos().y(), self.res), 0)
+        val = x / self.res, 1.0 - y / self.res
+        self.variablesChanged.emit(val)
+        self.cursorPos = x, y
+        self.update()
+
+    def mousePressEvent(self, a0: QMouseEvent | None):
+        self.handleMouse(a0)
+
+    def mouseMoveEvent(self, a0: QMouseEvent | None):
+        self.handleMouse(a0)
+
+    def paintEvent(self, e: QPaintEvent | None) -> None:
+        super().paintEvent(e)
+        painter = QPainter(self)
+        painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
+
+        a, b = self.cursorPos
+        painter.drawArc(
+            QRectF(a - 4, b - 4, 8, 8),
+            0,
+            360 * 16,
+        )
+        painter.setBrush(QBrush(QColor(0, 0, 0, 255)))
+        painter.drawArc(
+            QRectF(a - 5, b - 5, 10, 10),
+            0,
+            360 * 16,
+        )
 
     def initializeGL(self):
         context = self.context()
@@ -139,7 +178,7 @@ class ColorWheel(QOpenGLWidget):
         self.program.setUniformValue("res", int(self.res))
         self.program.setUniformValue("constant", float(self.constant))
         self.program.setUniformValue("constantPos", int(self.constantPos))
-        x, y, z = self.colorSpace.computeScales(self.color)
+        x, y, z = self.colorSpace.scales()
         self.program.setUniformValue("scales", x, y, z)
 
         gl = self.gl
@@ -152,6 +191,8 @@ class ColorWheel(QOpenGLWidget):
 
 
 class LockedChannelBar(QOpenGLWidget):
+    constantChanged = pyqtSignal(float)
+
     def __init__(self, parent: QWidget):
         super().__init__(parent)
         self.setMinimumHeight(50)
@@ -163,6 +204,7 @@ class LockedChannelBar(QOpenGLWidget):
         self.variables = 0, 0
         self.constantPos = 0
         self.color = 0, 0, 0
+        self.cursorPos = 0
 
     def updateColor(self, color: tuple[float, float, float]):
         self.color = color
@@ -184,10 +226,6 @@ class LockedChannelBar(QOpenGLWidget):
             self.color[(self.constantPos + 2) % 3],
         )
         self.update()
-    
-    def updateVariableChannelValues(self, variables: tuple[float, float]):
-        self.variables = variables
-        self.update()
 
     def resizeEvent(self, e: QResizeEvent | None):
         super().resizeEvent(e)
@@ -198,6 +236,37 @@ class LockedChannelBar(QOpenGLWidget):
         self.res = e.size().width()
         self.update()
 
+    def handleMouse(self, event: QMouseEvent | None):
+        if event == None:
+            return
+
+        x = max(min(event.pos().x(), self.res), 0)
+        self.constantChanged.emit(x / self.res)
+        self.cursorPos = x
+        self.update()
+
+    def mousePressEvent(self, a0: QMouseEvent | None):
+        self.handleMouse(a0)
+
+    def mouseMoveEvent(self, a0: QMouseEvent | None):
+        self.handleMouse(a0)
+
+    def paintEvent(self, e: QPaintEvent | None):
+        def drawHollowRect(painter: QPainter, x: int, y: int, w: int, h: int):
+            painter.drawLine(QLineF(x, y, x + w, y))
+            painter.drawLine(QLineF(x + w, y, x + w, y + h))
+            painter.drawLine(QLineF(x + w, y + h, x, y + h))
+            painter.drawLine(QLineF(x, y + h, x, y))
+
+        super().paintEvent(e)
+        painter = QPainter(self)
+        painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
+
+        x = self.cursorPos
+        drawHollowRect(painter, x - 4, 0, 8, self.height())
+        painter.setBrush(QBrush(QColor(0, 0, 0, 255)))
+        drawHollowRect(painter, x - 5, 0, 10, self.height())
+
     def initializeGL(self):
         context = self.context()
         profile = QOpenGLVersionProfile()
@@ -207,40 +276,6 @@ class LockedChannelBar(QOpenGLWidget):
             return
         self.gl = context.versionFunctions(profile)
         self.compileShader()
-
-    # def compileShader(self):
-    #     vert = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Vertex)
-    #     vert.compileSourceCode(vertex)
-    #     frag = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Fragment)
-    #     frag.compileSourceCode(
-    #         self.shape.modifyShader(self.colorSpace.modifyShader(bar_fragment))
-    #     )
-    #     self.program = QOpenGLShaderProgram(self.context())
-    #     self.program.addShader(vert)
-    #     self.program.addShader(frag)
-    #     self.program.link()
-
-    # def paintGL(self):
-    #     if self.gl == None:
-    #         QMessageBox.critical(
-    #             self,
-    #             "Unable to get OpenGL Renderer.\n",
-    #             "This error is originated from ExtendedColorSelector. \n"
-    #             "As we are using OpenGL for color wheel rendering, it is required to use OpenGL for rendering.\n"
-    #             "Please goto Settings -> Configure Krita -> Display -> Canvas Acceleration -> "
-    #             "Preferred Renderer, and select OpenGL. \n\n"
-    #             "Krita WILL CRASH if you enter the canvas. So please change the settings in start menu.",
-    #         )
-    #         return
-
-    #     self.program.setUniformValue("res", int(self.res))
-    #     self.program.setUniformValue("variables", self.variables[0], self.variables[1])
-    #     self.program.setUniformValue("constantPos", int(self.constantPos))
-    #     x, y, z = self.colorSpace.computeScales(self.color)
-    #     self.program.setUniformValue("scales", x, y, z)
-
-    #     gl = self.gl
-    #     gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)
 
     def compileShader(self):
         vert = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Vertex)
@@ -270,9 +305,11 @@ class LockedChannelBar(QOpenGLWidget):
         self.program.bind()
 
         self.program.setUniformValue("res", int(self.res))
-        self.program.setUniformValue("variables", float(self.variables[0]), float(self.variables[1]))
+        self.program.setUniformValue(
+            "variables", float(self.variables[0]), float(self.variables[1])
+        )
         self.program.setUniformValue("constantPos", int(self.constantPos))
-        x, y, z = self.colorSpace.computeScales(self.color)
+        x, y, z = self.colorSpace.scales()
         self.program.setUniformValue("scales", x, y, z)
 
         gl = self.gl

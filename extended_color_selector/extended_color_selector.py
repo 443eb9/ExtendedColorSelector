@@ -1,3 +1,4 @@
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtWidgets import (
     QWidget,
@@ -21,7 +22,8 @@ class ExtendedColorSelector(DockWidget):
         super().__init__()
         self.setWindowTitle(DOCKER_NAME)
         self.colorSpace = ColorSpace.Rgb
-        self.lockedChannel = "R"
+        self.lockedChannel = 0
+        self.color = 0, 0, 0
 
         container = QWidget(self)
         self.setWidget(container)
@@ -29,6 +31,8 @@ class ExtendedColorSelector(DockWidget):
 
         self.colorWheel = ColorWheel(self)
         self.lockedChannelBar = LockedChannelBar(self)
+        self.colorWheel.variablesChanged.connect(self.updateVariableChannelsValue)
+        self.lockedChannelBar.constantChanged.connect(self.updateLockedChannelValue)
 
         self.colorSpaceSwitchers = QHBoxLayout(self)
         self.lockers = QHBoxLayout(self)
@@ -74,7 +78,7 @@ class ExtendedColorSelector(DockWidget):
         for i, channel in enumerate(self.colorSpace.channels()):
             button = QRadioButton(channel)
             button.clicked.connect(lambda _, i=i: self.updateLockedChannel(i))
-            button.setChecked(self.lockedChannel == channel)
+            button.setChecked(self.lockedChannel == i)
             self.lockers.addWidget(button)
             self.lockersGroup.addButton(button, i)
         self.lockers.update()
@@ -85,18 +89,39 @@ class ExtendedColorSelector(DockWidget):
         self.colorWheel.updateColorSpace(colorSpace)
         self.lockedChannelBar.updateColorSpace(colorSpace)
         # TODO remember the locked channel
-        self.lockedChannel = self.colorSpace.channels()[0]
+        self.lockedChannel = 0
         self.updateLockers()
 
     def updateLockedChannel(self, channel: int):
         self.colorWheel.updateLockedChannel(channel)
         self.lockedChannelBar.updateLockedChannel(channel)
+        self.lockedChannel = channel
+
+    def syncColor(self):
+        self.colorWheel.updateColor(self.color)
+        self.lockedChannelBar.updateColor(self.color)
 
     def updateLockedChannelValue(self, value: float):
-        self.colorWheel.updateLockedChannelValue(value)
+        match self.lockedChannel:
+            case 0:
+                self.color = value, self.color[1], self.color[2]
+            case 1:
+                self.color = self.color[0], value, self.color[2]
+            case 2:
+                self.color = self.color[0], self.color[1], value
 
-    def updateVariableValue(self, variables: tuple[float, float]):
-        self.lockedChannelBar.updateVariableChannelValues(variables)
+        self.syncColor()
+
+    def updateVariableChannelsValue(self, variables: tuple[float, float]):
+        match self.lockedChannel:
+            case 0:
+                self.color = self.color[0], variables[1], self.color[2]
+            case 1:
+                self.color = variables[0], self.color[1], variables[1]
+            case 2:
+                self.color = variables[0], variables[1], self.color[2]
+
+        self.syncColor()
 
     def resizeEvent(self, e: QResizeEvent):
         self.colorWheel.resizeEvent(e)
