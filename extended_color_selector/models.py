@@ -31,10 +31,7 @@ class ColorSpace(Enum):
 
     def modifyShader(self, shader: str) -> str:
         component = self.getShaderComponent()
-        start = shader.find("vec3 getColor(vec2 colorCoord, float constant, float constantPos);")
-        shader.replace("vec3 getColor(vec2 colorCoord, float constant, float constantPos);", "")
-        shader.replace("vec3 colorToRgb(vec3 color);", "")
-        return shader[:start] + component + shader[start:]
+        return shader.replace("vec3 colorToRgb(vec3 color);", component)
 
     def displayName(self) -> str:
         match self:
@@ -42,6 +39,15 @@ class ColorSpace(Enum):
                 return "RGB"
             case ColorSpace.Hsv:
                 return "HSV"
-            
+
     def channels(self) -> list[str]:
         return list(self.displayName())
+
+    def computeScales(
+        self, color: tuple[float, float, float]
+    ) -> tuple[float, float, float]:
+        match self:
+            case ColorSpace.Rgb:
+                return 1, 1, 1
+            case ColorSpace.Hsv:
+                return 360, 1, 1

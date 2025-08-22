@@ -1,18 +1,5 @@
 #version 410 core
 
-vec3 getColor(vec2 colorCoord, float constant, int constant_pos) {
-    switch(constant_pos) {
-        case 0:
-            return vec3(constant, colorCoord.x, colorCoord.y);
-        case 1:
-            return vec3(colorCoord.x * 360.0, constant, colorCoord.y);
-        case 2:
-            return vec3(colorCoord.x * 360.0, colorCoord.y, constant);
-        default:
-            return vec3(1.0);
-    }
-}
-
 vec3 colorToRgb(vec3 color) {
     float v = color.z;
     float w = (1.0 - color.y) * v;

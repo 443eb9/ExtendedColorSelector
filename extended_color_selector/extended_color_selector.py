@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
 )
 from krita import DockWidget, DockWidgetFactory, DockWidgetFactoryBase  # type: ignore
 
-from .color_wheel import ColorWheel
+from .color_wheel import ColorWheel, LockedChannelBar
 from .models import ColorSpace
 
 DOCKER_NAME = "Extended Color Selector"
@@ -28,6 +28,7 @@ class ExtendedColorSelector(DockWidget):
         self.mainLayout = QVBoxLayout(container)
 
         self.colorWheel = ColorWheel(self)
+        self.lockedChannelBar = LockedChannelBar(self)
 
         self.colorSpaceSwitchers = QHBoxLayout(self)
         self.lockers = QHBoxLayout(self)
@@ -36,6 +37,7 @@ class ExtendedColorSelector(DockWidget):
         self.updateLockers()
 
         self.mainLayout.addWidget(self.colorWheel)
+        self.mainLayout.addWidget(self.lockedChannelBar)
         self.mainLayout.addLayout(self.colorSpaceSwitchers)
         self.mainLayout.addLayout(self.lockers)
         self.mainLayout.addStretch(1)
@@ -81,15 +83,20 @@ class ExtendedColorSelector(DockWidget):
     def updateColorSpace(self, colorSpace: ColorSpace):
         self.colorSpace = colorSpace
         self.colorWheel.updateColorSpace(colorSpace)
+        self.lockedChannelBar.updateColorSpace(colorSpace)
         # TODO remember the locked channel
         self.lockedChannel = self.colorSpace.channels()[0]
         self.updateLockers()
 
     def updateLockedChannel(self, channel: int):
         self.colorWheel.updateLockedChannel(channel)
+        self.lockedChannelBar.updateLockedChannel(channel)
 
     def updateLockedChannelValue(self, value: float):
         self.colorWheel.updateLockedChannelValue(value)
+
+    def updateVariableValue(self, variables: tuple[float, float]):
+        self.lockedChannelBar.updateVariableChannelValues(variables)
 
     def resizeEvent(self, e: QResizeEvent):
         self.colorWheel.resizeEvent(e)
