@@ -7,7 +7,7 @@ vec3 colorToRgb(vec3 color) {
     float h = color.x / 60.0;
     int i = int(floor(h));
     float f = h - float(i);
-    if(i % 2 == 0) {
+    if(i % 2 == 1) {
         f = 1.0 - f;
     }
 
