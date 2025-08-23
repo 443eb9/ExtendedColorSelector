@@ -13,22 +13,22 @@ vec3 colorToRgb(vec3 color);
 void main(void) {
     float colorCoord = gl_FragCoord.x / res;
 
-    vec3 color = lim_max - lim_min;
+    vec3 t;
     switch(constantPos) {
         case 0:
-            color *= vec3(colorCoord, variables.x, variables.y);
+            t = vec3(colorCoord, variables.x, variables.y);
             break;
         case 1:
-            color *= vec3(variables.x, colorCoord, variables.y);
+            t = vec3(variables.x, colorCoord, variables.y);
             break;
         case 2:
-            color *= vec3(variables.x, variables.y, colorCoord);
+            t = vec3(variables.x, variables.y, colorCoord);
             break;
     }
 
-    color += lim_min;
+    vec3 color = mix(lim_min + 1e-6, lim_max - 1e-6, t);
     color = colorToRgb(color);
-    if(any(greaterThan(color, vec3(1.0)))) {
+    if(any(greaterThan(color, vec3(1.0))) || any(lessThan(color, vec3(0.0)))) {
         color = all(greaterThan(outOfGamut, vec3(0.0))) ? outOfGamut : clamp(color, vec3(0.0), vec3(1.0));
     }
 

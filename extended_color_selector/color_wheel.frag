@@ -16,20 +16,20 @@ void main(void) {
     vec2 uv = gl_FragCoord.xy / res;
     vec2 colorCoord = getColorCoord(uv);
 
-    vec3 color = lim_max - lim_min;
+    vec3 t;
     switch(constantPos) {
         case 0:
-            color *= vec3(constant, colorCoord.x, colorCoord.y);
+            t = vec3(constant, colorCoord.x, colorCoord.y);
             break;
         case 1:
-            color *= vec3(colorCoord.x, constant, colorCoord.y);
+            t = vec3(colorCoord.x, constant, colorCoord.y);
             break;
         case 2:
-            color *= vec3(colorCoord.x, colorCoord.y, constant);
+            t = vec3(colorCoord.x, colorCoord.y, constant);
             break;
     }
 
-    color = color + lim_min;
+    vec3 color = mix(lim_min + 1e-6, lim_max - 1e-6, t);
     color = colorToRgb(color);
     if(any(greaterThan(color, vec3(1.0)))) {
         color = all(greaterThan(outOfGamut, vec3(0.0))) ? outOfGamut : clamp(color, vec3(0.0), vec3(1.0));
