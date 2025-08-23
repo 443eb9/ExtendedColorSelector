@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import (
 from pathlib import Path
 from enum import Enum
 
-from .models import ColorSpace
+from .models import ColorModel
 
 
 components = {}
@@ -64,7 +64,7 @@ class ColorWheel(QOpenGLWidget):
         self.setMinimumHeight(200)
 
         self.res = 1
-        self.colorSpace = ColorSpace.Rgb
+        self.colorModel = ColorModel.Rgb
         self.shape = WheelShape.Square
         self.compileShader()
         self.constantPos = 0
@@ -74,8 +74,8 @@ class ColorWheel(QOpenGLWidget):
         self.color = color
         self.update()
 
-    def updateColorSpace(self, colorSpace: ColorSpace):
-        self.colorSpace = colorSpace
+    def updateColorModel(self, colorModel: ColorModel):
+        self.colorModel = colorModel
         self.compileShader()
         self.update()
 
@@ -157,7 +157,7 @@ class ColorWheel(QOpenGLWidget):
         vert.compileSourceCode(vertex)
         frag = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Fragment)
         frag.compileSourceCode(
-            self.shape.modifyShader(self.colorSpace.modifyShader(wheel_fragment))
+            self.shape.modifyShader(self.colorModel.modifyShader(wheel_fragment))
         )
         self.program = QOpenGLShaderProgram(self.context())
         self.program.addShader(vert)
@@ -182,7 +182,7 @@ class ColorWheel(QOpenGLWidget):
         self.program.setUniformValue("res", int(self.res))
         self.program.setUniformValue("constant", float(self.color[self.constantPos]))
         self.program.setUniformValue("constantPos", int(self.constantPos))
-        mn, mx = self.colorSpace.limits()
+        mn, mx = self.colorModel.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
         self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
 
@@ -203,7 +203,7 @@ class LockedChannelBar(QOpenGLWidget):
         self.setMinimumHeight(50)
 
         self.res = 1
-        self.colorSpace = ColorSpace.Rgb
+        self.colorSpace = ColorModel.Rgb
         self.shape = WheelShape.Square
         self.compileShader()
         self.constantPos = 0
@@ -213,8 +213,8 @@ class LockedChannelBar(QOpenGLWidget):
         self.color = color
         self.update()
 
-    def updateColorSpace(self, colorSpace: ColorSpace):
-        self.colorSpace = colorSpace
+    def updateColorModel(self, colorModel: ColorModel):
+        self.colorSpace = colorModel
         self.compileShader()
         self.update()
 

@@ -5,7 +5,7 @@ import math
 components: dict[str, str] = {}
 
 
-class ColorSpace(Enum):
+class ColorModel(Enum):
     Rgb = 0
     Hsv = 1
     Hsl = 2
@@ -18,7 +18,7 @@ class ColorSpace(Enum):
             components[name] = open(
                 Path(__file__).parent
                 / "shader_components"
-                / "color_spaces"
+                / "color_models"
                 / f"{name}.glsl"
             ).read()[
                 18:
@@ -28,15 +28,15 @@ class ColorSpace(Enum):
 
     def shaderComponentName(self) -> str:
         match self:
-            case ColorSpace.Rgb:
+            case ColorModel.Rgb:
                 return "rgb"
-            case ColorSpace.Hsv:
+            case ColorModel.Hsv:
                 return "hsv"
-            case ColorSpace.Hsl:
+            case ColorModel.Hsl:
                 return "hsl"
-            case ColorSpace.Oklab:
+            case ColorModel.Oklab:
                 return "oklab"
-            case ColorSpace.Xyz:
+            case ColorModel.Xyz:
                 return "xyz"
 
     def modifyShader(self, shader: str) -> str:
@@ -45,41 +45,41 @@ class ColorSpace(Enum):
 
     def displayName(self) -> str:
         match self:
-            case ColorSpace.Rgb:
+            case ColorModel.Rgb:
                 return "RGB"
-            case ColorSpace.Hsv:
+            case ColorModel.Hsv:
                 return "HSV"
-            case ColorSpace.Hsl:
+            case ColorModel.Hsl:
                 return "HSL"
-            case ColorSpace.Oklab:
+            case ColorModel.Oklab:
                 return "OkLab"
-            case ColorSpace.Xyz:
+            case ColorModel.Xyz:
                 return "XYZ"
 
     def channels(self) -> list[str]:
         match self:
-            case ColorSpace.Rgb:
+            case ColorModel.Rgb:
                 return ["R", "G", "B"]
-            case ColorSpace.Hsv:
+            case ColorModel.Hsv:
                 return ["H", "S", "V"]
-            case ColorSpace.Hsl:
+            case ColorModel.Hsl:
                 return ["H", "S", "L"]
-            case ColorSpace.Oklab:
+            case ColorModel.Oklab:
                 return ["L", "A", "B"]
-            case ColorSpace.Xyz:
+            case ColorModel.Xyz:
                 return ["X", "Y", "Z"]
 
     def limits(self) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
         match self:
-            case ColorSpace.Rgb:
+            case ColorModel.Rgb:
                 return (0, 0, 0), (1, 1, 1)
-            case ColorSpace.Hsv:
+            case ColorModel.Hsv:
                 return (0, 0, 0), (360, 1, 1)
-            case ColorSpace.Hsl:
+            case ColorModel.Hsl:
                 return (0, 0, 0), (360, 1, 1)
-            case ColorSpace.Oklab:
+            case ColorModel.Oklab:
                 return (0, -1, -1), (1, 1, 1)
-            case ColorSpace.Xyz:
+            case ColorModel.Xyz:
                 return (0, 0, 0), (1, 1, 1)
 
     def normalize(
@@ -103,42 +103,42 @@ class ColorSpace(Enum):
         )
 
 
-def colorSpaceFromKritaModel(model: str) -> ColorSpace | None:
+def colorModelFromKrita(model: str) -> ColorModel | None:
     match model:
         case "RGBA":
-            return ColorSpace.Rgb
+            return ColorModel.Rgb
         case _:
             return None
 
 
-def transferColorSpace(
-    color: tuple[float, float, float], fromSpace: ColorSpace, toSpace: ColorSpace
+def transferColorModel(
+    color: tuple[float, float, float], fromSpace: ColorModel, toSpace: ColorModel
 ) -> tuple[float, float, float]:
     color = fromSpace.unnormalize(color)
     rgb = None
     match fromSpace:
-        case ColorSpace.Rgb:
+        case ColorModel.Rgb:
             rgb = color
-        case ColorSpace.Hsv:
+        case ColorModel.Hsv:
             rgb = hsvToRSrgb(color)
-        case ColorSpace.Hsl:
+        case ColorModel.Hsl:
             rgb = hslToSrgb(color)
-        case ColorSpace.Oklab:
+        case ColorModel.Oklab:
             rgb = oklabToSrgb(color)
-        case ColorSpace.Xyz:
+        case ColorModel.Xyz:
             rgb = xyzToSrgb(color)
 
     unnormalized = None
     match toSpace:
-        case ColorSpace.Rgb:
+        case ColorModel.Rgb:
             unnormalized = rgb
-        case ColorSpace.Hsv:
+        case ColorModel.Hsv:
             unnormalized = srgbToHsv(rgb)
-        case ColorSpace.Hsl:
+        case ColorModel.Hsl:
             unnormalized = srgbToHsl(rgb)
-        case ColorSpace.Oklab:
+        case ColorModel.Oklab:
             unnormalized = oklabToSrgb(color)
-        case ColorSpace.Xyz:
+        case ColorModel.Xyz:
             unnormalized = xyzToSrgb(color)
 
     return toSpace.normalize(unnormalized)

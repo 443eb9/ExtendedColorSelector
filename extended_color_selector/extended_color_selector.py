@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
 from krita import *  # type: ignore
 
 from .color_wheel import ColorWheel, LockedChannelBar
-from .models import ColorSpace, colorSpaceFromKritaModel, transferColorSpace
+from .models import ColorModel, colorModelFromKrita, transferColorModel
 from .config import SYNC_INTERVAL_MS
 
 DOCKER_NAME = "Extended Color Selector"
@@ -22,7 +22,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
     def __init__(self):
         super().__init__()
         self.setWindowTitle(DOCKER_NAME)
-        self.colorSpace = ColorSpace.Rgb
+        self.colorSpace = ColorModel.Rgb
         self.lockedChannel = 0
         self.color = 0, 0, 0
 
@@ -38,7 +38,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.colorSpaceSwitchers = QHBoxLayout(self)
         self.lockers = QHBoxLayout(self)
 
-        self.updateColorSpaceSwitchers()
+        self.updateColorModelSwitchers()
         self.updateLockers()
 
         self.mainLayout.addWidget(self.colorWheel)
@@ -51,7 +51,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.timer.timeout.connect(self.syncColor)
         # self.timer.start(SYNC_INTERVAL_MS)
 
-    def updateColorSpaceSwitchers(self):
+    def updateColorModelSwitchers(self):
         while True:
             widget = self.colorSpaceSwitchers.takeAt(0)
             if widget == None:
@@ -62,7 +62,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
         self.cswGroup = QButtonGroup()
         self.cswGroup.setExclusive(True)
-        for colorSpace in ColorSpace:
+        for colorSpace in ColorModel:
             button = QRadioButton(colorSpace.displayName())
             button.setChecked(colorSpace == self.colorSpace)
             button.clicked.connect(lambda _, cs=colorSpace: self.updateColorSpace(cs))
@@ -89,14 +89,14 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.lockers.update()
         self.update()
 
-    def updateColorSpace(self, colorSpace: ColorSpace):
+    def updateColorSpace(self, colorSpace: ColorModel):
         if colorSpace == self.colorSpace:
             return
 
-        self.color = transferColorSpace(self.color, self.colorSpace, colorSpace)
+        self.color = transferColorModel(self.color, self.colorSpace, colorSpace)
         self.colorSpace = colorSpace
-        self.colorWheel.updateColorSpace(colorSpace)
-        self.lockedChannelBar.updateColorSpace(colorSpace)
+        self.colorWheel.updateColorModel(colorSpace)
+        self.lockedChannelBar.updateColorModel(colorSpace)
         # TODO remember the locked channel
         self.lockedChannel = 0
         self.updateLockers()
@@ -128,7 +128,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         if kritaView == None:
             return
 
-        r, g, b = transferColorSpace(self.color, self.colorSpace, ColorSpace.Rgb)
+        r, g, b = transferColorModel(self.color, self.colorSpace, ColorModel.Rgb)
         color = ManagedColor.fromQColor(  # type: ignore
             QColor(int(r * 255), int(g * 255), int(b * 255)), kritaView.canvas()
         )
@@ -144,13 +144,13 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         mc = kritaView.foregroundColor()
         if mc == None:
             return
-        colorSpace = colorSpaceFromKritaModel(mc.colorModel())
-        if colorSpace == None:
+        colorModel = colorModelFromKrita(mc.colorModel())
+        if colorModel == None:
             return
 
         components = mc.componentsOrdered()
-        color = transferColorSpace(
-            (components[0], components[1], components[2]), colorSpace, self.colorSpace
+        color = transferColorModel(
+            (components[0], components[1], components[2]), colorModel, self.colorSpace
         )
 
         self.color = color
