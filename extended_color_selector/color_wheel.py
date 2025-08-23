@@ -73,11 +73,12 @@ class WheelShape(Enum):
                     return x * 0.5 + 0.5, y * 0.5 + 0.5
 
                 d = 2.0 - normalizedRingThickness * 2
-                a = d / math.sqrt(2.0)
-                if abs(x) > a * 0.5 or abs(y) > a * 0.5:
-                    return -1, -1
+                halfA = d / math.sqrt(2.0) * 0.5
+                # if abs(x) > halfA or abs(y) > halfA:
+                #     return -1, -1
+                x, y = min(max(x, -halfA), halfA), min(max(y, -halfA), halfA)
 
-                return x / (a * 0.5) * 0.5 + 0.5, y / (a * 0.5) * 0.5 + 0.5
+                return x / halfA * 0.5 + 0.5, y / halfA * 0.5 + 0.5
             case WheelShape.Triangle:
                 p = QVector2D(x, y)
                 RAD_120 = math.pi * 120.0 / 180.0
@@ -97,16 +98,18 @@ class WheelShape(Enum):
 
                 x = b.length() / (y * A)
 
-                if x < 0.0 or y < 0.0 or x > 1.0 or y > 1.0:
-                    return -1, -1
+                # if x < 0.0 or y < 0.0 or x > 1.0 or y > 1.0:
+                #     return -1, -1
+                x, y = min(max(x, 0.0), 1.0), min(max(y, 0.0), 1.0)
 
                 return x, y
             case WheelShape.Circle:
                 r = math.sqrt(x * x + y * y)
-                if r > 1 - normalizedRingThickness:
-                    return -1, -1
+                # if r > 1 - normalizedRingThickness:
+                #     return -1, -1
+                r = min(r, 1 - normalizedRingThickness)
                 a = math.atan2(y, x) / math.pi * 0.5 + 0.5
-                return (r, a)
+                return (r / (1 - normalizedRingThickness), a)
 
     def getPos(
         self, coord: tuple[float, float], normalizedRingThickness: float
@@ -133,6 +136,7 @@ class WheelShape(Enum):
             case WheelShape.Circle:
                 y *= 2 * math.pi
                 y += math.pi
+                x *= 1 - normalizedRingThickness
                 x, y = math.cos(y) * x, math.sin(y) * x
                 return x, y
 
