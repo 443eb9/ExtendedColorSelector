@@ -4,6 +4,7 @@ uniform float constant;
 uniform int constantPos;
 uniform vec3 lim_min;
 uniform vec3 lim_max;
+uniform vec3 outOfGamut;
 uniform int res;
 out vec4 out_color;
 
@@ -30,5 +31,9 @@ void main(void) {
 
     color = color + lim_min;
     color = colorToRgb(color);
+    if(any(greaterThan(color, vec3(1.0)))) {
+        color = all(greaterThan(outOfGamut, vec3(0.0))) ? outOfGamut : clamp(color, vec3(0.0), vec3(1.0));
+    }
+
     out_color = vec4(color, 1.0);
 }

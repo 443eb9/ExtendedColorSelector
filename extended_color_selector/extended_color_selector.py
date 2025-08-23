@@ -34,6 +34,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.lockedChannelBar = LockedChannelBar(self)
         self.colorWheel.variablesChanged.connect(self.updateVariableChannelsValue)
         self.lockedChannelBar.constantChanged.connect(self.updateLockedChannelValue)
+        self.updateOutOfGamutColor((0.5, 0.5, 0.5))
 
         self.colorSpaceSwitchers = QHBoxLayout(self)
         self.lockers = QHBoxLayout(self)
@@ -101,6 +102,10 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.lockedChannel = 0
         self.updateLockers()
         self.propagateColor()
+
+    def updateOutOfGamutColor(self, srgb: tuple[float, float, float]):
+        self.colorWheel.updateOutOfGamutColor(srgb)
+        self.lockedChannelBar.updateOutOfGamutColor(srgb)
 
     def updateLockedChannel(self, channel: int):
         if channel == self.lockedChannel:

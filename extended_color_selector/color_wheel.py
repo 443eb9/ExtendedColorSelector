@@ -68,7 +68,12 @@ class ColorWheel(QOpenGLWidget):
         self.shape = WheelShape.Square
         self.compileShader()
         self.constantPos = 0
+        self.outOfGamut = -1, -1, -1
         self.color = 0, 0, 0
+
+    def updateOutOfGamutColor(self, srgb: tuple[float, float, float]):
+        self.outOfGamut = srgb
+        self.update()
 
     def updateColor(self, color: tuple[float, float, float]):
         self.color = color
@@ -185,6 +190,9 @@ class ColorWheel(QOpenGLWidget):
         mn, mx = self.colorModel.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
         self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
+        self.program.setUniformValue(
+            "outOfGamut", self.outOfGamut[0], self.outOfGamut[1], self.outOfGamut[2]
+        )
 
         gl = self.gl
         gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)
@@ -207,7 +215,12 @@ class LockedChannelBar(QOpenGLWidget):
         self.shape = WheelShape.Square
         self.compileShader()
         self.constantPos = 0
+        self.outOfGamut = -1, -1, -1
         self.color = 0, 0, 0
+    
+    def updateOutOfGamutColor(self, srgb: tuple[float, float, float]):
+        self.outOfGamut = srgb
+        self.update()
 
     def updateColor(self, color: tuple[float, float, float]):
         self.color = color
@@ -317,6 +330,9 @@ class LockedChannelBar(QOpenGLWidget):
         mn, mx = self.colorSpace.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
         self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
+        self.program.setUniformValue(
+            "outOfGamut", self.outOfGamut[0], self.outOfGamut[1], self.outOfGamut[2]
+        )
 
         gl = self.gl
         gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)
