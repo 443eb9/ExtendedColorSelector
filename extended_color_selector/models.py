@@ -75,7 +75,6 @@ class ColorModel(Enum):
                 return ["X", "Y", "Z"]
             case ColorModel.Lab:
                 return ["L", "A", "B"]
-            
 
     def limits(self) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
         match self:
@@ -133,35 +132,35 @@ def transferColorModel(
     color: tuple[float, float, float], fromSpace: ColorModel, toSpace: ColorModel
 ) -> tuple[float, float, float]:
     color = fromSpace.unnormalize(color)
-    rgb = None
+    xyz = None
     match fromSpace:
         case ColorModel.Rgb:
-            rgb = color
+            xyz = srgbToXyz(color)
         case ColorModel.Hsv:
-            rgb = hsvToRSrgb(color)
+            xyz = srgbToXyz(hsvToSrgb(color))
         case ColorModel.Hsl:
-            rgb = hslToSrgb(color)
+            xyz = srgbToXyz(hslToSrgb(color))
         case ColorModel.Oklab:
-            rgb = oklabToSrgb(color)
+            xyz = oklabToXyz(color)
         case ColorModel.Xyz:
-            rgb = xyzToSrgb(color)
+            xyz = color
         case ColorModel.Lab:
-            rgb = labToSrgb(color)
+            xyz = labToXyz(color)
 
     unnormalized = None
     match toSpace:
         case ColorModel.Rgb:
-            unnormalized = rgb
+            unnormalized = xyzToSrgb(xyz)
         case ColorModel.Hsv:
-            unnormalized = srgbToHsv(rgb)
+            unnormalized = srgbToHsv(xyzToSrgb(xyz))
         case ColorModel.Hsl:
-            unnormalized = srgbToHsl(rgb)
+            unnormalized = srgbToHsl(xyzToSrgb(xyz))
         case ColorModel.Oklab:
-            unnormalized = oklabToSrgb(color)
+            unnormalized = xyzToOklab(color)
         case ColorModel.Xyz:
-            unnormalized = xyzToSrgb(color)
+            unnormalized = xyz
         case ColorModel.Lab:
-            unnormalized = labToSrgb(color)
+            unnormalized = xyzToLab(color)
 
     return toSpace.normalize(unnormalized)
 
@@ -219,7 +218,7 @@ def srgbToHsv(color: tuple[float, float, float]) -> tuple[float, float, float]:
     return h, 1 - (w / v) if v != 0 else 0, v
 
 
-def hsvToRSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
+def hsvToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
     v = color[2]
     w = (1 - color[1]) * v
 
@@ -288,43 +287,36 @@ def srgbToHsl(color: tuple[float, float, float]) -> tuple[float, float, float]:
     return h, s, l
 
 
-def oklabToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
-    lightness = color[0]
-    a = color[1]
-    b = color[2]
+# https://bottosson.github.io/posts/oklab/
+def xyzToOklab(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    x = color[0]
+    y = color[1]
+    z = color[2]
 
-    l_ = lightness + 0.3963377774 * a + 0.2158037573 * b
-    m_ = lightness - 0.1055613458 * a - 0.0638541728 * b
-    s_ = lightness - 0.0894841775 * a - 1.2914855480 * b
+    l_ = 0.8189330101 * x + 0.3618667424 * y - 0.1288597137 * z
+    m_ = 0.0329845436 * x + 0.9293118715 * y + 0.0361456387 * z
+    s_ = 0.0482003018 * x + 0.2643662691 * y + 0.6338517070 * z
 
-    l = l_ * l_ * l_
-    m = m_ * m_ * m_
-    s = s_ * s_ * s_
-
-    red = 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s
-    green = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s
-    blue = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
-
-    return linearToSrgb((red, green, blue))
-
-
-def srgbToOklab(color: tuple[float, float, float]) -> tuple[float, float, float]:
-    red, green, blue = srgbToLinear(color)
-    l = 0.4122214708 * red + 0.5363325363 * green + 0.0514459929 * blue
-    m = 0.2119034982 * red + 0.6806995451 * green + 0.1073969566 * blue
-    s = 0.0883024619 * red + 0.2817188376 * green + 0.6299787005 * blue
-    l_ = l ** (1.0 / 3)
-    m_ = m ** (1.0 / 3)
-    s_ = s ** (1.0 / 3)
     l = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
-    a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
-    b = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
+    a = 1.9779984951 * l_ - 2.4285922050 * m_ - 0.4505937099 * s_
+    b = 0.0259040371 * l_ - 0.7827717662 * m_ - 0.8086757660 * s_
+
     return l, a, b
 
 
-# print(srgbToLinear((0.2, 0.5, 0.8)))
-# print(srgbToOklab((0.2, 0.5, 0.8)))
-print(oklabToSrgb((0.76, 0.34, 0.38)))
+def oklabToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    l = color[0]
+    a = color[1]
+    b = color[2]
+
+    l_ = +1.2270138511 * l - 0.5577999806 * a + 0.2812561489 * b
+    m_ = -0.0405801784 * l + 1.1122568696 * a - 0.0716766786 * b
+    s_ = -0.0763812845 * l - 0.4214819784 * a + 1.5861632204 * b
+
+    x = +1.0036857869 * l_ + 0.4017697723 * m_ - 0.2289199151 * s_
+    y = +0.9891438566 * l_ - 0.1059504191 * m_ + 0.0540547326 * s_
+    z = -0.9253082648 * l_ + 0.1154263052 * m_ - 1.2962456804 * s_
+    return x, y, z
 
 
 def xyzToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
@@ -346,7 +338,7 @@ def srgbToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
     return x, y, z
 
 
-def labToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
+def labToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
     l = 100.0 * color[0]
     a = 100.0 * color[1]
     b = 100.0 * color[2]
@@ -373,8 +365,8 @@ def labToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
     return x, y, z
 
 
-def srgbToLab(color: tuple[float, float, float]) -> tuple[float, float, float]:
-    x, y, z = srgbToXyz(color)
+def xyzToLab(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    x, y, z = color
 
     xr = x / XYZ_D65_WHITE[0]
     yr = y / XYZ_D65_WHITE[1]
@@ -393,3 +385,5 @@ def srgbToLab(color: tuple[float, float, float]) -> tuple[float, float, float]:
     b = 2.00 * (fy - fz)
 
     return l, a, b
+
+print(srgbToLinear((0.8, 0.7, 0.6)))
