@@ -34,6 +34,15 @@ class WheelShape(Enum):
     Triangle = 1
     Circle = 2
 
+    def displayName(self) -> str:
+        match self:
+            case WheelShape.Square:
+                return "Square"
+            case WheelShape.Triangle:
+                return "Triangle"
+            case WheelShape.Circle:
+                return "Circle"
+
     def modifyShader(self, shader: str) -> str:
         name = None
         match self:

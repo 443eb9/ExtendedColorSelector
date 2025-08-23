@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 import math
 from krita import *  # type: ignore
 
-from .color_wheel import ColorWheel, LockedChannelBar
+from .color_wheel import ColorWheel, LockedChannelBar, WheelShape
 from .models import ColorModel, colorModelFromKrita, transferColorModel
 from .config import SYNC_INTERVAL_MS
 
@@ -56,6 +56,14 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             self.lockers.addWidget(self.channelSpinBoxes[i])
         self.updateLockers()
 
+        shapeSwitchers = QHBoxLayout(self)
+        shapeSwitchersGroup = QButtonGroup()
+        for shape in WheelShape:
+            button = QRadioButton(shape.displayName())
+            button.clicked.connect(lambda _, s=shape: self.colorWheel.updateShape(s))
+            shapeSwitchers.addWidget(button)
+            shapeSwitchersGroup.addButton(button)
+
         self.axesConfigLayout = QHBoxLayout(self)
         swapAxesButton = QPushButton("Swap Axes")
         swapAxesButton.clicked.connect(self.colorWheel.toggleSwapAxes)
@@ -80,6 +88,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.mainLayout.addLayout(self.lockers)
         self.mainLayout.addLayout(self.axesConfigLayout)
         self.mainLayout.addWidget(wheelRotationBox)
+        self.mainLayout.addLayout(shapeSwitchers)
         self.mainLayout.addStretch(1)
 
         self.syncTimer = QTimer()
