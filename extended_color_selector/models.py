@@ -11,6 +11,7 @@ class ColorModel(Enum):
     Hsl = 2
     Oklab = 3
     Xyz = 4
+    Lab = 5
 
     def getShaderComponent(self) -> str:
         name = self.shaderComponentName()
@@ -38,6 +39,8 @@ class ColorModel(Enum):
                 return "oklab"
             case ColorModel.Xyz:
                 return "xyz"
+            case ColorModel.Lab:
+                return "lab"
 
     def modifyShader(self, shader: str) -> str:
         component = self.getShaderComponent()
@@ -55,6 +58,8 @@ class ColorModel(Enum):
                 return "OkLab"
             case ColorModel.Xyz:
                 return "XYZ"
+            case ColorModel.Lab:
+                return "Lab"
 
     def channels(self) -> list[str]:
         match self:
@@ -68,6 +73,9 @@ class ColorModel(Enum):
                 return ["L", "A", "B"]
             case ColorModel.Xyz:
                 return ["X", "Y", "Z"]
+            case ColorModel.Lab:
+                return ["L", "A", "B"]
+            
 
     def limits(self) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
         match self:
@@ -81,6 +89,16 @@ class ColorModel(Enum):
                 return (0, -1, -1), (1, 1, 1)
             case ColorModel.Xyz:
                 return (0, 0, 0), (1, 1, 1)
+            case ColorModel.Lab:
+                return (0, -1, -1), (1, 1, 1)
+
+    def clamp(self, color: tuple[float, float, float]) -> tuple[float, float, float]:
+        mn, mx = self.limits()
+        return (
+            max(min(color[0], mx[0]), mn[0]),
+            max(min(color[1], mx[1]), mn[1]),
+            max(min(color[2], mx[2]), mn[2]),
+        )
 
     def normalize(
         self, color: tuple[float, float, float]
@@ -127,6 +145,8 @@ def transferColorModel(
             rgb = oklabToSrgb(color)
         case ColorModel.Xyz:
             rgb = xyzToSrgb(color)
+        case ColorModel.Lab:
+            rgb = labToSrgb(color)
 
     unnormalized = None
     match toSpace:
@@ -140,8 +160,15 @@ def transferColorModel(
             unnormalized = oklabToSrgb(color)
         case ColorModel.Xyz:
             unnormalized = xyzToSrgb(color)
+        case ColorModel.Lab:
+            unnormalized = labToSrgb(color)
 
     return toSpace.normalize(unnormalized)
+
+
+LAB_CIE_EPSILON = 216.0 / 24389.0
+LAB_CIE_KAPPA = 24389.0 / 27.0
+XYZ_D65_WHITE = 0.95047, 1.0, 1.08883
 
 
 def srgbToLinear(color: tuple[float, float, float]) -> tuple[float, float, float]:
@@ -317,3 +344,52 @@ def srgbToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
     z = r * 0.0193339 + g * 0.119192 + b * 0.9503041
 
     return x, y, z
+
+
+def labToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    l = 100.0 * color[0]
+    a = 100.0 * color[1]
+    b = 100.0 * color[2]
+
+    fy = (l + 16.0) / 116.0
+    fx = a / 500.0 + fy
+    fz = fy - b / 200.0
+
+    fx3 = fx * fx * fx
+    xr = fx3 if fx3 > LAB_CIE_EPSILON else (116.0 * fx - 16.0) / LAB_CIE_KAPPA
+
+    yr = (
+        ((l + 16.0) / 116.0) ** 3
+        if l > LAB_CIE_EPSILON * LAB_CIE_KAPPA
+        else l / LAB_CIE_KAPPA
+    )
+
+    fz3 = fz * fz * fz
+    zr = fz3 if fz3 > LAB_CIE_EPSILON else (116.0 * fz - 16.0) / LAB_CIE_KAPPA
+
+    x = xr * XYZ_D65_WHITE[0]
+    y = yr * XYZ_D65_WHITE[1]
+    z = zr * XYZ_D65_WHITE[2]
+    return x, y, z
+
+
+def srgbToLab(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    x, y, z = srgbToXyz(color)
+
+    xr = x / XYZ_D65_WHITE[0]
+    yr = y / XYZ_D65_WHITE[1]
+    zr = z / XYZ_D65_WHITE[2]
+    fx = (
+        xr ** (1.0 / 3) if xr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * xr + 16.0) / 116.0
+    )
+    fy = (
+        yr ** (1.0 / 3) if yr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * yr + 16.0) / 116.0
+    )
+    fz = (
+        zr ** (1.0 / 3) if yr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * zr + 16.0) / 116.0
+    )
+    l = 1.16 * fy - 0.16
+    a = 5.00 * (fx - fy)
+    b = 2.00 * (fy - fz)
+
+    return l, a, b
