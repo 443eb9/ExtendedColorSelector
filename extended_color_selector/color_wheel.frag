@@ -10,6 +10,7 @@ uniform int axesConfig;
 uniform int res;
 uniform float rotation;
 uniform float ringThickness;
+uniform float ringMargin;
 out vec4 out_color;
 
 vec3 colorToSrgb(vec3 color);
@@ -31,7 +32,7 @@ vec4 drawWheel(vec2 p) {
         p.y = -p.y;
     }
 
-    vec3 colorCoordAndAntialias = getColorCoordAndAntialias(p, ringThickness / (res / 2));
+    vec3 colorCoordAndAntialias = getColorCoordAndAntialias(p, (ringThickness + ringMargin) / (res / 2));
     vec2 colorCoord = colorCoordAndAntialias.xy;
     float antialias = colorCoordAndAntialias.z;
     if(any(lessThan(colorCoord, vec2(0.0)))) {

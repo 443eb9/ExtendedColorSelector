@@ -82,12 +82,19 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             lambda rot: self.colorWheel.updateRotation(math.radians(rot))
         )
 
+        wheelRingMarginBox = QSpinBox()
+        wheelRingMarginBox.setMinimum(0)
+        wheelRingMarginBox.valueChanged.connect(
+            lambda x: self.colorWheel.updateRingMargin(x)
+        )
+
         self.mainLayout.addWidget(self.colorWheel)
         self.mainLayout.addWidget(self.lockedChannelBar)
         self.mainLayout.addLayout(self.colorSpaceSwitchers)
         self.mainLayout.addLayout(self.lockers)
         self.mainLayout.addLayout(self.axesConfigLayout)
         self.mainLayout.addWidget(wheelRotationBox)
+        self.mainLayout.addWidget(wheelRingMarginBox)
         self.mainLayout.addLayout(shapeSwitchers)
         self.mainLayout.addStretch(1)
 

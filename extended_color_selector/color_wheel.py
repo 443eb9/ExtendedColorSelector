@@ -63,7 +63,7 @@ class WheelShape(Enum):
             component,
         )
 
-    def getColorCoordAndAntialias(
+    def getColorCoord(
         self, p: tuple[float, float], normalizedRingThickness: float
     ) -> tuple[float, float]:
         x, y = p
@@ -176,6 +176,7 @@ class ColorWheel(QOpenGLWidget):
         self.reverseX = False
         self.reverseY = False
         self.ringThickness = 20
+        self.ringMargin = 5
 
         self.variablesChanged = variablesChanged
         self.constantChanged = constantChanged
@@ -215,7 +216,12 @@ class ColorWheel(QOpenGLWidget):
         self.update()
 
     def updateRingThickness(self, thickness: float):
-        self.ringThickness = thickness
+        self.ringThickness = thickness - self.ringMargin
+        self.update()
+
+    def updateRingMargin(self, padding: float):
+        self.ringThickness += padding - self.ringMargin
+        self.ringMargin = padding
         self.update()
 
     def updateLockedChannel(self, lockedChannel: int):
@@ -251,7 +257,9 @@ class ColorWheel(QOpenGLWidget):
             y = -y
 
         self.variablesChanged.emit(
-            self.shape.getColorCoordAndAntialias((x, y), self.ringThickness / (self.res / 2))
+            self.shape.getColorCoord(
+                (x, y), (self.ringThickness + self.ringMargin) / (self.res / 2)
+            )
         )
         self.update()
 
@@ -301,9 +309,9 @@ class ColorWheel(QOpenGLWidget):
             case 2:
                 ix, iy = 0, 1
 
-        normalizedRingThickness = self.ringThickness / (self.res / 2)
         x, y = self.shape.getPos(
-            (self.color[ix], self.color[iy]), normalizedRingThickness
+            (self.color[ix], self.color[iy]),
+            (self.ringThickness + self.ringMargin) / (self.res / 2),
         )
         if self.reverseX:
             x = -x
@@ -338,7 +346,8 @@ class ColorWheel(QOpenGLWidget):
             return
 
         ringX, ringY = self.shape.getRingPos(
-            self.color[self.constantPos], normalizedRingThickness
+            self.color[self.constantPos],
+            self.ringThickness / (self.res / 2),
         )
         ringX, ringY = (ringX * 0.5 + 0.5) * self.res, (ringY * 0.5 + 0.5) * self.res
         painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
@@ -403,6 +412,7 @@ class ColorWheel(QOpenGLWidget):
         )
         self.program.setUniformValue("rotation", self.rotation)
         self.program.setUniformValue("ringThickness", float(self.ringThickness))
+        self.program.setUniformValue("ringMargin", float(self.ringMargin))
         variables = None
         match self.constantPos:
             case 0:
