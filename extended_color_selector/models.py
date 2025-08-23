@@ -10,6 +10,7 @@ class ColorSpace(Enum):
     Hsv = 1
     Hsl = 2
     Oklab = 3
+    Xyz = 4
 
     def getShaderComponent(self) -> str:
         name = self.shaderComponentName()
@@ -35,6 +36,8 @@ class ColorSpace(Enum):
                 return "hsl"
             case ColorSpace.Oklab:
                 return "oklab"
+            case ColorSpace.Xyz:
+                return "xyz"
 
     def modifyShader(self, shader: str) -> str:
         component = self.getShaderComponent()
@@ -50,6 +53,8 @@ class ColorSpace(Enum):
                 return "HSL"
             case ColorSpace.Oklab:
                 return "OkLab"
+            case ColorSpace.Xyz:
+                return "XYZ"
 
     def channels(self) -> list[str]:
         match self:
@@ -61,6 +66,8 @@ class ColorSpace(Enum):
                 return ["H", "S", "L"]
             case ColorSpace.Oklab:
                 return ["L", "A", "B"]
+            case ColorSpace.Xyz:
+                return ["X", "Y", "Z"]
 
     def limits(self) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
         match self:
@@ -72,6 +79,8 @@ class ColorSpace(Enum):
                 return (0, 0, 0), (360, 1, 1)
             case ColorSpace.Oklab:
                 return (0, -1, -1), (1, 1, 1)
+            case ColorSpace.Xyz:
+                return (0, 0, 0), (1, 1, 1)
 
     def normalize(
         self, color: tuple[float, float, float]
@@ -116,19 +125,23 @@ def transferColorSpace(
             rgb = hslToSrgb(color)
         case ColorSpace.Oklab:
             rgb = oklabToSrgb(color)
+        case ColorSpace.Xyz:
+            rgb = xyzToSrgb(color)
 
-    def unnormalized():
-        match toSpace:
-            case ColorSpace.Rgb:
-                return rgb
-            case ColorSpace.Hsv:
-                return srgbToHsv(rgb)
-            case ColorSpace.Hsl:
-                return srgbToHsl(rgb)
-            case ColorSpace.Oklab:
-                return oklabToSrgb(color)
+    unnormalized = None
+    match toSpace:
+        case ColorSpace.Rgb:
+            unnormalized = rgb
+        case ColorSpace.Hsv:
+            unnormalized = srgbToHsv(rgb)
+        case ColorSpace.Hsl:
+            unnormalized = srgbToHsl(rgb)
+        case ColorSpace.Oklab:
+            unnormalized = oklabToSrgb(color)
+        case ColorSpace.Xyz:
+            unnormalized = xyzToSrgb(color)
 
-    return toSpace.normalize(unnormalized())
+    return toSpace.normalize(unnormalized)
 
 
 def srgbToLinear(color: tuple[float, float, float]) -> tuple[float, float, float]:
@@ -285,3 +298,22 @@ def srgbToOklab(color: tuple[float, float, float]) -> tuple[float, float, float]
 # print(srgbToLinear((0.2, 0.5, 0.8)))
 # print(srgbToOklab((0.2, 0.5, 0.8)))
 print(oklabToSrgb((0.76, 0.34, 0.38)))
+
+
+def xyzToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    x, y, z = color
+    r = x * 3.2404542 + y * -1.5371385 + z * -0.4985314
+    g = x * -0.969266 + y * 1.8760108 + z * 0.041556
+    b = x * 0.0556434 + y * -0.2040259 + z * 1.0572252
+
+    return linearToSrgb((r, g, b))
+
+
+def srgbToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    r, g, b = srgbToLinear(color)
+
+    x = r * 0.4124564 + g * 0.3575761 + b * 0.1804375
+    y = r * 0.2126729 + g * 0.7151522 + b * 0.072175
+    z = r * 0.0193339 + g * 0.119192 + b * 0.9503041
+
+    return x, y, z
