@@ -26,6 +26,10 @@ void main(void) {
     }
 
     vec2 colorCoord = getColorCoord(uv);
+    if(any(lessThan(colorCoord, vec2(0.0)))) {
+        out_color = vec4(0.0);
+        return;
+    }
 
     vec3 t;
     switch(constantPos) {

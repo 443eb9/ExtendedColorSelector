@@ -22,18 +22,25 @@ from PyQt5.QtWidgets import (
 )
 from pathlib import Path
 from enum import Enum
+import math
 
 from .models import ColorModel
 
 
 class WheelShape(Enum):
     Square = 0
+    Triangle = 1
+    Circle = 2
 
     def modifyShader(self, shader: str) -> str:
         name = None
         match self:
             case WheelShape.Square:
                 name = "square"
+            case WheelShape.Triangle:
+                name = "triangle"
+            case WheelShape.Circle:
+                name = "circle"
 
         component = open(
             Path(__file__).parent / "shader_components" / "shapes" / f"{name}.glsl"
@@ -44,6 +51,32 @@ class WheelShape(Enum):
             "vec2 getColorCoord(vec2 uv);",
             component,
         )
+
+    def getColorCoord(self, uv: tuple[float, float]) -> tuple[float, float]:
+        x, y = uv
+        match self:
+            case WheelShape.Square:
+                return x, y
+            case WheelShape.Triangle:
+                raise NotImplementedError()
+            case WheelShape.Circle:
+                x, y = x * 2 - 1, y * 2 - 1
+                r = math.sqrt(x * x + y * y)
+                a = math.atan2(y, x) / math.pi * 0.5 + 0.5
+                return (min(r, 1), a)
+
+    def getUv(self, coord: tuple[float, float]) -> tuple[float, float]:
+        x, y = coord
+        match self:
+            case WheelShape.Square:
+                return x, y
+            case WheelShape.Triangle:
+                raise NotImplementedError()
+            case WheelShape.Circle:
+                y *= 2 * math.pi
+                y += math.pi
+                x, y = math.cos(y) * x, math.sin(y) * x
+                return x * 0.5 + 0.5, y * 0.5 + 0.5
 
 
 vertex = open(Path(__file__).parent / "fullscreen.vert").read()
@@ -60,7 +93,7 @@ class ColorWheel(QOpenGLWidget):
 
         self.res = 1
         self.colorModel = ColorModel.Rgb
-        self.shape = WheelShape.Square
+        self.shape = WheelShape.Circle
         self.compileShader()
         self.constantPos = 0
         self.outOfGamut = -1, -1, -1
@@ -128,7 +161,9 @@ class ColorWheel(QOpenGLWidget):
         if self.reverseY:
             y = self.res - y
 
-        self.variablesChanged.emit((x / self.res, y / self.res))
+        uv = x / self.res, y / self.res
+        print(self.shape.getColorCoord(uv))
+        self.variablesChanged.emit(self.shape.getColorCoord(uv))
         self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None):
@@ -151,14 +186,18 @@ class ColorWheel(QOpenGLWidget):
             case 2:
                 ix, iy = 0, 1
 
-        x, y = self.color[ix] * self.width(), self.color[iy] * self.height()
+        x, y = self.color[ix] * self.res, self.color[iy] * self.res
         if self.reverseX:
-            x = self.width() - x
+            x = self.res - x
         if self.reverseY:
-            y = self.height() - y
+            y = self.res - y
         if self.swapAxes:
             x, y = y, x
-        y = self.height() - y
+        y = self.res - y
+
+        x, y = self.shape.getUv((x / self.res, y / self.res))
+        x *= self.res
+        y *= self.res
 
         painter.drawArc(
             QRectF(x - 4, y - 4, 8, 8),
