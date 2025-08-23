@@ -22,7 +22,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
     def __init__(self):
         super().__init__()
         self.setWindowTitle(DOCKER_NAME)
-        self.colorSpace = ColorModel.Rgb
+        self.colorModel = ColorModel.Rgb
         self.lockedChannel = 0
         self.color = 0, 0, 0
 
@@ -35,6 +35,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.colorWheel.variablesChanged.connect(self.updateVariableChannelsValue)
         self.lockedChannelBar.constantChanged.connect(self.updateLockedChannelValue)
         self.updateOutOfGamutColor((0.5, 0.5, 0.5))
+        # self.colorWheel.updateSwapAxis(True)
 
         self.colorSpaceSwitchers = QHBoxLayout(self)
         self.lockers = QHBoxLayout(self)
@@ -63,10 +64,10 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
         self.cswGroup = QButtonGroup()
         self.cswGroup.setExclusive(True)
-        for colorSpace in ColorModel:
-            button = QRadioButton(colorSpace.displayName())
-            button.setChecked(colorSpace == self.colorSpace)
-            button.clicked.connect(lambda _, cs=colorSpace: self.updateColorSpace(cs))
+        for colorModel in ColorModel:
+            button = QRadioButton(colorModel.displayName())
+            button.setChecked(colorModel == self.colorModel)
+            button.clicked.connect(lambda _, cs=colorModel: self.updateColorModel(cs))
             self.colorSpaceSwitchers.addWidget(button)
             self.cswGroup.addButton(button)
 
@@ -81,7 +82,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
         self.lockersGroup = QButtonGroup()
         self.lockersGroup.setExclusive(True)
-        for i, channel in enumerate(self.colorSpace.channels()):
+        for i, channel in enumerate(self.colorModel.channels()):
             button = QRadioButton(channel)
             button.clicked.connect(lambda _, i=i: self.updateLockedChannel(i))
             button.setChecked(self.lockedChannel == i)
@@ -90,18 +91,21 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.lockers.update()
         self.update()
 
-    def updateColorSpace(self, colorSpace: ColorModel):
-        if colorSpace == self.colorSpace:
+    def updateColorModel(self, colorModel: ColorModel):
+        if colorModel == self.colorModel:
             return
 
-        self.color = transferColorModel(self.color, self.colorSpace, colorSpace)
-        self.colorSpace = colorSpace
-        self.colorWheel.updateColorModel(colorSpace)
-        self.lockedChannelBar.updateColorModel(colorSpace)
+        print(self.color, self.colorModel, colorModel)
+        self.color = transferColorModel(self.color, self.colorModel, colorModel)
+        print(f"Color changed to:", self.color)
+        self.colorModel = colorModel
+        self.colorWheel.updateColorModel(colorModel)
+        self.lockedChannelBar.updateColorModel(colorModel)
         # TODO remember the locked channel
         self.lockedChannel = 0
         self.updateLockers()
         self.propagateColor()
+        self.syncColor()
 
     def updateOutOfGamutColor(self, srgb: tuple[float, float, float]):
         self.colorWheel.updateOutOfGamutColor(srgb)
@@ -133,9 +137,12 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         if kritaView == None:
             return
 
-        r, g, b = transferColorModel(self.color, self.colorSpace, ColorModel.Rgb)
+        r, g, b = transferColorModel(self.color, self.colorModel, ColorModel.Rgb)
+        r = min(int(r * 256), 255)
+        g = min(int(g * 256), 255)
+        b = min(int(b * 256), 255)
         color = ManagedColor.fromQColor(  # type: ignore
-            QColor(int(r * 255), int(g * 255), int(b * 255)), kritaView.canvas()
+            QColor(r, g, b), kritaView.canvas()
         )
         kritaView.setForeGroundColor(color)
 
@@ -155,13 +162,14 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
         components = mc.componentsOrdered()
         color = transferColorModel(
-            (components[0], components[1], components[2]), colorModel, self.colorSpace
+            (components[0], components[1], components[2]), colorModel, self.colorModel
         )
 
         self.color = color
         self.propagateColor()
 
     def updateLockedChannelValue(self, value: float):
+        print(f"Locked channel value:", value)
         match self.lockedChannel:
             case 0:
                 self.color = value, self.color[1], self.color[2]
@@ -174,6 +182,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.sendColor()
 
     def updateVariableChannelsValue(self, variables: tuple[float, float]):
+        print(f"Variable channels value:", variables)
+
         match self.lockedChannel:
             case 0:
                 self.color = self.color[0], variables[0], variables[1]

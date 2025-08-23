@@ -26,9 +26,6 @@ from enum import Enum
 from .models import ColorModel
 
 
-components = {}
-
-
 class WheelShape(Enum):
     Square = 0
 
@@ -38,16 +35,14 @@ class WheelShape(Enum):
             case WheelShape.Square:
                 name = "square"
 
-        if not name in components:
-            components[name] = open(
-                Path(__file__).parent / "shader_components" / "shapes" / f"{name}.glsl"
-            ).read()[
-                18:
-            ]  # To strip the version directive
-
+        component = open(
+            Path(__file__).parent / "shader_components" / "shapes" / f"{name}.glsl"
+        ).read()[
+            18:
+        ]  # To strip the version directive
         return shader.replace(
             "vec2 getColorCoord(vec2 uv);",
-            components[name],
+            component,
         )
 
 
@@ -70,6 +65,13 @@ class ColorWheel(QOpenGLWidget):
         self.constantPos = 0
         self.outOfGamut = -1, -1, -1
         self.color = 0, 0, 0
+        self.swapAxis = False
+        self.reverseX = False
+        self.reverseY = False
+
+    def updateSwapAxis(self, swapAxis: bool):
+        self.swapAxis = swapAxis
+        self.update()
 
     def updateOutOfGamutColor(self, srgb: tuple[float, float, float]):
         self.outOfGamut = srgb
@@ -110,8 +112,10 @@ class ColorWheel(QOpenGLWidget):
             return
 
         x = max(min(event.pos().x(), self.res), 0)
-        y = max(min(event.pos().y(), self.res), 0)
-        self.variablesChanged.emit((x / self.res, 1.0 - y / self.res))
+        y = self.res - max(min(event.pos().y(), self.res), 0)
+        if self.swapAxis:
+            x, y = y, x
+        self.variablesChanged.emit((x / self.res, y / self.res))
         self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None):
@@ -133,6 +137,8 @@ class ColorWheel(QOpenGLWidget):
                 ix, iy = 0, 2
             case 2:
                 ix, iy = 0, 1
+        if self.swapAxis:
+            ix, iy = iy, ix
         x, y = self.color[ix] * self.width(), (1 - self.color[iy]) * self.height()
 
         painter.drawArc(
@@ -187,6 +193,12 @@ class ColorWheel(QOpenGLWidget):
         self.program.setUniformValue("res", int(self.res))
         self.program.setUniformValue("constant", float(self.color[self.constantPos]))
         self.program.setUniformValue("constantPos", int(self.constantPos))
+        self.program.setUniformValue(
+            "axisConfig",
+            int(1 if self.swapAxis else 0),
+            int(1 if self.reverseX else 0),
+            int(1 if self.reverseY else 0),
+        )
         mn, mx = self.colorModel.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
         self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
@@ -217,7 +229,7 @@ class LockedChannelBar(QOpenGLWidget):
         self.constantPos = 0
         self.outOfGamut = -1, -1, -1
         self.color = 0, 0, 0
-    
+
     def updateOutOfGamutColor(self, srgb: tuple[float, float, float]):
         self.outOfGamut = srgb
         self.update()
@@ -249,6 +261,7 @@ class LockedChannelBar(QOpenGLWidget):
             return
 
         x = max(min(event.pos().x(), self.res), 0)
+        print(x)
         self.constantChanged.emit(x / self.res)
         self.update()
 

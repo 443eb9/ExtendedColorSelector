@@ -1,6 +1,6 @@
 #version 410 core
 
-vec3 colorToRgb(vec3 color) {
+vec3 colorToSrgb(vec3 color) {
     float v = color.z;
     float w = (1.0 - color.y) * v;
 

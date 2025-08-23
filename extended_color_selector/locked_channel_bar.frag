@@ -8,7 +8,7 @@ uniform vec3 outOfGamut;
 uniform int res;
 out vec4 out_color;
 
-vec3 colorToRgb(vec3 color);
+vec3 colorToSrgb(vec3 color);
 
 void main(void) {
     float colorCoord = gl_FragCoord.x / res;
@@ -26,8 +26,8 @@ void main(void) {
             break;
     }
 
-    vec3 color = mix(lim_min + 1e-6, lim_max - 1e-6, t);
-    color = colorToRgb(color);
+    vec3 color = mix(lim_min, lim_max, t);
+    color = colorToSrgb(color);
     if(any(greaterThan(color, vec3(1.0))) || any(lessThan(color, vec3(0.0)))) {
         color = all(greaterThan(outOfGamut, vec3(0.0))) ? outOfGamut : clamp(color, vec3(0.0), vec3(1.0));
     }

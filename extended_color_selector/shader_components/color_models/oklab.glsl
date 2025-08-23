@@ -4,17 +4,21 @@ float invGamma(float x) {
     if(x <= 0.0) {
         return x;
     }
-    if(x <= 0.04045) {
-        return x / 12.92;
+    if(x <= 0.0031308) {
+        return x * 12.92;
     }
-    return pow((x + 0.055) / 1.055, 2.4);
+    return (1.055 * pow(x, 1.0 / 2.4)) - 0.055;
 }
 
 vec3 linearToSrgb(vec3 color) {
     return vec3(invGamma(color.r), invGamma(color.g), invGamma(color.b));
 }
 
-vec3 colorToRgb(vec3 color) {
+vec3 linearToSrgb(vec3 color) {
+    return vec3(invGamma(color.r), invGamma(color.g), invGamma(color.b));
+}
+
+vec3 colorToSrgb(vec3 color) {
     float lightness = color.x;
     float a = color.y;
     float b = color.z;

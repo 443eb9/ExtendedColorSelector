@@ -2,8 +2,6 @@ from enum import Enum
 from pathlib import Path
 import math
 
-components: dict[str, str] = {}
-
 
 class ColorModel(Enum):
     Rgb = 0
@@ -14,40 +12,33 @@ class ColorModel(Enum):
     Lab = 5
     Oklch = 6
 
-    def getShaderComponent(self) -> str:
-        name = self.shaderComponentName()
-        if not name in components:
-            components[name] = open(
-                Path(__file__).parent
-                / "shader_components"
-                / "color_models"
-                / f"{name}.glsl"
-            ).read()[
-                18:
-            ]  # To strip the version directive
-
-        return components[name]
-
     def modifyShader(self, shader: str) -> str:
-        component = self.getShaderComponent()
-        return shader.replace("vec3 colorToRgb(vec3 color);", component)
-
-    def shaderComponentName(self) -> str:
+        name = None
         match self:
             case ColorModel.Rgb:
-                return "rgb"
+                name = "rgb"
             case ColorModel.Hsv:
-                return "hsv"
+                name = "hsv"
             case ColorModel.Hsl:
-                return "hsl"
+                name = "hsl"
             case ColorModel.Oklab:
-                return "oklab"
+                name = "oklab"
             case ColorModel.Xyz:
-                return "xyz"
+                name = "xyz"
             case ColorModel.Lab:
-                return "lab"
+                name = "lab"
             case ColorModel.Oklch:
-                return "oklch"
+                name = "oklch"
+
+        component = open(
+            Path(__file__).parent
+            / "shader_components"
+            / "color_models"
+            / f"{name}.glsl"
+        ).read()[
+            18:
+        ]  # To strip the version directive
+        return shader.replace("vec3 colorToSrgb(vec3 color);", component)
 
     def displayName(self) -> str:
         match self:
@@ -138,9 +129,17 @@ def colorModelFromKrita(model: str) -> ColorModel | None:
 
 
 def transferColorModel(
-    color: tuple[float, float, float], fromSpace: ColorModel, toSpace: ColorModel
+    color: tuple[float, float, float],
+    fromSpace: ColorModel,
+    toSpace: ColorModel,
+    clamp: bool = True,
 ) -> tuple[float, float, float]:
+    if fromSpace == toSpace:
+        return color
+
     color = fromSpace.unnormalize(color)
+    print(f"{fromSpace} {color}")
+
     xyz = None
     match fromSpace:
         case ColorModel.Rgb:
@@ -157,6 +156,8 @@ def transferColorModel(
             xyz = labToXyz(color)
         case ColorModel.Oklch:
             xyz = oklchToXyz(color)
+
+    print(f"xyz: {xyz}")
 
     unnormalized = None
     match toSpace:
@@ -175,7 +176,15 @@ def transferColorModel(
         case ColorModel.Oklch:
             unnormalized = xyzToOklch(color)
 
-    return toSpace.normalize(unnormalized)
+    print(f"{toSpace} {unnormalized}")
+    result = toSpace.normalize(unnormalized)
+    if clamp:
+        result = (
+            min(max(result[0], 0.0), 1.0),
+            min(max(result[1], 0.0), 1.0),
+            min(max(result[2], 0.0), 1.0),
+        )
+    return result
 
 
 def cbrt(x: float) -> float:
@@ -330,17 +339,18 @@ def oklabToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
     a = color[1]
     b = color[2]
 
-    l_ = +1.2270138511 * l - 0.5577999806 * a + 0.2812561489 * b
-    m_ = -0.0405801784 * l + 1.1122568696 * a - 0.0716766786 * b
-    s_ = -0.0763812845 * l - 0.4214819784 * a + 1.5861632204 * b
+    l_ = 0.9999999984 * l + 0.3963377921 * a + 0.2158037580 * b
+    m_ = 1.0000000088 * l - 0.10556134232 * a - 0.0638541747 * b
+    s_ = 1.0000000546 * l - 0.08948418209 * a - 1.2914855378 * b
 
     l_ = l_**3
     m_ = m_**3
     s_ = s_**3
 
-    x = 0.9999999984 * l_ + 0.3963377921 * m_ + 0.2158037580 * s_
-    y = 1.0000000088 * l_ - 0.10556134232 * m_ - 0.0638541747 * s_
-    z = 1.0000000546 * l_ - 0.08948418209 * m_ - 1.2914855378 * s_
+    x = +1.2270138511 * l_ - 0.5577999806 * m_ + 0.2812561489 * s_
+    y = -0.0405801784 * l_ + 1.1122568696 * m_ - 0.0716766786 * s_
+    z = -0.0763812845 * l_ - 0.4214819784 * m_ + 1.5861632204 * s_
+
     return x, y, z
 
 
@@ -415,16 +425,14 @@ def xyzToLab(color: tuple[float, float, float]) -> tuple[float, float, float]:
 def oklchToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
     l = color[0]
     hue = math.radians(color[2])
-    sin = math.sin(hue)
-    cos = math.cos(hue)
-    a = color[1] * cos
-    b = color[1] * sin
+    a = color[1] * math.cos(hue)
+    b = color[1] * math.sin(hue)
 
-    return labToXyz((l, a, b))
+    return oklabToXyz((l, a, b))
 
 
 def xyzToOklch(color: tuple[float, float, float]) -> tuple[float, float, float]:
-    l, a, b = xyzToLab(color)
+    l, a, b = xyzToOklab(color)
     chroma = math.hypot(a, b)
     hue = math.degrees(math.atan2(b, a))
 

@@ -4,10 +4,10 @@ float invGamma(float x) {
     if(x <= 0.0) {
         return x;
     }
-    if(x <= 0.04045) {
-        return x / 12.92;
+    if(x <= 0.0031308) {
+        return x * 12.92;
     }
-    return pow((x + 0.055) / 1.055, 2.4);
+    return (1.055 * pow(x, 1.0 / 2.4)) - 0.055;
 }
 
 vec3 linearToSrgb(vec3 color) {
@@ -32,7 +32,7 @@ const float LAB_CIE_KAPPA = 24389.0 / 27.0;
 
 const vec3 XYZ_D65_WHITE = vec3(0.95047, 1.0, 1.08883);
 
-vec3 colorToRgb(vec3 color) {
+vec3 colorToSrgb(vec3 color) {
     float l = 100. * color.x;
     float a = 100. * color.y;
     float b = 100. * color.z;

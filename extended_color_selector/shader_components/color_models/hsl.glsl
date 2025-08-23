@@ -1,6 +1,6 @@
 #version 410 core
 
-vec3 colorToRgb(vec3 hsl) {
+vec3 colorToSrgb(vec3 hsl) {
     float value = hsl.z + hsl.y * min(hsl.z, 1 - hsl.z);
     float saturation = value == 0.0 ? 0.0 : 2.0 * (1.0 - hsl.z / value);
     vec3 color = vec3(hsl.x, saturation, value);
