@@ -304,7 +304,7 @@ def hsvToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
         case 5:
             return v, w, n
         case _:
-            return 0, 0, 0
+            return v, n, w
 
 
 def hslToSrgb(hsl: tuple[float, float, float]) -> tuple[float, float, float]:
@@ -337,7 +337,7 @@ def hslToSrgb(hsl: tuple[float, float, float]) -> tuple[float, float, float]:
         case 5:
             return v, w, n
         case _:
-            return 0, 0, 0
+            return v, n, w
 
 
 def srgbToHsl(color: tuple[float, float, float]) -> tuple[float, float, float]:

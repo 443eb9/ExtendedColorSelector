@@ -31,6 +31,6 @@ vec3 colorToSrgb(vec3 hsl) {
         case 5:
             return vec3(v, w, n);
         default:
-            return vec3(0.0);
+            return vec3(v, n, w);
     }
 }
