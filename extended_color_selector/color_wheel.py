@@ -126,6 +126,13 @@ class WheelShape(Enum):
                 x, y = math.cos(y) * x, math.sin(y) * x
                 return x, y
 
+    def getRingPos(
+        self, value: float, normalizedRingThickness: float
+    ) -> tuple[float, float]:
+        value = (value + 0.5) * 2 * math.pi
+        r = 1 - normalizedRingThickness * 0.5
+        return math.cos(value) * r, math.sin(value) * r
+
 
 vertex = open(Path(__file__).parent / "fullscreen.vert").read()
 wheel_fragment = open(Path(__file__).parent / "color_wheel.frag").read()
@@ -133,12 +140,20 @@ bar_fragment = open(Path(__file__).parent / "locked_channel_bar.frag").read()
 
 
 class ColorWheel(QOpenGLWidget):
-    variablesChanged = pyqtSignal(object)
+    class ColorWheelEditing(Enum):
+        Wheel = 1
+        Ring = 2
 
-    def __init__(self, parent: QWidget):
+    def __init__(
+        self,
+        parent: QWidget,
+        variablesChanged: pyqtBoundSignal,
+        constantChanged: pyqtBoundSignal,
+    ):
         super().__init__(parent)
         self.setMinimumHeight(200)
         self.rotation = 0.0
+        self.editing = ColorWheel.ColorWheelEditing.Wheel
 
         self.res = 1
         self.colorModel = ColorModel.Rgb
@@ -150,7 +165,10 @@ class ColorWheel(QOpenGLWidget):
         self.swapAxes = False
         self.reverseX = False
         self.reverseY = False
-        self.ringThickness = 0
+        self.ringThickness = 20
+
+        self.variablesChanged = variablesChanged
+        self.constantChanged = constantChanged
 
     def toggleSwapAxes(self):
         self.swapAxes = not self.swapAxes
@@ -191,7 +209,6 @@ class ColorWheel(QOpenGLWidget):
         self.update()
 
     def updateLockedChannel(self, lockedChannel: int):
-        self.constant = self.color[lockedChannel]
         self.constantPos = lockedChannel
         self.update()
 
@@ -206,10 +223,7 @@ class ColorWheel(QOpenGLWidget):
         self.res = size
         self.update()
 
-    def handleMouse(self, event: QMouseEvent | None):
-        if event == None:
-            return
-
+    def handleWheelEdit(self, event: QMouseEvent):
         x = max(min(event.pos().x(), self.res), 0) / self.res
         y = max(min(event.pos().y(), self.res), 0) / self.res
 
@@ -231,7 +245,35 @@ class ColorWheel(QOpenGLWidget):
         )
         self.update()
 
+    def handleRingEdit(self, event: QMouseEvent):
+        x, y = event.pos().x(), event.pos().y()
+        value = math.atan2(y - self.res / 2, x - self.res / 2) / math.pi * 0.5 + 0.5
+        self.constantChanged.emit(value)
+
+    def handleMouse(self, event: QMouseEvent | None):
+        if event == None:
+            return
+
+        match self.editing:
+            case ColorWheel.ColorWheelEditing.Wheel:
+                self.handleWheelEdit(event)
+            case ColorWheel.ColorWheelEditing.Ring:
+                self.handleRingEdit(event)
+
     def mousePressEvent(self, a0: QMouseEvent | None):
+        if a0 == None:
+            return
+
+        d = QVector2D(a0.pos()).distanceToPoint(QVector2D(self.res, self.res) * 0.5)
+        if (
+            self.ringThickness > 0
+            and d < self.res * 0.5
+            and d > self.res * 0.5 - self.ringThickness
+        ):
+            self.editing = ColorWheel.ColorWheelEditing.Ring
+        else:
+            self.editing = ColorWheel.ColorWheelEditing.Wheel
+
         self.handleMouse(a0)
 
     def mouseMoveEvent(self, a0: QMouseEvent | None):
@@ -239,8 +281,6 @@ class ColorWheel(QOpenGLWidget):
 
     def paintEvent(self, e: QPaintEvent | None):
         super().paintEvent(e)
-        painter = QPainter(self)
-        painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
 
         ix, iy = 0, 0
         match self.constantPos:
@@ -251,8 +291,9 @@ class ColorWheel(QOpenGLWidget):
             case 2:
                 ix, iy = 0, 1
 
+        normalizedRingThickness = self.ringThickness / (self.res / 2)
         x, y = self.shape.getPos(
-            (self.color[ix], self.color[iy]), self.ringThickness / (self.res / 2)
+            (self.color[ix], self.color[iy]), normalizedRingThickness
         )
         if self.reverseX:
             x = -x
@@ -269,6 +310,8 @@ class ColorWheel(QOpenGLWidget):
         y = 1 - y
         x, y = x * self.res, y * self.res
 
+        painter = QPainter(self)
+        painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
         painter.drawArc(
             QRectF(x - 4, y - 4, 8, 8),
             0,
@@ -280,6 +323,17 @@ class ColorWheel(QOpenGLWidget):
             0,
             360 * 16,
         )
+
+        if self.ringThickness == 0:
+            return
+
+        ringX, ringY = self.shape.getRingPos(
+            self.color[self.constantPos], normalizedRingThickness
+        )
+        ringX, ringY = (ringX * 0.5 + 0.5) * self.res, (ringY * 0.5 + 0.5) * self.res
+        painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
+        painter.drawArc(QRectF(ringX - 4, ringY - 4, 8, 8), 0, 360 * 16)
+        painter.drawArc(QRectF(ringX - 5, ringY - 5, 10, 10), 0, 360 * 16)
 
     def initializeGL(self):
         context = self.context()
@@ -361,9 +415,7 @@ class ColorWheel(QOpenGLWidget):
 
 
 class LockedChannelBar(QOpenGLWidget):
-    constantChanged = pyqtSignal(float)
-
-    def __init__(self, parent: QWidget):
+    def __init__(self, parent: QWidget, constantChanged: pyqtBoundSignal):
         super().__init__(parent)
         self.setMinimumHeight(50)
 
@@ -374,6 +426,8 @@ class LockedChannelBar(QOpenGLWidget):
         self.constantPos = 0
         self.outOfGamut = -1, -1, -1
         self.color = 0, 0, 0
+
+        self.constantChanged = constantChanged
 
     def updateOutOfGamutColor(self, srgb: tuple[float, float, float]):
         self.outOfGamut = srgb

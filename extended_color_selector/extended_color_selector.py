@@ -22,6 +22,9 @@ DOCKER_ID = "pyKrita_extended_color_selector"
 
 
 class ExtendedColorSelector(DockWidget):  # type: ignore
+    variablesChanged = pyqtSignal(object)
+    constantChanged = pyqtSignal(float)
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle(DOCKER_NAME)
@@ -33,8 +36,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.setWidget(container)
         self.mainLayout = QVBoxLayout(container)
 
-        self.colorWheel = ColorWheel(self)
-        self.lockedChannelBar = LockedChannelBar(self)
+        self.colorWheel = ColorWheel(self, self.variablesChanged, self.constantChanged)
+        self.lockedChannelBar = LockedChannelBar(self, self.constantChanged)
         self.colorWheel.variablesChanged.connect(self.updateVariableChannelsValue)
         self.lockedChannelBar.constantChanged.connect(self.updateLockedChannelValue)
         self.updateOutOfGamutColor((0.5, 0.5, 0.5))
