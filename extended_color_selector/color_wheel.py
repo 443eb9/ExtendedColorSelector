@@ -74,8 +74,6 @@ class WheelShape(Enum):
 
                 d = 2.0 - normalizedRingThickness * 2
                 halfA = d / math.sqrt(2.0) * 0.5
-                # if abs(x) > halfA or abs(y) > halfA:
-                #     return -1, -1
                 x, y = min(max(x, -halfA), halfA), min(max(y, -halfA), halfA)
 
                 return x / halfA * 0.5 + 0.5, y / halfA * 0.5 + 0.5
@@ -83,30 +81,25 @@ class WheelShape(Enum):
                 p = QVector2D(x, y)
                 RAD_120 = math.pi * 120.0 / 180.0
                 t = 1.0 - normalizedRingThickness
-                V0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0)) * t
-                V1 = QVector2D(math.cos(RAD_120 * 1.0), math.sin(RAD_120 * 1.0)) * t
-                V2 = QVector2D(math.cos(RAD_120 * 2.0), math.sin(RAD_120 * 2.0)) * t
-                VC = (V1 + V2) / 2.0
-                VH = VC - V0
-                A = (V0 - V1).length()
-                H = VH.length()
+                v0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0)) * t
+                v1 = QVector2D(math.cos(RAD_120 * 1.0), math.sin(RAD_120 * 1.0)) * t
+                v2 = QVector2D(math.cos(RAD_120 * 2.0), math.sin(RAD_120 * 2.0)) * t
+                vc = (v1 + v2) / 2.0
+                vh = vc - v0
+                a = (v0 - v1).length()
+                h = max(vh.length(), 1e-6)
 
-                y = QVector2D.dotProduct(p - V0, VH / H) / H
-                b = p - (V0 * (1 - y) + V1 * y)
-                if QVector2D.dotProduct(b, V2 - V1) < 0.0:
-                    return -1, -1
+                y = QVector2D.dotProduct(p - v0, vh / h) / h
+                b = p - (v0 * (1 - y) + v1 * y)
+                x = b.length() / max(y * a, 1e-6)
+                if QVector2D.dotProduct(b, v2 - v1) < 0.0:
+                    x = 0
 
-                x = b.length() / (y * A)
-
-                # if x < 0.0 or y < 0.0 or x > 1.0 or y > 1.0:
-                #     return -1, -1
                 x, y = min(max(x, 0.0), 1.0), min(max(y, 0.0), 1.0)
 
                 return x, y
             case WheelShape.Circle:
                 r = math.sqrt(x * x + y * y)
-                # if r > 1 - normalizedRingThickness:
-                #     return -1, -1
                 r = min(r, 1 - normalizedRingThickness)
                 a = math.atan2(y, x) / math.pi * 0.5 + 0.5
                 return (r / (1 - normalizedRingThickness), a)
