@@ -1,10 +1,6 @@
 #version 410 core
 
-// uniform float rotation;
-
-vec2 getColorCoord(vec2 uv) {
-    vec2 p = uv * 2.0 - 1.0;
-
+vec2 getColorCoord(vec2 p) {
     const float PI = 3.1415926535897932384626433832795;
     const float RAD_120 = PI * 120.0 / 180.0;
     const vec2 V0 = vec2(cos(RAD_120 * 0.0), sin(RAD_120 * 0.0));

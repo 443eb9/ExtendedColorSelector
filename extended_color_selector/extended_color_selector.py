@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QDoubleSpinBox,
 )
+import math
 from krita import *  # type: ignore
 
 from .color_wheel import ColorWheel, LockedChannelBar
@@ -63,11 +64,19 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.axesConfigLayout.addWidget(reverseXAxisButton)
         self.axesConfigLayout.addWidget(reverseYAxisButton)
 
+        wheelRotationBox = QSpinBox()
+        wheelRotationBox.setMinimum(0)
+        wheelRotationBox.setMaximum(360)
+        wheelRotationBox.valueChanged.connect(
+            lambda rot: self.colorWheel.updateRotation(math.radians(rot))
+        )
+
         self.mainLayout.addWidget(self.colorWheel)
         self.mainLayout.addWidget(self.lockedChannelBar)
         self.mainLayout.addLayout(self.colorSpaceSwitchers)
         self.mainLayout.addLayout(self.lockers)
         self.mainLayout.addLayout(self.axesConfigLayout)
+        self.mainLayout.addWidget(wheelRotationBox)
         self.mainLayout.addStretch(1)
 
         self.syncTimer = QTimer()

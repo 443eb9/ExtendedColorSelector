@@ -442,7 +442,7 @@ def xyzToLab(color: tuple[float, float, float]) -> tuple[float, float, float]:
     zr = z / XYZ_D65_WHITE[2]
     fx = cbrt(xr) if xr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * xr + 16.0) / 116.0
     fy = cbrt(yr) if yr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * yr + 16.0) / 116.0
-    fz = cbrt(zr) if yr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * zr + 16.0) / 116.0
+    fz = cbrt(zr) if zr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * zr + 16.0) / 116.0
     l = 1.16 * fy - 0.16
     a = 5.00 * (fx - fy)
     b = 2.00 * (fy - fz)

@@ -1,7 +1,6 @@
 #version 410 core
 
-vec2 getColorCoord(vec2 uv) {
-    vec2 p = uv * 2.0 - 1.0;
+vec2 getColorCoord(vec2 p) {
     float r = length(p);
     if(r > 1.0) {
         return vec2(-1.0);

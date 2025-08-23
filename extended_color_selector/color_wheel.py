@@ -11,6 +11,7 @@ from PyQt5.QtGui import (
     QBrush,
     QColor,
     QVector2D,
+    QMatrix2x2,
 )
 from PyQt5.QtWidgets import (
     QOpenGLWidget,
@@ -49,17 +50,17 @@ class WheelShape(Enum):
             18:
         ]  # To strip the version directive
         return shader.replace(
-            "vec2 getColorCoord(vec2 uv);",
+            "vec2 getColorCoord(vec2 p);",
             component,
         )
 
-    def getColorCoord(self, uv: tuple[float, float]) -> tuple[float, float]:
-        x, y = uv
+    def getColorCoord(self, p: tuple[float, float]) -> tuple[float, float]:
+        x, y = p
         match self:
             case WheelShape.Square:
-                return x, y
+                return x * 0.5 + 0.5, y * 0.5 + 0.5
             case WheelShape.Triangle:
-                p = QVector2D(x, y) * QVector2D(2, 2) - QVector2D(1, 1)
+                p = QVector2D(x, y)
                 RAD_120 = math.pi * 120.0 / 180.0
                 V0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0))
                 V1 = QVector2D(math.cos(RAD_120 * 1.0), math.sin(RAD_120 * 1.0))
@@ -81,35 +82,30 @@ class WheelShape(Enum):
 
                 return x, y
             case WheelShape.Circle:
-                x, y = x * 2 - 1, y * 2 - 1
                 r = math.sqrt(x * x + y * y)
+                if r > 1:
+                    return -1, -1
                 a = math.atan2(y, x) / math.pi * 0.5 + 0.5
-                return (min(r, 1), a)
+                return (r, a)
 
-    def getUv(self, coord: tuple[float, float]) -> tuple[float, float]:
+    def getPos(self, coord: tuple[float, float]) -> tuple[float, float]:
         x, y = coord
         match self:
             case WheelShape.Square:
-                return x, y
+                return x * 2 - 1, y * 2 - 1
             case WheelShape.Triangle:
                 RAD_120 = math.pi * 120.0 / 180.0
                 V0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0))
                 V1 = QVector2D(math.cos(RAD_120 * 1.0), math.sin(RAD_120 * 1.0))
                 V2 = QVector2D(math.cos(RAD_120 * 2.0), math.sin(RAD_120 * 2.0))
-                VC = (V1 + V2) / 2.0
-                VH = VC - V0
-                A = (V0 - V1).length()
-                H = VH.length()
 
-                print(x, y)
                 p = (V0 * (1 - y) + V1 * y) + (V2 - V1) * y * x
-                p = p * 0.5 + QVector2D(0.5, 0.5)
                 return p.x(), p.y()
             case WheelShape.Circle:
                 y *= 2 * math.pi
                 y += math.pi
                 x, y = math.cos(y) * x, math.sin(y) * x
-                return x * 0.5 + 0.5, y * 0.5 + 0.5
+                return x, y
 
 
 vertex = open(Path(__file__).parent / "fullscreen.vert").read()
@@ -123,10 +119,11 @@ class ColorWheel(QOpenGLWidget):
     def __init__(self, parent: QWidget):
         super().__init__(parent)
         self.setMinimumHeight(200)
+        self.rotation = 0.0
 
         self.res = 1
         self.colorModel = ColorModel.Rgb
-        self.shape = WheelShape.Circle
+        self.shape = WheelShape.Square
         self.compileShader()
         self.constantPos = 0
         self.outOfGamut = -1, -1, -1
@@ -165,6 +162,10 @@ class ColorWheel(QOpenGLWidget):
         self.compileShader()
         self.update()
 
+    def updateRotation(self, radians: float):
+        self.rotation = radians
+        self.update()
+
     def updateLockedChannel(self, lockedChannel: int):
         self.constant = self.color[lockedChannel]
         self.constantPos = lockedChannel
@@ -185,17 +186,23 @@ class ColorWheel(QOpenGLWidget):
         if event == None:
             return
 
-        x = max(min(event.pos().x(), self.res), 0)
-        y = self.res - max(min(event.pos().y(), self.res), 0)
+        x = max(min(event.pos().x(), self.res), 0) / self.res
+        y = max(min(event.pos().y(), self.res), 0) / self.res
+
+        x, y = x * 2.0 - 1.0, y * 2.0 - 1.0
+        y = -y
+        s = math.sin(self.rotation)
+        c = math.cos(self.rotation)
+        x, y = x * c - y * s, x * s + y * c
+
         if self.swapAxes:
             x, y = y, x
         if self.reverseX:
-            x = self.res - x
+            x = -x
         if self.reverseY:
-            y = self.res - y
+            y = -y
 
-        uv = x / self.res, y / self.res
-        self.variablesChanged.emit(self.shape.getColorCoord(uv))
+        self.variablesChanged.emit(self.shape.getColorCoord((x, y)))
         self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None):
@@ -218,17 +225,21 @@ class ColorWheel(QOpenGLWidget):
             case 2:
                 ix, iy = 0, 1
 
-        x, y = self.shape.getUv((self.color[ix], self.color[iy]))
+        x, y = self.shape.getPos((self.color[ix], self.color[iy]))
         if self.reverseX:
-            x = 1.0 - x
+            x = -x
         if self.reverseY:
-            y = 1.0 - y
+            y = -y
         if self.swapAxes:
             x, y = y, x
 
+        s = math.sin(-self.rotation)
+        c = math.cos(-self.rotation)
+        x, y = x * c - y * s, y * c + x * s
+
+        x, y = x * 0.5 + 0.5, y * 0.5 + 0.5
         y = 1 - y
-        x *= self.res
-        y *= self.res
+        x, y = x * self.res, y * self.res
 
         painter.drawArc(
             QRectF(x - 4, y - 4, 8, 8),
@@ -298,6 +309,7 @@ class ColorWheel(QOpenGLWidget):
         self.program.setUniformValue(
             "outOfGamut", self.outOfGamut[0], self.outOfGamut[1], self.outOfGamut[2]
         )
+        self.program.setUniformValue("rotation", self.rotation)
 
         gl = self.gl
         gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)

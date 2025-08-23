@@ -7,25 +7,32 @@ uniform vec3 lim_max;
 uniform vec3 outOfGamut;
 uniform int axesConfig;
 uniform int res;
+uniform float rotation;
 out vec4 out_color;
 
 vec3 colorToSrgb(vec3 color);
 
-vec2 getColorCoord(vec2 uv);
+vec2 getColorCoord(vec2 p);
 
 void main(void) {
     vec2 uv = gl_FragCoord.xy / res;
+    vec2 p = uv * 2.0 - 1.0;
+
+    float s = sin(rotation);
+    float c = cos(rotation);
+    p = vec2(p.x * c - p.y * s, p.x * s + p.y * c);
+
     if(((axesConfig >> 0) & 1) == 1) {
-        uv = uv.yx;
+        p = p.yx;
     }
     if(((axesConfig >> 1) & 1) == 1) {
-        uv.x = 1.0 - uv.x;
+        p.x = -p.x;
     }
     if(((axesConfig >> 2) & 1) == 1) {
-        uv.y = 1.0 - uv.y;
+        p.y = -p.y;
     }
 
-    vec2 colorCoord = getColorCoord(uv);
+    vec2 colorCoord = getColorCoord(p);
     if(any(lessThan(colorCoord, vec2(0.0)))) {
         out_color = vec4(0.0);
         return;
