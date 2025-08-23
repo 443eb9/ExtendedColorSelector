@@ -35,7 +35,6 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.colorWheel.variablesChanged.connect(self.updateVariableChannelsValue)
         self.lockedChannelBar.constantChanged.connect(self.updateLockedChannelValue)
         self.updateOutOfGamutColor((0.5, 0.5, 0.5))
-        # self.colorWheel.updateSwapAxis(True)
 
         self.colorSpaceSwitchers = QHBoxLayout(self)
         self.lockers = QHBoxLayout(self)
@@ -43,10 +42,22 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.updateColorModelSwitchers()
         self.updateLockers()
 
+        self.axisConfigLayout = QHBoxLayout(self)
+        swapAxisButton = QPushButton("Swap Axes")
+        swapAxisButton.clicked.connect(self.colorWheel.toggleSwapAxis)
+        reverseXAxisButton = QPushButton("Revert X Axis")
+        reverseXAxisButton.clicked.connect(self.colorWheel.toggleReverseX)
+        reverseYAxisButton = QPushButton("Revert Y Axis")
+        reverseYAxisButton.clicked.connect(self.colorWheel.toggleReverseY)
+        self.axisConfigLayout.addWidget(swapAxisButton)
+        self.axisConfigLayout.addWidget(reverseXAxisButton)
+        self.axisConfigLayout.addWidget(reverseYAxisButton)
+
         self.mainLayout.addWidget(self.colorWheel)
         self.mainLayout.addWidget(self.lockedChannelBar)
         self.mainLayout.addLayout(self.colorSpaceSwitchers)
         self.mainLayout.addLayout(self.lockers)
+        self.mainLayout.addLayout(self.axisConfigLayout)
         self.mainLayout.addStretch(1)
 
         self.timer = QTimer()

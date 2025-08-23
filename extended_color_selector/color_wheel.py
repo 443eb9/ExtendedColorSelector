@@ -69,8 +69,16 @@ class ColorWheel(QOpenGLWidget):
         self.reverseX = False
         self.reverseY = False
 
-    def updateSwapAxis(self, swapAxis: bool):
-        self.swapAxis = swapAxis
+    def toggleSwapAxis(self):
+        self.swapAxis = not self.swapAxis
+        self.update()
+
+    def toggleReverseX(self):
+        self.reverseX = not self.reverseX
+        self.update()
+
+    def toggleReverseY(self):
+        self.reverseY = not self.reverseY
         self.update()
 
     def updateOutOfGamutColor(self, srgb: tuple[float, float, float]):
@@ -115,6 +123,11 @@ class ColorWheel(QOpenGLWidget):
         y = self.res - max(min(event.pos().y(), self.res), 0)
         if self.swapAxis:
             x, y = y, x
+        if self.reverseX:
+            x = self.res - x
+        if self.reverseY:
+            y = self.res - y
+
         self.variablesChanged.emit((x / self.res, y / self.res))
         self.update()
 
@@ -137,9 +150,15 @@ class ColorWheel(QOpenGLWidget):
                 ix, iy = 0, 2
             case 2:
                 ix, iy = 0, 1
+
+        x, y = self.color[ix] * self.width(), self.color[iy] * self.height()
+        if self.reverseX:
+            x = self.width() - x
+        if self.reverseY:
+            y = self.height() - y
         if self.swapAxis:
-            ix, iy = iy, ix
-        x, y = self.color[ix] * self.width(), (1 - self.color[iy]) * self.height()
+            x, y = y, x
+        y = self.height() - y
 
         painter.drawArc(
             QRectF(x - 4, y - 4, 8, 8),
@@ -193,12 +212,16 @@ class ColorWheel(QOpenGLWidget):
         self.program.setUniformValue("res", int(self.res))
         self.program.setUniformValue("constant", float(self.color[self.constantPos]))
         self.program.setUniformValue("constantPos", int(self.constantPos))
-        self.program.setUniformValue(
-            "axisConfig",
-            int(1 if self.swapAxis else 0),
-            int(1 if self.reverseX else 0),
-            int(1 if self.reverseY else 0),
-        )
+
+        axisConfig = 0
+        if self.swapAxis:
+            axisConfig |= 1 << 0
+        if self.reverseX:
+            axisConfig |= 1 << 1
+        if self.reverseY:
+            axisConfig |= 1 << 2
+
+        self.program.setUniformValue("axisConfig", axisConfig)
         mn, mx = self.colorModel.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
         self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])

@@ -5,7 +5,7 @@ uniform int constantPos;
 uniform vec3 lim_min;
 uniform vec3 lim_max;
 uniform vec3 outOfGamut;
-uniform ivec3 axisConfig;
+uniform int axisConfig;
 uniform int res;
 out vec4 out_color;
 
@@ -15,13 +15,13 @@ vec2 getColorCoord(vec2 uv);
 
 void main(void) {
     vec2 uv = gl_FragCoord.xy / res;
-    if(axisConfig.x == 1) {
+    if(((axisConfig >> 0) & 1) == 1) {
         uv = uv.yx;
     }
-    if(axisConfig.y == 1) {
+    if(((axisConfig >> 1) & 1) == 1) {
         uv.x = 1.0 - uv.x;
     }
-    if(axisConfig.z == 1) {
+    if(((axisConfig >> 2) & 1) == 1) {
         uv.y = 1.0 - uv.y;
     }
 
