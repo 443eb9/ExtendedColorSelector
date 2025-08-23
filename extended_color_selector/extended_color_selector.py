@@ -70,9 +70,9 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.mainLayout.addLayout(self.axesConfigLayout)
         self.mainLayout.addStretch(1)
 
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.syncColor)
-        # self.timer.start(SYNC_INTERVAL_MS)
+        self.syncTimer = QTimer()
+        self.syncTimer.timeout.connect(self.syncColor)
+        self.syncTimer.start(SYNC_INTERVAL_MS)
 
     def updateColorModelSwitchers(self):
         while True:
@@ -150,12 +150,6 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.lockedChannelBar.updateLockedChannel(channel)
         self.lockedChannel = channel
 
-    # def mousePressEvent(self, a0: QMouseEvent | None) -> None:
-    #     self.timer.stop()
-
-    # def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
-    #     self.timer.start(SYNC_INTERVAL_MS)
-
     def propagateColor(self):
         self.colorWheel.updateColor(self.color)
         self.lockedChannelBar.updateColor(self.color)
@@ -178,6 +172,13 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         kritaView.setForeGroundColor(color)
 
     def syncColor(self):
+        if (
+            self.colorWheel.underMouse()
+            or self.lockedChannelBar.underMouse()
+            or any([b.underMouse() for b in self.channelSpinBoxes])
+        ):
+            return
+
         kritaWindow = Krita.instance().activeWindow()  # type: ignore
         if kritaWindow == None:
             return
