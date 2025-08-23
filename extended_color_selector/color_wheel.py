@@ -284,7 +284,6 @@ class LockedChannelBar(QOpenGLWidget):
             return
 
         x = max(min(event.pos().x(), self.res), 0)
-        print(x)
         self.constantChanged.emit(x / self.res)
         self.update()
 

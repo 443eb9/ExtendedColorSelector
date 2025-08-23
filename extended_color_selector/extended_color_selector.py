@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QRadioButton,
     QButtonGroup,
+    QSpinBox,
+    QDoubleSpinBox,
 )
 from krita import *  # type: ignore
 
@@ -40,6 +42,14 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.lockers = QHBoxLayout(self)
 
         self.updateColorModelSwitchers()
+        self.lockersGroup = QButtonGroup()
+        self.lockersGroup.setExclusive(True)
+        self.channelSpinBoxes = QDoubleSpinBox(), QDoubleSpinBox(), QDoubleSpinBox()
+        self.channelButtons = QRadioButton(), QRadioButton(), QRadioButton()
+        for i in range(3):
+            self.lockers.addWidget(self.channelButtons[i])
+            self.lockersGroup.addButton(self.channelButtons[i], i)
+            self.lockers.addWidget(self.channelSpinBoxes[i])
         self.updateLockers()
 
         self.axesConfigLayout = QHBoxLayout(self)
@@ -83,22 +93,22 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             self.cswGroup.addButton(button)
 
     def updateLockers(self):
-        while True:
-            widget = self.lockers.takeAt(0)
-            if widget == None:
-                break
-            widget = widget.widget()
-            if widget != None:
-                widget.deleteLater()
-
-        self.lockersGroup = QButtonGroup()
-        self.lockersGroup.setExclusive(True)
+        displayScales = self.colorModel.displayScales()
+        displayMin, displayMax = self.colorModel.displayLimits()
         for i, channel in enumerate(self.colorModel.channels()):
-            button = QRadioButton(channel)
+            button = self.channelButtons[i]
+            button.setText(channel)
             button.clicked.connect(lambda _, i=i: self.updateLockedChannel(i))
             button.setChecked(self.lockedChannel == i)
-            self.lockers.addWidget(button)
-            self.lockersGroup.addButton(button, i)
+
+            valueBox = self.channelSpinBoxes[i]
+            valueBox.setRange(displayMin[i], displayMax[i])
+            valueBox.valueChanged.connect(
+                lambda value, ch=i, scale=displayScales[i]: self.updateChannelValue(
+                    ch, value / scale
+                )
+            )
+
         self.lockers.update()
         self.update()
 
@@ -106,21 +116,31 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         if colorModel == self.colorModel:
             return
 
-        print(self.color, self.colorModel, colorModel)
         self.color = transferColorModel(self.color, self.colorModel, colorModel)
-        print(f"Color changed to:", self.color)
         self.colorModel = colorModel
         self.colorWheel.updateColorModel(colorModel)
         self.lockedChannelBar.updateColorModel(colorModel)
         # TODO remember the locked channel
         self.lockedChannel = 0
         self.updateLockers()
-        self.propagateColor()
+        self.updateChannelSpinBoxes()
         self.syncColor()
 
     def updateOutOfGamutColor(self, srgb: tuple[float, float, float]):
         self.colorWheel.updateOutOfGamutColor(srgb)
         self.lockedChannelBar.updateOutOfGamutColor(srgb)
+
+    def updateChannelValue(self, channel: int, value: float):
+        match channel:
+            case 0:
+                self.color = value, self.color[1], self.color[2]
+            case 1:
+                self.color = self.color[0], value, self.color[2]
+            case 2:
+                self.color = self.color[0], self.color[1], value
+
+        self.propagateColor()
+        self.sendColor()
 
     def updateLockedChannel(self, channel: int):
         if channel == self.lockedChannel:
@@ -179,8 +199,13 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.color = color
         self.propagateColor()
 
+    def updateChannelSpinBoxes(self):
+        displayScale = self.colorModel.displayScales()
+        for i in range(3):
+            x = self.color[i] * displayScale[i]
+            self.channelSpinBoxes[i].setValue(x)
+
     def updateLockedChannelValue(self, value: float):
-        print(f"Locked channel value:", value)
         match self.lockedChannel:
             case 0:
                 self.color = value, self.color[1], self.color[2]
@@ -190,11 +215,10 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
                 self.color = self.color[0], self.color[1], value
 
         self.propagateColor()
+        self.updateChannelSpinBoxes()
         self.sendColor()
 
     def updateVariableChannelsValue(self, variables: tuple[float, float]):
-        print(f"Variable channels value:", variables)
-
         match self.lockedChannel:
             case 0:
                 self.color = self.color[0], variables[0], variables[1]
@@ -204,6 +228,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
                 self.color = variables[0], variables[1], self.color[2]
 
         self.propagateColor()
+        self.updateChannelSpinBoxes()
         self.sendColor()
 
     def resizeEvent(self, e: QResizeEvent):

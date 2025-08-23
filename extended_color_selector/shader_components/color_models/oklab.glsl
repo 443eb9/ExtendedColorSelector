@@ -14,10 +14,6 @@ vec3 linearToSrgb(vec3 color) {
     return vec3(invGamma(color.r), invGamma(color.g), invGamma(color.b));
 }
 
-vec3 linearToSrgb(vec3 color) {
-    return vec3(invGamma(color.r), invGamma(color.g), invGamma(color.b));
-}
-
 vec3 colorToSrgb(vec3 color) {
     float lightness = color.x;
     float a = color.y;

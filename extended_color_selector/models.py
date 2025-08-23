@@ -74,6 +74,7 @@ class ColorModel(Enum):
             case ColorModel.Oklch:
                 return ["L", "C", "H"]
 
+    # Returns the minimum and maximum values for each channel in their own space.
     def limits(self) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
         match self:
             case ColorModel.Rgb:
@@ -90,6 +91,43 @@ class ColorModel(Enum):
                 return (0, -1, -1), (1, 1, 1)
             case ColorModel.Oklch:
                 return (0, 0, 0), (1, 1, 360)
+
+    # Returns the factor to multiply to the normalized color when displaying.
+    def displayScales(self) -> tuple[float, float, float]:
+        match self:
+            case ColorModel.Rgb:
+                return 100, 100, 100
+            case ColorModel.Hsv:
+                return 360, 100, 100
+            case ColorModel.Hsl:
+                return 360, 100, 100
+            case ColorModel.Oklab:
+                return 100, 100, 100
+            case ColorModel.Xyz:
+                return 100, 100, 100
+            case ColorModel.Lab:
+                return 100, 100, 100
+            case ColorModel.Oklch:
+                return 100, 100, 100
+
+    def displayLimits(
+        self,
+    ) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
+        match self:
+            case ColorModel.Rgb:
+                return (0, 0, 0), (100, 100, 100)
+            case ColorModel.Hsv:
+                return (0, 0, 0), (360, 100, 100)
+            case ColorModel.Hsl:
+                return (0, 0, 0), (360, 100, 100)
+            case ColorModel.Oklab:
+                return (0, -100, -100), (100, 100, 100)
+            case ColorModel.Xyz:
+                return (0, 0, 0), (100, 100, 100)
+            case ColorModel.Lab:
+                return (0, -100, -100), (100, 100, 100)
+            case ColorModel.Oklch:
+                return (0, 0, 0), (100, 100, 360)
 
     def clamp(self, color: tuple[float, float, float]) -> tuple[float, float, float]:
         mn, mx = self.limits()
@@ -138,7 +176,6 @@ def transferColorModel(
         return color
 
     color = fromSpace.unnormalize(color)
-    print(f"{fromSpace} {color}")
 
     xyz = None
     match fromSpace:
@@ -157,8 +194,6 @@ def transferColorModel(
         case ColorModel.Oklch:
             xyz = oklchToXyz(color)
 
-    print(f"xyz: {xyz}")
-
     unnormalized = None
     match toSpace:
         case ColorModel.Rgb:
@@ -176,7 +211,6 @@ def transferColorModel(
         case ColorModel.Oklch:
             unnormalized = xyzToOklch(color)
 
-    print(f"{toSpace} {unnormalized}")
     result = toSpace.normalize(unnormalized)
     if clamp:
         result = (
