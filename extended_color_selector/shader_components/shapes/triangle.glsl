@@ -15,8 +15,12 @@ vec2 getColorCoord(vec2 uv) {
     const float A = distance(V0, V1);
     const float H = length(VH);
 
-    float x = dot(p - V1, (V2 - V1) / A) / A;
     float y = dot(p - V0, VH / H) / H;
+    vec2 b = p - mix(V0, V1, y);
+    if(dot(b, V2 - V1) < 0.0) {
+        return vec2(-1.0);
+    }
+    float x = length(b) / (y * A);
 
     if(x < 0.0 || y < 0.0 || x > 1.0 || y > 1.0) {
         return vec2(-1.0);

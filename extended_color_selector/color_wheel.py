@@ -10,6 +10,7 @@ from PyQt5.QtGui import (
     QPainter,
     QBrush,
     QColor,
+    QVector2D,
 )
 from PyQt5.QtWidgets import (
     QOpenGLWidget,
@@ -58,7 +59,27 @@ class WheelShape(Enum):
             case WheelShape.Square:
                 return x, y
             case WheelShape.Triangle:
-                raise NotImplementedError()
+                p = QVector2D(x, y) * QVector2D(2, 2) - QVector2D(1, 1)
+                RAD_120 = math.pi * 120.0 / 180.0
+                V0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0))
+                V1 = QVector2D(math.cos(RAD_120 * 1.0), math.sin(RAD_120 * 1.0))
+                V2 = QVector2D(math.cos(RAD_120 * 2.0), math.sin(RAD_120 * 2.0))
+                VC = (V1 + V2) / 2.0
+                VH = VC - V0
+                A = (V0 - V1).length()
+                H = VH.length()
+
+                y = QVector2D.dotProduct(p - V0, VH / H) / H
+                b = p - (V0 * (1 - y) + V1 * y)
+                if QVector2D.dotProduct(b, V2 - V1) < 0.0:
+                    return -1, -1
+
+                x = b.length() / (y * A)
+
+                if x < 0.0 or y < 0.0 or x > 1.0 or y > 1.0:
+                    return -1, -1
+
+                return x, y
             case WheelShape.Circle:
                 x, y = x * 2 - 1, y * 2 - 1
                 r = math.sqrt(x * x + y * y)
@@ -71,7 +92,19 @@ class WheelShape(Enum):
             case WheelShape.Square:
                 return x, y
             case WheelShape.Triangle:
-                raise NotImplementedError()
+                RAD_120 = math.pi * 120.0 / 180.0
+                V0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0))
+                V1 = QVector2D(math.cos(RAD_120 * 1.0), math.sin(RAD_120 * 1.0))
+                V2 = QVector2D(math.cos(RAD_120 * 2.0), math.sin(RAD_120 * 2.0))
+                VC = (V1 + V2) / 2.0
+                VH = VC - V0
+                A = (V0 - V1).length()
+                H = VH.length()
+
+                print(x, y)
+                p = (V0 * (1 - y) + V1 * y) + (V2 - V1) * y * x
+                p = p * 0.5 + QVector2D(0.5, 0.5)
+                return p.x(), p.y()
             case WheelShape.Circle:
                 y *= 2 * math.pi
                 y += math.pi
@@ -185,16 +218,15 @@ class ColorWheel(QOpenGLWidget):
             case 2:
                 ix, iy = 0, 1
 
-        x, y = self.color[ix] * self.res, self.color[iy] * self.res
+        x, y = self.shape.getUv((self.color[ix], self.color[iy]))
         if self.reverseX:
-            x = self.res - x
+            x = 1.0 - x
         if self.reverseY:
-            y = self.res - y
+            y = 1.0 - y
         if self.swapAxes:
             x, y = y, x
-        y = self.res - y
 
-        x, y = self.shape.getUv((x / self.res, y / self.res))
+        y = 1 - y
         x *= self.res
         y *= self.res
 
