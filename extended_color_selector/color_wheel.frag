@@ -16,7 +16,7 @@ vec3 colorToSrgb(vec3 color);
 
 vec2 getColorCoord(vec2 p, float normalizedRingThickness);
 
-void drawWheel(vec2 p) {
+vec4 drawWheel(vec2 p) {
     float s = sin(rotation);
     float c = cos(rotation);
     p = vec2(p.x * c - p.y * s, p.x * s + p.y * c);
@@ -33,8 +33,7 @@ void drawWheel(vec2 p) {
 
     vec2 colorCoord = getColorCoord(p, ringThickness / (res / 2));
     if(any(lessThan(colorCoord, vec2(0.0)))) {
-        out_color = vec4(0.0);
-        return;
+        return vec4(0.0);
     }
 
     vec3 t;
@@ -56,10 +55,10 @@ void drawWheel(vec2 p) {
         color = all(greaterThan(outOfGamut, vec3(0.0))) ? outOfGamut : clamp(color, vec3(0.0), vec3(1.0));
     }
 
-    out_color = vec4(color, 1.0);
+    return vec4(color, 1.0);
 }
 
-void drawRing(float x) {
+vec4 drawRing(float x, float dist) {
     vec3 t;
     switch(constantPos) {
         case 0:
@@ -79,18 +78,23 @@ void drawRing(float x) {
         color = all(greaterThan(outOfGamut, vec3(0.0))) ? outOfGamut : clamp(color, vec3(0.0), vec3(1.0));
     }
 
-    out_color = vec4(color, 1.0);
+    const float SMOOTH = 1.5;
+    float antialiasing = abs(smoothstep(res * 0.5 - ringThickness - SMOOTH, res * 0.5 - ringThickness + SMOOTH, dist) - smoothstep(res * 0.5 - SMOOTH, res * 0.5 + SMOOTH, dist));
+    return vec4(color, antialiasing);
 }
 
-void main(void) {
+void main() {
     vec2 coord = gl_FragCoord.xy;
     vec2 uv = coord / res;
     vec2 p = uv * 2.0 - 1.0;
     float d = distance(coord, vec2(res) * 0.5);
 
-    drawWheel(p);
+    vec4 color = drawWheel(p);
 
     if(ringThickness > 0 && d < res * 0.5 && d > res * 0.5 - ringThickness) {
-        drawRing(atan(p.y, p.x) / 2.0 / 3.141592653589 + 0.5);
+        vec4 ring = drawRing(atan(p.y, p.x) / 2.0 / 3.141592653589 + 0.5, d);
+        color = mix(color, ring, ring.a);
     }
+
+    out_color = color;
 }
