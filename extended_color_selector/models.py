@@ -168,17 +168,17 @@ def colorModelFromKrita(model: str) -> ColorModel | None:
 
 def transferColorModel(
     color: tuple[float, float, float],
-    fromSpace: ColorModel,
-    toSpace: ColorModel,
+    fromModel: ColorModel,
+    toModel: ColorModel,
     clamp: bool = True,
 ) -> tuple[float, float, float]:
-    if fromSpace == toSpace:
+    if fromModel == toModel:
         return color
 
-    color = fromSpace.unnormalize(color)
+    color = fromModel.unnormalize(color)
 
     xyz = None
-    match fromSpace:
+    match fromModel:
         case ColorModel.Rgb:
             xyz = srgbToXyz(color)
         case ColorModel.Hsv:
@@ -195,7 +195,7 @@ def transferColorModel(
             xyz = oklchToXyz(color)
 
     unnormalized = None
-    match toSpace:
+    match toModel:
         case ColorModel.Rgb:
             unnormalized = xyzToSrgb(xyz)
         case ColorModel.Hsv:
@@ -203,15 +203,15 @@ def transferColorModel(
         case ColorModel.Hsl:
             unnormalized = srgbToHsl(xyzToSrgb(xyz))
         case ColorModel.Oklab:
-            unnormalized = xyzToOklab(color)
+            unnormalized = xyzToOklab(xyz)
         case ColorModel.Xyz:
             unnormalized = xyz
         case ColorModel.Lab:
-            unnormalized = xyzToLab(color)
+            unnormalized = xyzToLab(xyz)
         case ColorModel.Oklch:
-            unnormalized = xyzToOklch(color)
+            unnormalized = xyzToOklch(xyz)
 
-    result = toSpace.normalize(unnormalized)
+    result = toModel.normalize(unnormalized)
     if clamp:
         result = (
             min(max(result[0], 0.0), 1.0),
@@ -440,15 +440,9 @@ def xyzToLab(color: tuple[float, float, float]) -> tuple[float, float, float]:
     xr = x / XYZ_D65_WHITE[0]
     yr = y / XYZ_D65_WHITE[1]
     zr = z / XYZ_D65_WHITE[2]
-    fx = (
-        xr ** (1.0 / 3) if xr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * xr + 16.0) / 116.0
-    )
-    fy = (
-        yr ** (1.0 / 3) if yr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * yr + 16.0) / 116.0
-    )
-    fz = (
-        zr ** (1.0 / 3) if yr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * zr + 16.0) / 116.0
-    )
+    fx = cbrt(xr) if xr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * xr + 16.0) / 116.0
+    fy = cbrt(yr) if yr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * yr + 16.0) / 116.0
+    fz = cbrt(zr) if yr > LAB_CIE_EPSILON else (LAB_CIE_KAPPA * zr + 16.0) / 116.0
     l = 1.16 * fy - 0.16
     a = 5.00 * (fx - fy)
     b = 2.00 * (fy - fz)

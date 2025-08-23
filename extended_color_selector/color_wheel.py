@@ -162,7 +162,6 @@ class ColorWheel(QOpenGLWidget):
             y = self.res - y
 
         uv = x / self.res, y / self.res
-        print(self.shape.getColorCoord(uv))
         self.variablesChanged.emit(self.shape.getColorCoord(uv))
         self.update()
 

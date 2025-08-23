@@ -194,7 +194,9 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
         components = mc.componentsOrdered()
         color = transferColorModel(
-            (components[0], components[1], components[2]), colorModel, self.colorModel
+            colorModel.normalize((components[0], components[1], components[2])),
+            colorModel,
+            self.colorModel,
         )
 
         self.color = color
