@@ -123,11 +123,12 @@ class WheelShape(Enum):
                 return x * a - a * 0.5, y * a - a * 0.5
             case WheelShape.Triangle:
                 RAD_120 = math.pi * 120.0 / 180.0
-                V0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0))
-                V1 = QVector2D(math.cos(RAD_120 * 1.0), math.sin(RAD_120 * 1.0))
-                V2 = QVector2D(math.cos(RAD_120 * 2.0), math.sin(RAD_120 * 2.0))
+                t = 1.0 - normalizedRingThickness
+                v0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0)) * t
+                v1 = QVector2D(math.cos(RAD_120 * 1.0), math.sin(RAD_120 * 1.0)) * t
+                v2 = QVector2D(math.cos(RAD_120 * 2.0), math.sin(RAD_120 * 2.0)) * t
 
-                p = (V0 * (1 - y) + V1 * y) + (V2 - V1) * y * x
+                p = (v0 * (1 - y) + v1 * y) + (v2 - v1) * y * x
                 return p.x(), p.y()
             case WheelShape.Circle:
                 y *= 2 * math.pi
