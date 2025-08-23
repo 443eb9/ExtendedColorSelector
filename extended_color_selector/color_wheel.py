@@ -65,12 +65,12 @@ class ColorWheel(QOpenGLWidget):
         self.constantPos = 0
         self.outOfGamut = -1, -1, -1
         self.color = 0, 0, 0
-        self.swapAxis = False
+        self.swapAxes = False
         self.reverseX = False
         self.reverseY = False
 
-    def toggleSwapAxis(self):
-        self.swapAxis = not self.swapAxis
+    def toggleSwapAxes(self):
+        self.swapAxes = not self.swapAxes
         self.update()
 
     def toggleReverseX(self):
@@ -121,7 +121,7 @@ class ColorWheel(QOpenGLWidget):
 
         x = max(min(event.pos().x(), self.res), 0)
         y = self.res - max(min(event.pos().y(), self.res), 0)
-        if self.swapAxis:
+        if self.swapAxes:
             x, y = y, x
         if self.reverseX:
             x = self.res - x
@@ -156,7 +156,7 @@ class ColorWheel(QOpenGLWidget):
             x = self.width() - x
         if self.reverseY:
             y = self.height() - y
-        if self.swapAxis:
+        if self.swapAxes:
             x, y = y, x
         y = self.height() - y
 
@@ -213,15 +213,15 @@ class ColorWheel(QOpenGLWidget):
         self.program.setUniformValue("constant", float(self.color[self.constantPos]))
         self.program.setUniformValue("constantPos", int(self.constantPos))
 
-        axisConfig = 0
-        if self.swapAxis:
-            axisConfig |= 1 << 0
+        axesConfig = 0
+        if self.swapAxes:
+            axesConfig |= 1 << 0
         if self.reverseX:
-            axisConfig |= 1 << 1
+            axesConfig |= 1 << 1
         if self.reverseY:
-            axisConfig |= 1 << 2
+            axesConfig |= 1 << 2
 
-        self.program.setUniformValue("axisConfig", axisConfig)
+        self.program.setUniformValue("axesConfig", axesConfig)
         mn, mx = self.colorModel.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
         self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
