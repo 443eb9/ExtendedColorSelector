@@ -1,11 +1,11 @@
 #version 410 core
 
-vec2 getColorCoord(vec2 p) {
+vec2 getColorCoord(vec2 p, float normalizedRingThickness) {
     const float PI = 3.1415926535897932384626433832795;
     const float RAD_120 = PI * 120.0 / 180.0;
-    const vec2 V0 = vec2(cos(RAD_120 * 0.0), sin(RAD_120 * 0.0));
-    const vec2 V1 = vec2(cos(RAD_120 * 1.0), sin(RAD_120 * 1.0));
-    const vec2 V2 = vec2(cos(RAD_120 * 2.0), sin(RAD_120 * 2.0));
+    const vec2 V0 = vec2(cos(RAD_120 * 0.0), sin(RAD_120 * 0.0)) * (1.0 - normalizedRingThickness);
+    const vec2 V1 = vec2(cos(RAD_120 * 1.0), sin(RAD_120 * 1.0)) * (1.0 - normalizedRingThickness);
+    const vec2 V2 = vec2(cos(RAD_120 * 2.0), sin(RAD_120 * 2.0)) * (1.0 - normalizedRingThickness);
     const vec2 VC = (V1 + V2) / 2.0;
     const vec2 VH = VC - V0;
     const float A = distance(V0, V1);

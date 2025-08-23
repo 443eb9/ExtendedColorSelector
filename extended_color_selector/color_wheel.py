@@ -50,21 +50,32 @@ class WheelShape(Enum):
             18:
         ]  # To strip the version directive
         return shader.replace(
-            "vec2 getColorCoord(vec2 p);",
+            "vec2 getColorCoord(vec2 p, float normalizedRingThickness);",
             component,
         )
 
-    def getColorCoord(self, p: tuple[float, float]) -> tuple[float, float]:
+    def getColorCoord(
+        self, p: tuple[float, float], normalizedRingThickness: float
+    ) -> tuple[float, float]:
         x, y = p
         match self:
             case WheelShape.Square:
-                return x * 0.5 + 0.5, y * 0.5 + 0.5
+                if normalizedRingThickness == 0:
+                    return x * 0.5 + 0.5, y * 0.5 + 0.5
+
+                d = 2.0 - normalizedRingThickness * 2
+                a = d / math.sqrt(2.0)
+                if abs(x) > a * 0.5 or abs(y) > a * 0.5:
+                    return -1, -1
+
+                return x / (a * 0.5) * 0.5 + 0.5, y / (a * 0.5) * 0.5 + 0.5
             case WheelShape.Triangle:
                 p = QVector2D(x, y)
                 RAD_120 = math.pi * 120.0 / 180.0
-                V0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0))
-                V1 = QVector2D(math.cos(RAD_120 * 1.0), math.sin(RAD_120 * 1.0))
-                V2 = QVector2D(math.cos(RAD_120 * 2.0), math.sin(RAD_120 * 2.0))
+                t = 1.0 - normalizedRingThickness
+                V0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0)) * t
+                V1 = QVector2D(math.cos(RAD_120 * 1.0), math.sin(RAD_120 * 1.0)) * t
+                V2 = QVector2D(math.cos(RAD_120 * 2.0), math.sin(RAD_120 * 2.0)) * t
                 VC = (V1 + V2) / 2.0
                 VH = VC - V0
                 A = (V0 - V1).length()
@@ -83,16 +94,24 @@ class WheelShape(Enum):
                 return x, y
             case WheelShape.Circle:
                 r = math.sqrt(x * x + y * y)
-                if r > 1:
+                if r > 1 - normalizedRingThickness:
                     return -1, -1
                 a = math.atan2(y, x) / math.pi * 0.5 + 0.5
                 return (r, a)
 
-    def getPos(self, coord: tuple[float, float]) -> tuple[float, float]:
+    def getPos(
+        self, coord: tuple[float, float], normalizedRingThickness: float
+    ) -> tuple[float, float]:
         x, y = coord
         match self:
             case WheelShape.Square:
-                return x * 2 - 1, y * 2 - 1
+                if normalizedRingThickness == 0:
+                    return x, y
+
+                d = 2.0 - normalizedRingThickness * 2
+                a = d / math.sqrt(2.0)
+
+                return x * a - a * 0.5, y * a - a * 0.5
             case WheelShape.Triangle:
                 RAD_120 = math.pi * 120.0 / 180.0
                 V0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0))
@@ -131,6 +150,7 @@ class ColorWheel(QOpenGLWidget):
         self.swapAxes = False
         self.reverseX = False
         self.reverseY = False
+        self.ringThickness = 20
 
     def toggleSwapAxes(self):
         self.swapAxes = not self.swapAxes
@@ -164,6 +184,10 @@ class ColorWheel(QOpenGLWidget):
 
     def updateRotation(self, radians: float):
         self.rotation = radians
+        self.update()
+
+    def updateRingThickness(self, thickness: float):
+        self.ringThickness = thickness
         self.update()
 
     def updateLockedChannel(self, lockedChannel: int):
@@ -202,7 +226,9 @@ class ColorWheel(QOpenGLWidget):
         if self.reverseY:
             y = -y
 
-        self.variablesChanged.emit(self.shape.getColorCoord((x, y)))
+        self.variablesChanged.emit(
+            self.shape.getColorCoord((x, y), self.ringThickness / (self.res / 2))
+        )
         self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None):
@@ -225,7 +251,9 @@ class ColorWheel(QOpenGLWidget):
             case 2:
                 ix, iy = 0, 1
 
-        x, y = self.shape.getPos((self.color[ix], self.color[iy]))
+        x, y = self.shape.getPos(
+            (self.color[ix], self.color[iy]), self.ringThickness / (self.res / 2)
+        )
         if self.reverseX:
             x = -x
         if self.reverseY:
@@ -310,6 +338,18 @@ class ColorWheel(QOpenGLWidget):
             "outOfGamut", self.outOfGamut[0], self.outOfGamut[1], self.outOfGamut[2]
         )
         self.program.setUniformValue("rotation", self.rotation)
+        self.program.setUniformValue("ringThickness", float(self.ringThickness))
+        variables = None
+        match self.constantPos:
+            case 0:
+                variables = self.color[1], self.color[2]
+            case 1:
+                variables = self.color[0], self.color[2]
+            case 2:
+                variables = self.color[0], self.color[1]
+            case _:
+                return
+        self.program.setUniformValue("variables", variables[0], variables[1])
 
         gl = self.gl
         gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)
