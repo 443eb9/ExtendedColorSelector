@@ -12,6 +12,7 @@ class ColorModel(Enum):
     Oklab = 3
     Xyz = 4
     Lab = 5
+    Oklch = 6
 
     def getShaderComponent(self) -> str:
         name = self.shaderComponentName()
@@ -27,6 +28,10 @@ class ColorModel(Enum):
 
         return components[name]
 
+    def modifyShader(self, shader: str) -> str:
+        component = self.getShaderComponent()
+        return shader.replace("vec3 colorToRgb(vec3 color);", component)
+
     def shaderComponentName(self) -> str:
         match self:
             case ColorModel.Rgb:
@@ -41,10 +46,8 @@ class ColorModel(Enum):
                 return "xyz"
             case ColorModel.Lab:
                 return "lab"
-
-    def modifyShader(self, shader: str) -> str:
-        component = self.getShaderComponent()
-        return shader.replace("vec3 colorToRgb(vec3 color);", component)
+            case ColorModel.Oklch:
+                return "oklch"
 
     def displayName(self) -> str:
         match self:
@@ -60,6 +63,8 @@ class ColorModel(Enum):
                 return "XYZ"
             case ColorModel.Lab:
                 return "Lab"
+            case ColorModel.Oklch:
+                return "Oklch"
 
     def channels(self) -> list[str]:
         match self:
@@ -75,6 +80,8 @@ class ColorModel(Enum):
                 return ["X", "Y", "Z"]
             case ColorModel.Lab:
                 return ["L", "A", "B"]
+            case ColorModel.Oklch:
+                return ["L", "C", "H"]
 
     def limits(self) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
         match self:
@@ -90,6 +97,8 @@ class ColorModel(Enum):
                 return (0, 0, 0), (1, 1, 1)
             case ColorModel.Lab:
                 return (0, -1, -1), (1, 1, 1)
+            case ColorModel.Oklch:
+                return (0, 0, 0), (1, 1, 360)
 
     def clamp(self, color: tuple[float, float, float]) -> tuple[float, float, float]:
         mn, mx = self.limits()
@@ -146,6 +155,8 @@ def transferColorModel(
             xyz = color
         case ColorModel.Lab:
             xyz = labToXyz(color)
+        case ColorModel.Oklch:
+            xyz = oklchToXyz(color)
 
     unnormalized = None
     match toSpace:
@@ -161,6 +172,8 @@ def transferColorModel(
             unnormalized = xyz
         case ColorModel.Lab:
             unnormalized = xyzToLab(color)
+        case ColorModel.Oklch:
+            unnormalized = xyzToOklch(color)
 
     return toSpace.normalize(unnormalized)
 
@@ -397,3 +410,24 @@ def xyzToLab(color: tuple[float, float, float]) -> tuple[float, float, float]:
     b = 2.00 * (fy - fz)
 
     return l, a, b
+
+
+def oklchToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    l = color[0]
+    hue = math.radians(color[2])
+    sin = math.sin(hue)
+    cos = math.cos(hue)
+    a = color[1] * cos
+    b = color[1] * sin
+
+    return labToXyz((l, a, b))
+
+
+def xyzToOklch(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    l, a, b = xyzToLab(color)
+    chroma = math.hypot(a, b)
+    hue = math.degrees(math.atan2(b, a))
+
+    hue = hue + 360.0 if hue < 0.0 else hue
+
+    return l, chroma, hue
