@@ -106,7 +106,7 @@ class WheelShape(Enum):
         match self:
             case WheelShape.Square:
                 if normalizedRingThickness == 0:
-                    return x, y
+                    return x * 2.0 - 1.0, y * 2.0 - 1.0
 
                 d = 2.0 - normalizedRingThickness * 2
                 a = d / math.sqrt(2.0)
@@ -150,7 +150,7 @@ class ColorWheel(QOpenGLWidget):
         self.swapAxes = False
         self.reverseX = False
         self.reverseY = False
-        self.ringThickness = 20
+        self.ringThickness = 0
 
     def toggleSwapAxes(self):
         self.swapAxes = not self.swapAxes
