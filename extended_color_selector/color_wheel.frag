@@ -14,7 +14,7 @@ out vec4 out_color;
 
 vec3 colorToSrgb(vec3 color);
 
-vec2 getColorCoord(vec2 p, float normalizedRingThickness);
+vec3 getColorCoordAndAntialias(vec2 p, float normalizedRingThickness);
 
 vec4 drawWheel(vec2 p) {
     float s = sin(rotation);
@@ -31,7 +31,9 @@ vec4 drawWheel(vec2 p) {
         p.y = -p.y;
     }
 
-    vec2 colorCoord = getColorCoord(p, ringThickness / (res / 2));
+    vec3 colorCoordAndAntialias = getColorCoordAndAntialias(p, ringThickness / (res / 2));
+    vec2 colorCoord = colorCoordAndAntialias.xy;
+    float antialias = colorCoordAndAntialias.z;
     if(any(lessThan(colorCoord, vec2(0.0)))) {
         return vec4(0.0);
     }
@@ -55,7 +57,7 @@ vec4 drawWheel(vec2 p) {
         color = all(greaterThan(outOfGamut, vec3(0.0))) ? outOfGamut : clamp(color, vec3(0.0), vec3(1.0));
     }
 
-    return vec4(color, 1.0);
+    return vec4(color, antialias);
 }
 
 vec4 drawRing(float x, float dist) {
@@ -89,12 +91,15 @@ void main() {
     vec2 p = uv * 2.0 - 1.0;
     float d = distance(coord, vec2(res) * 0.5);
 
-    vec4 color = drawWheel(p);
+    vec3 color = vec3(0.0);
+
+    vec4 wheel = drawWheel(p);
+    color = mix(color, wheel.rgb, wheel.a);
 
     if(ringThickness > 0 && d < res * 0.5 && d > res * 0.5 - ringThickness) {
         vec4 ring = drawRing(atan(p.y, p.x) / 2.0 / 3.141592653589 + 0.5, d);
-        color = mix(color, ring, ring.a);
+        color = mix(color, ring.rgb, ring.a);
     }
 
-    out_color = color;
+    out_color = vec4(color, 1.0);
 }

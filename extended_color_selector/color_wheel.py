@@ -59,11 +59,11 @@ class WheelShape(Enum):
             18:
         ]  # To strip the version directive
         return shader.replace(
-            "vec2 getColorCoord(vec2 p, float normalizedRingThickness);",
+            "vec3 getColorCoordAndAntialias(vec2 p, float normalizedRingThickness);",
             component,
         )
 
-    def getColorCoord(
+    def getColorCoordAndAntialias(
         self, p: tuple[float, float], normalizedRingThickness: float
     ) -> tuple[float, float]:
         x, y = p
@@ -251,7 +251,7 @@ class ColorWheel(QOpenGLWidget):
             y = -y
 
         self.variablesChanged.emit(
-            self.shape.getColorCoord((x, y), self.ringThickness / (self.res / 2))
+            self.shape.getColorCoordAndAntialias((x, y), self.ringThickness / (self.res / 2))
         )
         self.update()
 
