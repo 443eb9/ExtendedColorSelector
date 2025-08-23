@@ -165,6 +165,10 @@ def transferColorModel(
     return toSpace.normalize(unnormalized)
 
 
+def cbrt(x: float) -> float:
+    return x ** (1.0 / 3) if x > 0 else -((-x) ** (1.0 / 3))
+
+
 LAB_CIE_EPSILON = 216.0 / 24389.0
 LAB_CIE_KAPPA = 24389.0 / 27.0
 XYZ_D65_WHITE = 0.95047, 1.0, 1.08883
@@ -176,7 +180,7 @@ def srgbToLinear(color: tuple[float, float, float]) -> tuple[float, float, float
             return x
         if x <= 0.04045:
             return x / 12.92
-        return (x + 0.055) / 1.055**2.4
+        return ((x + 0.055) / 1.055) ** 2.4
 
     return f(color[0]), f(color[1]), f(color[2])
 
@@ -185,7 +189,7 @@ def linearToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float
     def f(x: float) -> float:
         if x <= 0.0031308:
             return x * 12.92
-        return 1.055 * x**-2.4 - 0.055
+        return 1.055 * (x ** (1 / 2.4)) - 0.055
 
     return f(color[0]), f(color[1]), f(color[2])
 
@@ -297,9 +301,13 @@ def xyzToOklab(color: tuple[float, float, float]) -> tuple[float, float, float]:
     m_ = 0.0329845436 * x + 0.9293118715 * y + 0.0361456387 * z
     s_ = 0.0482003018 * x + 0.2643662691 * y + 0.6338517070 * z
 
+    l_ = cbrt(l_)
+    m_ = cbrt(m_)
+    s_ = cbrt(s_)
+
     l = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
-    a = 1.9779984951 * l_ - 2.4285922050 * m_ - 0.4505937099 * s_
-    b = 0.0259040371 * l_ - 0.7827717662 * m_ - 0.8086757660 * s_
+    a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
+    b = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
 
     return l, a, b
 
@@ -313,9 +321,13 @@ def oklabToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
     m_ = -0.0405801784 * l + 1.1122568696 * a - 0.0716766786 * b
     s_ = -0.0763812845 * l - 0.4214819784 * a + 1.5861632204 * b
 
-    x = +1.0036857869 * l_ + 0.4017697723 * m_ - 0.2289199151 * s_
-    y = +0.9891438566 * l_ - 0.1059504191 * m_ + 0.0540547326 * s_
-    z = -0.9253082648 * l_ + 0.1154263052 * m_ - 1.2962456804 * s_
+    l_ = l_**3
+    m_ = m_**3
+    s_ = s_**3
+
+    x = 0.9999999984 * l_ + 0.3963377921 * m_ + 0.2158037580 * s_
+    y = 1.0000000088 * l_ - 0.10556134232 * m_ - 0.0638541747 * s_
+    z = 1.0000000546 * l_ - 0.08948418209 * m_ - 1.2914855378 * s_
     return x, y, z
 
 
@@ -385,5 +397,3 @@ def xyzToLab(color: tuple[float, float, float]) -> tuple[float, float, float]:
     b = 2.00 * (fy - fz)
 
     return l, a, b
-
-print(srgbToLinear((0.8, 0.7, 0.6)))
