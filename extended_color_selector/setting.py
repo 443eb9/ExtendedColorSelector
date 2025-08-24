@@ -297,6 +297,12 @@ class GlobalSettingsDialog(QDialog):
         barHeightLayout.addWidget(QLabel("Bar Height"))
         barHeightLayout.addWidget(barHeightBox)
 
+        dontSyncIfOutOfGamutBox = QCheckBox("Don't Sync Color From Krita If Out Of Gamut")
+        dontSyncIfOutOfGamutBox.setChecked(settings.dontSyncIfOutOfGamut)
+        dontSyncIfOutOfGamutBox.clicked.connect(
+            lambda x: self.changeSetting("dontSyncIfOutOfGamut", x)
+        )
+
         portableSelectorSettingsGroup = QGroupBox("Portable Color Selector")
         pSettingsLayouts = QVBoxLayout()
         pSettingsLayout1 = QHBoxLayout()
@@ -335,6 +341,7 @@ class GlobalSettingsDialog(QDialog):
         portableSelectorSettingsGroup.setLayout(pSettingsLayouts)
 
         self.mainLayout.addWidget(outOfGamutColorPicker)
+        self.mainLayout.addWidget(dontSyncIfOutOfGamutBox)
         self.mainLayout.addLayout(barHeightLayout)
         self.mainLayout.addWidget(portableSelectorSettingsGroup)
         self.mainLayout.addStretch(1)

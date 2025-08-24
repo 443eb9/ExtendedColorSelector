@@ -158,6 +158,20 @@ class InternalState(QObject):
         if colorModel == None:
             return
 
+        curColor = transferColorModel(
+            self.color, self.colorModel, colorModel, clamp=False
+        )
+
+        if STATE.globalSettings.dontSyncIfOutOfGamut and (
+            curColor[0] > 1
+            or curColor[0] < 0
+            or curColor[1] > 1
+            or curColor[1] < 0
+            or curColor[2] > 1
+            or curColor[2] < 0
+        ):
+            return
+
         components = mc.componentsOrdered()
         color = transferColorModel(
             colorModel.normalize((components[0], components[1], components[2])),

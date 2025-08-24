@@ -723,6 +723,7 @@ class GlobalSettings:
             float(getOrDefault(s, "0.5")),
         )
         self.barHeight = int(getOrDefault(s, "20"))
+        self.dontSyncIfOutOfGamut = getOrDefault(s, "True") == "True"
         self.portableSelectorWidth = int(getOrDefault(s, "400"))
         self.portableSelectorBarHeight = int(getOrDefault(s, "20"))
         self.portableSelectorShortcut = getOrDefault(s, "Y")
@@ -734,6 +735,7 @@ class GlobalSettings:
             self.outOfGamutColor[1],
             self.outOfGamutColor[2],
             self.barHeight,
+            self.dontSyncIfOutOfGamut,
             self.portableSelectorWidth,
             self.portableSelectorBarHeight,
             self.portableSelectorShortcut,
