@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import IntEnum
 from pathlib import Path
 import math
 
 
-class ColorModel(Enum):
+class ColorModel(IntEnum):
     Rgb = 0
     Hsv = 1
     Hsl = 2
@@ -55,7 +55,7 @@ class ColorModel(Enum):
             case ColorModel.Lab:
                 return "Lab"
             case ColorModel.Oklch:
-                return "Oklch"
+                return "OkLch"
 
     def channels(self) -> list[str]:
         match self:

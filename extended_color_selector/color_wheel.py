@@ -23,13 +23,13 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 from pathlib import Path
-from enum import Enum
+from enum import IntEnum
 import math
 
 from .models import ColorModel
 
 
-class WheelShape(Enum):
+class WheelShape(IntEnum):
     Square = 0
     Triangle = 1
     Circle = 2
@@ -147,7 +147,7 @@ bar_fragment = open(Path(__file__).parent / "locked_channel_bar.frag").read()
 
 
 class ColorWheel(QOpenGLWidget):
-    class ColorWheelEditing(Enum):
+    class ColorWheelEditing(IntEnum):
         Wheel = 1
         Ring = 2
 
@@ -167,28 +167,16 @@ class ColorWheel(QOpenGLWidget):
         self.shape = WheelShape.Square
         self.compileShader()
         self.constantPos = 0
-        self.outOfGamut = -1, -1, -1
+        self.outOfGamut = None
         self.color = 0, 0, 0
         self.swapAxes = False
         self.reverseX = False
         self.reverseY = False
-        self.ringThickness = 20
-        self.ringMargin = 5
+        self.ringThickness = 0.0
+        self.ringMargin = 0.0
 
         self.variablesChanged = variablesChanged
         self.constantChanged = constantChanged
-
-    def toggleSwapAxes(self):
-        self.swapAxes = not self.swapAxes
-        self.update()
-
-    def toggleReverseX(self):
-        self.reverseX = not self.reverseX
-        self.update()
-
-    def toggleReverseY(self):
-        self.reverseY = not self.reverseY
-        self.update()
 
     def updateOutOfGamutColor(self, srgb: tuple[float, float, float]):
         self.outOfGamut = srgb
@@ -198,27 +186,13 @@ class ColorWheel(QOpenGLWidget):
         self.color = color
         self.update()
 
-    def updateColorModel(self, colorModel: ColorModel):
-        self.colorModel = colorModel
-        self.compileShader()
-        self.update()
+    def updateColorModel(self, colorModel: ColorModel, shape: WheelShape):
+        if self.colorModel == colorModel and self.shape == shape:
+            return
 
-    def updateShape(self, shape: WheelShape):
+        self.colorModel = colorModel
         self.shape = shape
         self.compileShader()
-        self.update()
-
-    def updateRotation(self, radians: float):
-        self.rotation = radians
-        self.update()
-
-    def updateRingThickness(self, thickness: float):
-        self.ringThickness = thickness - self.ringMargin
-        self.update()
-
-    def updateRingMargin(self, padding: float):
-        self.ringThickness += padding - self.ringMargin
-        self.ringMargin = padding
         self.update()
 
     def updateLockedChannel(self, lockedChannel: int):
@@ -281,13 +255,11 @@ class ColorWheel(QOpenGLWidget):
 
         d = QVector2D(a0.pos()).distanceToPoint(QVector2D(self.res, self.res) * 0.5)
         if (
-            self.ringThickness > 0
-            and d < self.res * 0.5
-            and d > self.res * 0.5 - self.ringThickness
-        ):
-            self.editing = ColorWheel.ColorWheelEditing.Ring
-        else:
+            self.ringThickness == 0 and self.ringMargin == 0
+        ) or d < self.res * 0.5 - self.ringThickness - self.ringMargin:
             self.editing = ColorWheel.ColorWheelEditing.Wheel
+        else:
+            self.editing = ColorWheel.ColorWheelEditing.Ring
 
         self.handleMouse(a0)
 
@@ -404,9 +376,13 @@ class ColorWheel(QOpenGLWidget):
         mn, mx = self.colorModel.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
         self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
-        self.program.setUniformValue(
-            "outOfGamut", self.outOfGamut[0], self.outOfGamut[1], self.outOfGamut[2]
-        )
+
+        if self.outOfGamut == None:
+            self.program.setUniformValue("outOfGamut", -1.0, -1.0, -1.0)
+        else:
+            self.program.setUniformValue(
+                "outOfGamut", self.outOfGamut[0], self.outOfGamut[1], self.outOfGamut[2]
+            )
         self.program.setUniformValue("rotation", self.rotation)
         self.program.setUniformValue("ringThickness", float(self.ringThickness))
         self.program.setUniformValue("ringMargin", float(self.ringMargin))
@@ -441,7 +417,7 @@ class LockedChannelBar(QOpenGLWidget):
         self.shape = WheelShape.Square
         self.compileShader()
         self.constantPos = 0
-        self.outOfGamut = -1, -1, -1
+        self.outOfGamut = None
         self.color = 0, 0, 0
 
         self.constantChanged = constantChanged
@@ -558,9 +534,13 @@ class LockedChannelBar(QOpenGLWidget):
         mn, mx = self.colorSpace.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
         self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
-        self.program.setUniformValue(
-            "outOfGamut", self.outOfGamut[0], self.outOfGamut[1], self.outOfGamut[2]
-        )
+
+        if self.outOfGamut == None:
+            self.program.setUniformValue("outOfGamut", -1.0, -1.0, -1.0)
+        else:
+            self.program.setUniformValue(
+                "outOfGamut", self.outOfGamut[0], self.outOfGamut[1], self.outOfGamut[2]
+            )
 
         gl = self.gl
         gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)

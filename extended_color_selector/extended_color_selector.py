@@ -15,15 +15,14 @@ from krita import *  # type: ignore
 
 from .color_wheel import ColorWheel, LockedChannelBar, WheelShape
 from .models import ColorModel, colorModelFromKrita, transferColorModel
-from .config import SYNC_INTERVAL_MS
-
-DOCKER_NAME = "Extended Color Selector"
-DOCKER_ID = "pyKrita_extended_color_selector"
+from .config import SYNC_INTERVAL_MS, DOCKER_NAME, DOCKER_ID
+from .setting import SettingsDialog
 
 
 class ExtendedColorSelector(DockWidget):  # type: ignore
     variablesChanged = pyqtSignal(object)
     constantChanged = pyqtSignal(float)
+    settingsChanged = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -31,6 +30,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.colorModel = ColorModel.Rgb
         self.lockedChannel = 0
         self.color = 0, 0, 0
+        self.settings = SettingsDialog(self, self.settingsChanged)
 
         container = QWidget(self)
         self.setWidget(container)
@@ -56,51 +56,73 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             self.lockers.addWidget(self.channelSpinBoxes[i])
         self.updateLockers()
 
-        shapeSwitchers = QHBoxLayout(self)
-        shapeSwitchersGroup = QButtonGroup()
-        for shape in WheelShape:
-            button = QRadioButton(shape.displayName())
-            button.clicked.connect(lambda _, s=shape: self.colorWheel.updateShape(s))
-            shapeSwitchers.addWidget(button)
-            shapeSwitchersGroup.addButton(button)
-
-        self.axesConfigLayout = QHBoxLayout(self)
-        swapAxesButton = QPushButton("Swap Axes")
-        swapAxesButton.clicked.connect(self.colorWheel.toggleSwapAxes)
-        reverseXAxisButton = QPushButton("Revert X Axis")
-        reverseXAxisButton.clicked.connect(self.colorWheel.toggleReverseX)
-        reverseYAxisButton = QPushButton("Revert Y Axis")
-        reverseYAxisButton.clicked.connect(self.colorWheel.toggleReverseY)
-        self.axesConfigLayout.addWidget(swapAxesButton)
-        self.axesConfigLayout.addWidget(reverseXAxisButton)
-        self.axesConfigLayout.addWidget(reverseYAxisButton)
-
-        wheelRotationBox = QSpinBox()
-        wheelRotationBox.setMinimum(0)
-        wheelRotationBox.setMaximum(360)
-        wheelRotationBox.valueChanged.connect(
-            lambda rot: self.colorWheel.updateRotation(math.radians(rot))
-        )
-
-        wheelRingMarginBox = QSpinBox()
-        wheelRingMarginBox.setMinimum(0)
-        wheelRingMarginBox.valueChanged.connect(
-            lambda x: self.colorWheel.updateRingMargin(x)
-        )
+        self.settings = SettingsDialog(self, self.settingsChanged)
+        settingsButtonLayout = QHBoxLayout(self)
+        settingsButton = QPushButton()
+        settingsButton.setIcon(Krita.instance().icon("configure"))  # type: ignore
+        settingsButton.setFlat(True)
+        settingsButton.clicked.connect(self.settings.show)
+        settingsButtonLayout.addWidget(settingsButton)
+        settingsButtonLayout.addStretch(1)
 
         self.mainLayout.addWidget(self.colorWheel)
         self.mainLayout.addWidget(self.lockedChannelBar)
         self.mainLayout.addLayout(self.colorSpaceSwitchers)
         self.mainLayout.addLayout(self.lockers)
-        self.mainLayout.addLayout(self.axesConfigLayout)
-        self.mainLayout.addWidget(wheelRotationBox)
-        self.mainLayout.addWidget(wheelRingMarginBox)
-        self.mainLayout.addLayout(shapeSwitchers)
         self.mainLayout.addStretch(1)
+        self.mainLayout.addLayout(settingsButtonLayout)
 
         self.syncTimer = QTimer()
         self.syncTimer.timeout.connect(self.syncColor)
         self.syncTimer.start(SYNC_INTERVAL_MS)
+
+        self.settingsChanged.connect(self.updateToSettings)
+        self.updateToSettings()
+
+    def updateToSettings(self):
+        settings = self.settings.colorModelSettings[self.colorModel]
+        if not settings.enabled:
+            self.colorModel = ColorModel(self.settings.displayOrder[0])
+            settings = self.settings.colorModelSettings[self.colorModel]
+
+        self.updateLockedChannel(settings.lockedChannelIndex)
+        if settings.ringEnabled:
+            self.colorWheel.ringThickness = settings.ringThickness
+            self.colorWheel.ringMargin = settings.ringMargin
+        else:
+            self.colorWheel.ringThickness = 0.0
+            self.colorWheel.ringMargin = 0.0
+        self.colorWheel.swapAxes = settings.swapAxes
+        self.colorWheel.reverseX = settings.reverseX
+        self.colorWheel.reverseY = settings.reverseY
+        self.colorWheel.outOfGamut = (
+            settings.outOfGamutColor if settings.outOfGamutColorEnabled else None
+        )
+        self.lockedChannelBar.outOfGamut = (
+            settings.outOfGamutColor if settings.outOfGamutColorEnabled else None
+        )
+        self.colorWheel.rotation = math.radians(settings.rotation)
+        self.colorWheel.updateColorModel(
+            self.colorModel, self.settings.colorModelSettings[self.colorModel].shape
+        )
+
+        if settings.barEnabled:
+            self.lockedChannelBar.show()
+        else:
+            self.lockedChannelBar.hide()
+        self.lockedChannelBar.updateColorModel(self.colorModel)
+
+        self.colorWheel.update()
+        self.lockedChannelBar.update()
+        self.updateColorModelSwitchers()
+
+        if settings.displayChannels:
+            self.updateChannelSpinBoxes()
+            for b in self.channelSpinBoxes:
+                b.show()
+        else:
+            for b in self.channelSpinBoxes:
+                b.hide()
 
     def updateColorModelSwitchers(self):
         while True:
@@ -111,14 +133,18 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             if widget != None:
                 widget.deleteLater()
 
-        self.cswGroup = QButtonGroup()
-        self.cswGroup.setExclusive(True)
-        for colorModel in ColorModel:
+        self.colorModelSwitchersGroup = QButtonGroup()
+        self.colorModelSwitchersGroup.setExclusive(True)
+        for colorModel in [ColorModel(i) for i in self.settings.displayOrder]:
+            settings = self.settings.colorModelSettings[colorModel]
+            if not settings.enabled:
+                continue
+
             button = QRadioButton(colorModel.displayName())
             button.setChecked(colorModel == self.colorModel)
             button.clicked.connect(lambda _, cs=colorModel: self.updateColorModel(cs))
             self.colorSpaceSwitchers.addWidget(button)
-            self.cswGroup.addButton(button)
+            self.colorModelSwitchersGroup.addButton(button)
 
     def updateLockers(self):
         displayScales = self.colorModel.displayScales()
@@ -146,11 +172,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
         self.color = transferColorModel(self.color, self.colorModel, colorModel)
         self.colorModel = colorModel
-        self.colorWheel.updateColorModel(colorModel)
-        self.lockedChannelBar.updateColorModel(colorModel)
-        # TODO remember the locked channel
-        self.lockedChannel = 0
-        self.updateLockers()
+        self.updateToSettings()
         self.updateChannelSpinBoxes()
         self.syncColor()
 
@@ -174,6 +196,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         if channel == self.lockedChannel:
             return
 
+        self.settings.colorModelSettings[self.colorModel].lockedChannelIndex = channel
         self.colorWheel.updateLockedChannel(channel)
         self.lockedChannelBar.updateLockedChannel(channel)
         self.lockedChannel = channel
@@ -271,7 +294,9 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
 instance = Krita.instance()  # type: ignore
 dock_widget_factory = DockWidgetFactory(  # type: ignore
-    DOCKER_ID, DockWidgetFactoryBase.DockRight, ExtendedColorSelector  # type: ignore
+    DOCKER_ID,
+    DockWidgetFactoryBase.DockRight,  # type: ignore
+    ExtendedColorSelector,  # type: ignore
 )
 
 instance.addDockWidgetFactory(dock_widget_factory)
