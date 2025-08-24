@@ -1,3 +1,5 @@
 DOCKER_NAME = "Extended Color Selector"
 DOCKER_ID = "pykrita_extended_color_selector"
 SYNC_INTERVAL_MS = 100
+SETTINGS_FIALOG_SIZE = 500,300
+GLOBAL_SETTINGS_FIALOG_SIZE = 500,300

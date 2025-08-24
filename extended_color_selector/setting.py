@@ -22,7 +22,7 @@ from krita import *  # type: ignore
 
 from .color_wheel import WheelShape
 from .models import ColorModel
-from .config import DOCKER_NAME
+from .config import *
 
 
 def getOrDefault(l: list[str], default: str) -> str:
@@ -35,6 +35,12 @@ def getOrDefault(l: list[str], default: str) -> str:
 
 class SettingsPerColorModel:
     def __init__(self, settings: str) -> None:
+        try:
+            self.initFrom(settings)
+        except:
+            self.initFrom("")
+
+    def initFrom(self, settings: str):
         s = [] if len(settings) == 0 else list(reversed(settings.split(",")))
         self.enabled = getOrDefault(s, "True") == "True"
         self.barEnabled = getOrDefault(s, "True") == "True"
@@ -50,12 +56,6 @@ class SettingsPerColorModel:
         self.ringRotation = float(getOrDefault(s, "0"))
         self.ringReversed = getOrDefault(s, "False") == "True"
         self.wheelRotateWithRing = getOrDefault(s, "False") == "True"
-        self.outOfGamutColorEnabled = getOrDefault(s, "False") == "True"
-        self.outOfGamutColor = (
-            float(getOrDefault(s, "0.5")),
-            float(getOrDefault(s, "0.5")),
-            float(getOrDefault(s, "0.5")),
-        )
         self.lockedChannelIndex = int(getOrDefault(s, "0"))
         self.barHeight = int(getOrDefault(s, "20"))
 
@@ -75,10 +75,6 @@ class SettingsPerColorModel:
             self.ringRotation,
             self.ringReversed,
             self.wheelRotateWithRing,
-            self.outOfGamutColorEnabled,
-            self.outOfGamutColor[0],
-            self.outOfGamutColor[1],
-            self.outOfGamutColor[2],
             self.lockedChannelIndex,
         ]
         Krita.instance().writeSetting(DOCKER_NAME, colorModel.displayName(), ",".join([str(x) for x in s]))  # type: ignore
@@ -119,8 +115,8 @@ class OptionalColorPicker(QWidget):
 
 
 class SettingsDialog(QDialog):
-    def __init__(self, parent: QWidget, settingsChanged: pyqtBoundSignal) -> None:
-        super().__init__(parent)
+    def __init__(self, settingsChanged: pyqtBoundSignal) -> None:
+        super().__init__()
         self.settingsChanged = settingsChanged
 
         self.colorModelSettings: dict[ColorModel, SettingsPerColorModel] = {}
@@ -136,7 +132,7 @@ class SettingsDialog(QDialog):
             else list(range(len(ColorModel)))
         )
 
-        self.setFixedSize(500, 300)
+        self.setFixedSize(SETTINGS_FIALOG_SIZE[0], SETTINGS_FIALOG_SIZE[1])
         self.mainLayout = QHBoxLayout(self)
         self.setWindowTitle("Extended Color Selector - Settings")
 
@@ -266,34 +262,12 @@ class SettingsDialog(QDialog):
                 lambda x, cm=colorModel: self.changeSetting(cm, "ringEnabled", x)
             )
 
-            outOfGamutColorPicker = OptionalColorPicker(
-                self,
-                "Out Of Gamut Color",
-                QColor(
-                    min(int(settings.outOfGamutColor[0] * 256), 255),
-                    min(int(settings.outOfGamutColor[1] * 256), 255),
-                    min(int(settings.outOfGamutColor[2] * 256), 255),
-                ),
-            )
-            outOfGamutColorPicker.enableChanged(settings.outOfGamutColorEnabled)
-            outOfGamutColorPicker.dialog.colorSelected.connect(
-                lambda x, cm=colorModel: self.changeSetting(
-                    cm, "outOfGamutColor", (x.redF(), x.greenF(), x.blueF())
-                )
-            )
-            outOfGamutColorPicker.enableButton.clicked.connect(
-                lambda x, cm=colorModel: self.changeSetting(
-                    cm, "outOfGamutColorEnabled", x
-                )
-            )
-
             pageLayout.addLayout(barSettingsLayout)
             pageLayout.addWidget(channelsSpinBoxEnabled)
             pageLayout.addLayout(shapeButtonsAndRotLayout)
             pageLayout.addLayout(axesSettingsLayout)
             pageLayout.addWidget(ringEnabled)
             pageLayout.addLayout(ringSettingsLayouts)
-            pageLayout.addWidget(outOfGamutColorPicker)
             pageLayout.addStretch(1)
             pages.addWidget(page)
 
@@ -357,3 +331,72 @@ class SettingsDialog(QDialog):
             self.settingsChanged.emit()
             return
         self.write()
+
+
+class GlobalSettings:
+    def __init__(self):
+        settings: str = Krita.instance().readSetting(DOCKER_NAME, "global", "")  # type: ignore
+        try:
+            self.initFrom(settings)
+        except:
+            self.initFrom("")
+
+    def initFrom(self, settings: str):
+        s = [] if len(settings) == 0 else list(reversed(settings.split(",")))
+        self.outOfGamutColorEnabled = getOrDefault(s, "True") == "True"
+        self.outOfGamutColor = (
+            float(getOrDefault(s, "0.5")),
+            float(getOrDefault(s, "0.5")),
+            float(getOrDefault(s, "0.5")),
+        )
+
+    def write(self):
+        s = [
+            self.outOfGamutColorEnabled,
+            self.outOfGamutColor[0],
+            self.outOfGamutColor[1],
+            self.outOfGamutColor[2],
+        ]
+        Krita.instance().writeSetting(DOCKER_NAME, "global", ",".join([str(x) for x in s]))  # type: ignore
+
+
+class GlobalSettingsDialog(QDialog):
+    def __init__(self, settingsChanged: pyqtBoundSignal):
+        super().__init__()
+        settings = GlobalSettings()
+        self.settings = settings
+        self.settingsChanged = settingsChanged
+
+        self.mainLayout = QVBoxLayout(self)
+        self.setWindowTitle("Extended Color Selector - Global Settings")
+        self.setFixedSize(
+            GLOBAL_SETTINGS_FIALOG_SIZE[0], GLOBAL_SETTINGS_FIALOG_SIZE[1]
+        )
+
+        outOfGamutColorPicker = OptionalColorPicker(
+            self,
+            "Out Of Gamut Color",
+            QColor(
+                min(int(settings.outOfGamutColor[0] * 256), 255),
+                min(int(settings.outOfGamutColor[1] * 256), 255),
+                min(int(settings.outOfGamutColor[2] * 256), 255),
+            ),
+        )
+        outOfGamutColorPicker.enableChanged(settings.outOfGamutColorEnabled)
+        outOfGamutColorPicker.dialog.colorSelected.connect(
+            lambda x: self.changeSetting(
+                "outOfGamutColor", (x.redF(), x.greenF(), x.blueF())
+            )
+        )
+        outOfGamutColorPicker.enableButton.clicked.connect(
+            lambda x: self.changeSetting("outOfGamutColorEnabled", x)
+        )
+        self.mainLayout.addWidget(outOfGamutColorPicker)
+        self.mainLayout.addStretch(1)
+
+    def changeSetting(self, name: str, value: object):
+        setattr(self.settings, name, value)
+        self.settingsChanged.emit()
+
+    def closeEvent(self, a0: QCloseEvent | None) -> None:
+        self.settings.write()

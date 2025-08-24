@@ -15,7 +15,7 @@ from krita import *  # type: ignore
 from .color_wheel import ColorWheel, LockedChannelBar, WheelShape
 from .models import ColorModel, colorModelFromKrita, transferColorModel
 from .config import SYNC_INTERVAL_MS, DOCKER_NAME, DOCKER_ID
-from .setting import SettingsDialog
+from .setting import SettingsDialog, GlobalSettingsDialog
 
 
 class ExtendedColorSelector(DockWidget):  # type: ignore
@@ -29,7 +29,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.colorModel = ColorModel.Rgb
         self.lockedChannel = 0
         self.color = 0, 0, 0
-        self.settings = SettingsDialog(self, self.settingsChanged)
+        self.settings = SettingsDialog(self.settingsChanged)
+        self.globalSettings = GlobalSettingsDialog(self.settingsChanged)
 
         container = QWidget(self)
         self.setWidget(container)
@@ -54,14 +55,18 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             self.lockers.addWidget(self.channelSpinBoxes[i])
         self.updateLockers()
 
-        self.settings = SettingsDialog(self, self.settingsChanged)
         settingsButtonLayout = QHBoxLayout()
         settingsButton = QPushButton()
         settingsButton.setIcon(Krita.instance().icon("configure"))  # type: ignore
         settingsButton.setFlat(True)
         settingsButton.clicked.connect(self.settings.show)
+        globalSettingsButton = QPushButton()
+        globalSettingsButton.setIcon(Krita.instance().icon("applications-system"))  # type: ignore
+        globalSettingsButton.setFlat(True)
+        globalSettingsButton.clicked.connect(self.globalSettings.show)
         settingsButtonLayout.addWidget(settingsButton)
         settingsButtonLayout.addStretch(1)
+        settingsButtonLayout.addWidget(globalSettingsButton)
 
         self.mainLayout.addWidget(self.colorWheel)
         self.mainLayout.addWidget(self.lockedChannelBar)
@@ -78,6 +83,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.updateToSettings()
 
     def updateToSettings(self):
+        globalSettings = self.globalSettings.settings
         settings = self.settings.colorModelSettings[self.colorModel]
         if not settings.enabled:
             self.colorModel = ColorModel(self.settings.displayOrder[0])
@@ -86,7 +92,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.updateLockedChannel(settings.lockedChannelIndex)
         self.lockedChannelBar.setMinimumHeight(int(settings.barHeight))
         self.lockedChannelBar.outOfGamut = (
-            settings.outOfGamutColor if settings.outOfGamutColorEnabled else None
+            globalSettings.outOfGamutColor if globalSettings.outOfGamutColorEnabled else None
         )
 
         if settings.ringEnabled:
@@ -102,7 +108,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.colorWheel.ringRotation = math.radians(settings.ringRotation)
         self.colorWheel.wheelRotateWithRing = settings.wheelRotateWithRing
         self.colorWheel.outOfGamut = (
-            settings.outOfGamutColor if settings.outOfGamutColorEnabled else None
+            globalSettings.outOfGamutColor if globalSettings.outOfGamutColorEnabled else None
         )
         self.colorWheel.rotation = math.radians(settings.rotation)
         self.colorWheel.updateColorModel(
