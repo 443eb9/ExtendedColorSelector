@@ -290,6 +290,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
     def canvasChanged(self, canvas):
         self.syncColor()
+        self.colorWheel.compileShader()
 
 
 instance = Krita.instance()  # type: ignore

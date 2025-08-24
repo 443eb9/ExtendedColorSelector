@@ -11,6 +11,7 @@ from PyQt5.QtGui import (
     QBrush,
     QColor,
     QVector2D,
+    QPalette,
 )
 from PyQt5.QtWidgets import (
     QOpenGLWidget,
@@ -160,6 +161,8 @@ class ColorWheel(QOpenGLWidget):
         self.setMinimumHeight(200)
         self.rotation = 0.0
         self.editing = ColorWheel.ColorWheelEditing.Wheel
+        self.gl = None
+        self.program = None
 
         self.res = 1
         self.colorModel = ColorModel.Rgb
@@ -355,6 +358,15 @@ class ColorWheel(QOpenGLWidget):
             end = fragCode.find("END RING RENDERING")
             fragCode = fragCode[:begin] + fragCode[end:]
 
+        if Application.activeWindow() == None:  # type: ignore
+            return
+        palette = Application.activeWindow().qwindow().palette()  # type: ignore
+        bgColor: QColor = palette.color(QPalette.ColorRole.Window)
+        fragCode = fragCode.replace(
+            "const vec3 BACKGROUND_COLOR = vec3(0.0);",
+            f"const vec3 BACKGROUND_COLOR = vec3({bgColor.redF()}, {bgColor.greenF()}, {bgColor.blueF()});",
+        )
+
         frag.compileSourceCode(fragCode)
         self.program = QOpenGLShaderProgram(self.context())
         self.program.addShader(vert)
@@ -381,6 +393,9 @@ class ColorWheel(QOpenGLWidget):
                 "Preferred Renderer, and select OpenGL. \n\n"
                 "Krita WILL CRASH if you enter the canvas. So please change the settings in start menu.",
             )
+            return
+
+        if self.program == None:
             return
 
         self.program.bind()

@@ -14,6 +14,8 @@ uniform float ringMargin;
 uniform float ringRotation;
 out vec4 out_color;
 
+const vec3 BACKGROUND_COLOR = vec3(0.0);
+
 vec3 colorToSrgb(vec3 color);
 
 vec3 getColorCoordAndAntialias(vec2 p, float normalizedRingThickness);
@@ -93,7 +95,7 @@ void main() {
     vec2 p = uv * 2.0 - 1.0;
     float d = distance(coord, vec2(res) * 0.5);
 
-    vec3 color = vec3(0.0);
+    vec3 color = BACKGROUND_COLOR;
 
     vec4 wheel = drawWheel(p);
     color = mix(color, wheel.rgb, wheel.a);
