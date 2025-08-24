@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt, pyqtBoundSignal, pyqtSignal
-from PyQt5.QtGui import QCloseEvent, QColor, QKeyEvent, QMouseEvent, QKeySequence
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QCloseEvent, QColor, QKeySequence
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -22,8 +22,7 @@ from PyQt5.QtWidgets import (
 )
 from krita import *  # type: ignore
 
-from .color_wheel import WheelShape
-from .models import ColorModel, SettingsPerColorModel, GlobalSettings
+from .models import ColorModel, WheelShape
 from .config import *
 from .internal_state import STATE
 
@@ -297,7 +296,9 @@ class GlobalSettingsDialog(QDialog):
         barHeightLayout.addWidget(QLabel("Bar Height"))
         barHeightLayout.addWidget(barHeightBox)
 
-        dontSyncIfOutOfGamutBox = QCheckBox("Don't Sync Color From Krita If Out Of Gamut")
+        dontSyncIfOutOfGamutBox = QCheckBox(
+            "Don't Sync Color From Krita If Out Of Gamut"
+        )
         dontSyncIfOutOfGamutBox.setChecked(settings.dontSyncIfOutOfGamut)
         dontSyncIfOutOfGamutBox.clicked.connect(
             lambda x: self.changeSetting("dontSyncIfOutOfGamut", x)

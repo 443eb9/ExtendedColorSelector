@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QEvent, QSize, pyqtBoundSignal, QRectF, QPoint, Qt
+from PyQt5.QtCore import QSize, QRectF, Qt
 from PyQt5.QtGui import (
     QMouseEvent,
     QOpenGLVersionProfile,
@@ -13,12 +13,12 @@ from PyQt5.QtGui import (
     QVector2D,
     QPalette,
 )
-from PyQt5.QtWidgets import QOpenGLWidget, QWidget, QMessageBox, QSizePolicy
+from PyQt5.QtWidgets import QOpenGLWidget, QMessageBox, QSizePolicy
 from pathlib import Path
 from enum import IntEnum
 import math
 
-from .models import ColorModel, WheelShape, SettingsPerColorModel
+from .models import ColorModel, SettingsPerColorModel
 from .setting import SettingsPerColorModel, GlobalSettings
 from .internal_state import STATE
 from .config import *
@@ -139,7 +139,6 @@ class ColorWheel(QOpenGLWidget):
         if a0 == None:
             return
 
-        STATE.suppressColorSyncing = True
         settings = STATE.currentSettings()
         x, y = self.getCurrentWheelWidgetCoord()
         self.editStart = QVector2D(x, y)
@@ -157,15 +156,6 @@ class ColorWheel(QOpenGLWidget):
 
     def mouseMoveEvent(self, a0: QMouseEvent | None):
         self.handleMouse(a0)
-
-    def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
-        STATE.suppressColorSyncing = False
-
-    def enterEvent(self, a0: QEvent | None) -> None:
-        STATE.suppressColorSyncing = True
-
-    def leaveEvent(self, a0: QEvent | None) -> None:
-        STATE.suppressColorSyncing = False
 
     def getCurrentWheelWidgetCoord(self) -> tuple[float, float]:
         settings = STATE.currentSettings()
@@ -440,13 +430,6 @@ class LockedChannelBar(QOpenGLWidget):
         if a0 == None:
             return
         self.editStart = a0.pos().x()
-        STATE.suppressColorSyncing = False
-
-    def enterEvent(self, a0: QEvent | None) -> None:
-        STATE.suppressColorSyncing = True
-
-    def leaveEvent(self, a0: QEvent | None) -> None:
-        STATE.suppressColorSyncing = False
 
     def getCurrentWidgetCoord(self) -> float:
         return STATE.color[STATE.lockedChannel] * self.width()

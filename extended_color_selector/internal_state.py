@@ -1,40 +1,17 @@
 from PyQt5.QtCore import (
-    QEvent,
     QObject,
-    Qt,
     pyqtSignal,
     QTimer,
-    pyqtBoundSignal,
     pyqtSignal,
     QObject,
 )
 from PyQt5.QtGui import (
-    QMouseEvent,
-    QResizeEvent,
     QColor,
-    QFocusEvent,
-    QCursor,
-    QKeySequence,
-    QWindow,
 )
-from PyQt5.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QRadioButton,
-    QButtonGroup,
-    QDoubleSpinBox,
-    QDialog,
-    QAction,
-    QShortcut,
-)
-import math
 from krita import *  # type: ignore
 
 from .models import (
     ColorModel,
-    WheelShape,
     transferColorModel,
     colorModelFromKrita,
     SettingsPerColorModel,

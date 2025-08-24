@@ -1,5 +1,4 @@
-from PyQt5.QtCore import pyqtSignal, QTimer, Qt
-from PyQt5.QtGui import QResizeEvent, QColor
+from PyQt5.QtGui import QResizeEvent, QMouseEvent
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -8,16 +7,13 @@ from PyQt5.QtWidgets import (
     QRadioButton,
     QButtonGroup,
     QDoubleSpinBox,
-    QSizePolicy,
 )
-import math
 from krita import *  # type: ignore
 
-from .color_wheel import ColorWheel, LockedChannelBar, WheelShape
-from .models import ColorModel, colorModelFromKrita, transferColorModel
-from .config import SYNC_INTERVAL_MS, DOCKER_NAME, DOCKER_ID
+from .color_wheel import ColorWheel, LockedChannelBar
+from .models import ColorModel
+from .config import DOCKER_NAME, DOCKER_ID
 from .setting import SettingsDialog, GlobalSettingsDialog
-from .portable_color_selector import PortableColorSelectorHandler
 from .internal_state import STATE
 
 
@@ -149,6 +145,12 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             self.channelSpinBoxes[i].blockSignals(True)
             self.channelSpinBoxes[i].setValue(x)
             self.channelSpinBoxes[i].blockSignals(False)
+
+    def enterEvent(self, event: QMouseEvent):
+        STATE.suppressColorSyncing = True
+
+    def leaveEvent(self, event: QMouseEvent):
+        STATE.suppressColorSyncing = False
 
     def resizeEvent(self, e: QResizeEvent):
         self.colorWheel.resizeEvent(e)

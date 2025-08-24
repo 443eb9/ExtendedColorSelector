@@ -1,41 +1,9 @@
-from PyQt5.QtCore import (
-    QEvent,
-    QObject,
-    Qt,
-    pyqtSignal,
-    QTimer,
-    pyqtBoundSignal,
-    pyqtSignal,
-)
-from PyQt5.QtGui import (
-    QKeyEvent,
-    QMouseEvent,
-    QResizeEvent,
-    QColor,
-    QFocusEvent,
-    QCursor,
-    QKeySequence,
-    QWindow,
-)
-from PyQt5.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QRadioButton,
-    QButtonGroup,
-    QDoubleSpinBox,
-    QDialog,
-    QAction,
-    QShortcut,
-)
-import math
+from PyQt5.QtCore import QEvent, Qt
+from PyQt5.QtGui import QKeyEvent, QFocusEvent, QCursor, QKeySequence
+from PyQt5.QtWidgets import QVBoxLayout, QDialog, QShortcut
 from krita import *  # type: ignore
 
-from .color_wheel import ColorWheel, LockedChannelBar, WheelShape
-from .models import ColorModel, colorModelFromKrita, transferColorModel
-from .config import SYNC_INTERVAL_MS, DOCKER_NAME, DOCKER_ID
-from .setting import SettingsDialog, GlobalSettingsDialog
+from .color_wheel import ColorWheel, LockedChannelBar
 from .internal_state import STATE
 
 

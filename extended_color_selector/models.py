@@ -1,26 +1,4 @@
-from PyQt5.QtCore import pyqtBoundSignal, QRectF, QPoint, Qt
-from PyQt5.QtGui import (
-    QMouseEvent,
-    QOpenGLVersionProfile,
-    QPaintEvent,
-    QResizeEvent,
-    QSurfaceFormat,
-    QOpenGLShader,
-    QOpenGLShaderProgram,
-    QPainter,
-    QBrush,
-    QColor,
-    QVector2D,
-    QPalette,
-)
-from PyQt5.QtWidgets import (
-    QOpenGLWidget,
-    QWidget,
-    QMessageBox,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-)
+from PyQt5.QtGui import QVector2D
 from pathlib import Path
 from enum import IntEnum
 import math
