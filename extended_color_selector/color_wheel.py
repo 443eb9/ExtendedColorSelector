@@ -213,7 +213,7 @@ class ColorWheel(QOpenGLWidget):
                 if settings.ringReversed
                 else STATE.color[STATE.lockedChannel]
             ),
-            (settings.ringThickness + settings.ringMargin) / (self.res / 2),
+            settings.ringThickness / (self.res / 2),
             math.radians(settings.ringRotation),
         )
         ringX, ringY = (ringX * 0.5 + 0.5) * self.res, (-ringY * 0.5 + 0.5) * self.res
@@ -277,7 +277,7 @@ class ColorWheel(QOpenGLWidget):
         if self.gl == None:
             QMessageBox.critical(
                 self,
-                "Unable to get OpenGL Renderer.\n",
+                "Extended Color Selector - Unable to get OpenGL Renderer\n",
                 "This error is originated from ExtendedColorSelector. \n"
                 "As we are using OpenGL for color wheel rendering, it is required to use OpenGL for rendering.\n"
                 "Please goto Settings -> Configure Krita -> Display -> Canvas Acceleration -> "
