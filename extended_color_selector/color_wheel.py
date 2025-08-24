@@ -18,8 +18,12 @@ from pathlib import Path
 from enum import IntEnum
 import math
 
-from .models import ColorModel, SettingsPerColorModel
-from .setting import SettingsPerColorModel, GlobalSettings
+from .models import (
+    ColorModel,
+    SettingsPerColorModel,
+    SettingsPerColorModel,
+    GlobalSettings,
+)
 from .internal_state import STATE
 from .config import *
 
