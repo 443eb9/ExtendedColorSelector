@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtBoundSignal, QRectF, QLineF
+from PyQt5.QtCore import pyqtBoundSignal, QRectF, QPoint, Qt
 from PyQt5.QtGui import (
     QMouseEvent,
     QOpenGLVersionProfile,
@@ -146,6 +146,15 @@ wheel_fragment = open(Path(__file__).parent / "color_wheel.frag").read()
 bar_fragment = open(Path(__file__).parent / "locked_channel_bar.frag").read()
 
 
+def computeMoveFactor(e: QMouseEvent) -> float:
+    m = e.modifiers()
+    if m == Qt.KeyboardModifier.ShiftModifier:
+        return 0.1
+    if m == Qt.KeyboardModifier.AltModifier:
+        return 0.01
+    return 1.0
+
+
 class ColorWheel(QOpenGLWidget):
     class ColorWheelEditing(IntEnum):
         Wheel = 1
@@ -178,6 +187,8 @@ class ColorWheel(QOpenGLWidget):
         self.ringReversed = False
         self.ringRotation = 0.0
         self.wheelRotateWithRing = False
+        self.moveFactor = 1
+        self.editStart: QVector2D | None = None
 
         self.variablesChanged = variablesChanged
         self.constantChanged = constantChanged
@@ -215,9 +226,12 @@ class ColorWheel(QOpenGLWidget):
         self.res = size
         self.update()
 
-    def handleWheelEdit(self, event: QMouseEvent):
-        x = max(min(event.pos().x(), self.res), 0) / self.res
-        y = max(min(event.pos().y(), self.res), 0) / self.res
+    def handleWheelEdit(self, cursor: QVector2D):
+        if self.editStart == None:
+            return
+
+        x = max(min(cursor.x(), self.res), 0) / self.res
+        y = max(min(cursor.y(), self.res), 0) / self.res
 
         x, y = x * 2.0 - 1.0, y * 2.0 - 1.0
         y = -y
@@ -238,8 +252,8 @@ class ColorWheel(QOpenGLWidget):
         self.variablesChanged.emit((cx, cy))
         self.update()
 
-    def handleRingEdit(self, event: QMouseEvent):
-        x, y = event.pos().x() / self.res * 2 - 1, event.pos().y() / self.res * 2 - 1
+    def handleRingEdit(self, cursor: QVector2D):
+        x, y = cursor.x() / self.res * 2 - 1, cursor.y() / self.res * 2 - 1
         y = -y
         v = self.shape.getRingValue((x, y), self.ringRotation)
         if self.ringReversed:
@@ -247,19 +261,24 @@ class ColorWheel(QOpenGLWidget):
         self.constantChanged.emit(v)
 
     def handleMouse(self, event: QMouseEvent | None):
-        if event == None:
+        if event == None or self.editStart == None:
             return
 
+        cursor = (
+            self.editStart + (QVector2D(event.pos()) - self.editStart) * self.moveFactor
+        )
         match self.editing:
             case ColorWheel.ColorWheelEditing.Wheel:
-                self.handleWheelEdit(event)
+                self.handleWheelEdit(cursor)
             case ColorWheel.ColorWheelEditing.Ring:
-                self.handleRingEdit(event)
+                self.handleRingEdit(cursor)
 
     def mousePressEvent(self, a0: QMouseEvent | None):
         if a0 == None:
             return
 
+        self.moveFactor = computeMoveFactor(a0)
+        self.editStart = QVector2D(a0.pos())
         d = QVector2D(a0.pos()).distanceToPoint(QVector2D(self.res, self.res) * 0.5)
         if (
             self.ringThickness == 0 and self.ringMargin == 0
@@ -310,7 +329,7 @@ class ColorWheel(QOpenGLWidget):
         painter = QPainter(self)
         painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
         painter.drawArc(
-            QRectF(x - 4, y - 2, 8, 8),
+            QRectF(x - 4, y - 3, 8, 8),
             0,
             360 * 16,
         )
@@ -454,6 +473,8 @@ class LockedChannelBar(QOpenGLWidget):
         self.constantPos = 0
         self.outOfGamut = None
         self.color = 0, 0, 0
+        self.moveFactor = 1
+        self.editStart: float | None = None
 
         self.constantChanged = constantChanged
 
@@ -484,14 +505,20 @@ class LockedChannelBar(QOpenGLWidget):
         self.update()
 
     def handleMouse(self, event: QMouseEvent | None):
-        if event == None:
+        if event == None or self.editStart == None:
             return
 
-        x = max(min(event.pos().x(), self.res), 0)
+        x = self.editStart + (event.x() - self.editStart) * self.moveFactor
+        x = max(min(x, self.res), 0)
         self.constantChanged.emit(x / self.res)
         self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None):
+        if a0 == None:
+            return
+
+        self.moveFactor = computeMoveFactor(a0)
+        self.editStart = a0.pos().x()
         self.handleMouse(a0)
 
     def mouseMoveEvent(self, a0: QMouseEvent | None):
