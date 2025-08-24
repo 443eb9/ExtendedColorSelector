@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal, pyqtBoundSignal, QRectF, QLineF
+from PyQt5.QtCore import pyqtBoundSignal, QRectF, QLineF
 from PyQt5.QtGui import (
     QMouseEvent,
     QOpenGLVersionProfile,
@@ -11,16 +11,11 @@ from PyQt5.QtGui import (
     QBrush,
     QColor,
     QVector2D,
-    QMatrix2x2,
 )
 from PyQt5.QtWidgets import (
     QOpenGLWidget,
     QWidget,
-    QVBoxLayout,
-    QTextEdit,
-    QLabel,
     QMessageBox,
-    QSizePolicy,
 )
 from pathlib import Path
 from enum import IntEnum
@@ -361,7 +356,7 @@ class ColorWheel(QOpenGLWidget):
         self.program.addShader(vert)
         self.program.addShader(frag)
         self.program.link()
-    
+
     def getActualWheelRotation(self) -> float:
         if self.wheelRotateWithRing:
             c = self.color[self.constantPos]
@@ -439,7 +434,6 @@ class ColorWheel(QOpenGLWidget):
 class LockedChannelBar(QOpenGLWidget):
     def __init__(self, parent: QWidget, constantChanged: pyqtBoundSignal):
         super().__init__(parent)
-        self.setMinimumHeight(50)
 
         self.res = 1
         self.colorSpace = ColorModel.Rgb

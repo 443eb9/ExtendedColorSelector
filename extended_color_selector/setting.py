@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer, pyqtBoundSignal
-from PyQt5.QtGui import QCloseEvent, QResizeEvent, QColor, QMouseEvent
+from PyQt5.QtCore import Qt, pyqtBoundSignal
+from PyQt5.QtGui import QCloseEvent, QColor
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -13,15 +13,11 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QListWidgetItem,
     QDialog,
-    QStackedWidget,
     QStackedLayout,
     QLabel,
     QColorDialog,
-    QToolButton,
     QMessageBox,
-    QGridLayout,
 )
-import math
 from krita import *  # type: ignore
 
 from .color_wheel import WheelShape
@@ -61,6 +57,7 @@ class SettingsPerColorModel:
             float(getOrDefault(s, "0.5")),
         )
         self.lockedChannelIndex = int(getOrDefault(s, "0"))
+        self.barHeight = int(getOrDefault(s, "0"))
 
     def write(self, colorModel: ColorModel):
         s = [
@@ -161,11 +158,21 @@ class SettingsDialog(QDialog):
             pageLayout = QVBoxLayout(self)
             page.setLayout(pageLayout)
 
+            barSettingsLayout = QHBoxLayout(self)
             barEnabled = QCheckBox(f"Enable {colorModel.displayName()} Bar")
             barEnabled.setChecked(settings.barEnabled)
             barEnabled.clicked.connect(
                 lambda x, cm=colorModel: self.changeSetting(cm, "barEnabled", x)
             )
+            barHeightBox = QSpinBox(self)
+            barHeightBox.setValue(settings.barHeight)
+            barHeightBox.valueChanged.connect(
+                lambda x, cm=colorModel: self.changeSetting(cm, "barHeight", x)
+            )
+            barSettingsLayout.addWidget(barEnabled)
+            barSettingsLayout.addWidget(QLabel("Bar Height"))
+            barSettingsLayout.addWidget(barHeightBox)
+
             channelsSpinBoxEnabled = QCheckBox(f"Display Channel Values")
             channelsSpinBoxEnabled.setChecked(settings.displayChannels)
             channelsSpinBoxEnabled.clicked.connect(
@@ -280,7 +287,7 @@ class SettingsDialog(QDialog):
                 )
             )
 
-            pageLayout.addWidget(barEnabled)
+            pageLayout.addLayout(barSettingsLayout)
             pageLayout.addWidget(channelsSpinBoxEnabled)
             pageLayout.addLayout(shapeButtonsAndRotLayout)
             pageLayout.addLayout(axesSettingsLayout)

@@ -1,5 +1,5 @@
 from PyQt5.QtCore import pyqtSignal, QTimer
-from PyQt5.QtGui import QResizeEvent, QColor, QMouseEvent
+from PyQt5.QtGui import QResizeEvent, QColor
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QRadioButton,
     QButtonGroup,
-    QSpinBox,
     QDoubleSpinBox,
 )
 import math
@@ -85,6 +84,11 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             settings = self.settings.colorModelSettings[self.colorModel]
 
         self.updateLockedChannel(settings.lockedChannelIndex)
+        self.lockedChannelBar.setMinimumHeight(int(settings.barHeight))
+        self.lockedChannelBar.outOfGamut = (
+            settings.outOfGamutColor if settings.outOfGamutColorEnabled else None
+        )
+
         if settings.ringEnabled:
             self.colorWheel.ringThickness = settings.ringThickness
             self.colorWheel.ringMargin = settings.ringMargin
@@ -98,9 +102,6 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.colorWheel.ringRotation = math.radians(settings.ringRotation)
         self.colorWheel.wheelRotateWithRing = settings.wheelRotateWithRing
         self.colorWheel.outOfGamut = (
-            settings.outOfGamutColor if settings.outOfGamutColorEnabled else None
-        )
-        self.lockedChannelBar.outOfGamut = (
             settings.outOfGamutColor if settings.outOfGamutColorEnabled else None
         )
         self.colorWheel.rotation = math.radians(settings.rotation)
