@@ -124,12 +124,12 @@ class SettingsDialog(QDialog):
             raw = Krita.instance().readSetting(DOCKER_NAME, colorModel.displayName(), "")  # type: ignore
             self.colorModelSettings[colorModel] = SettingsPerColorModel(raw)
 
-        order: str = Krita.instance().readSetting(DOCKER_NAME, "displayOrder", "0")  # type: ignore
+        order: str = Krita.instance().readSetting(DOCKER_NAME, "displayOrder", "")  # type: ignore
         orderList = order.split(",")
         self.displayOrder = (
-            [int(cmi) for cmi in orderList]
-            if len(orderList) == len(ColorModel)
-            else list(range(len(ColorModel)))
+            list(range(len(ColorModel)))
+            if len(order) == 0
+            else [int(cmi) for cmi in orderList]
         )
 
         self.setFixedSize(SETTINGS_FIALOG_SIZE[0], SETTINGS_FIALOG_SIZE[1])
