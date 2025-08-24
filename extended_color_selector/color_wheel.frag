@@ -98,6 +98,7 @@ void main() {
     vec4 wheel = drawWheel(p);
     color = mix(color, wheel.rgb, wheel.a);
 
+    // --BEGIN RING RENDERING--
     if(ringThickness > 0 && d < res * 0.5 && d > res * 0.5 - ringThickness) {
         float ringValue = fract((atan(p.y, p.x) + ringRotation) / 2.0 / 3.141592653589 + 0.5);
         if(((axesConfig >> 3) & 1) == 1) {
@@ -107,6 +108,7 @@ void main() {
         vec4 ring = drawRing(ringValue, d);
         color = mix(color, ring.rgb, ring.a);
     }
+    // --END RING RENDERING--
 
     out_color = vec4(color, 1.0);
 }

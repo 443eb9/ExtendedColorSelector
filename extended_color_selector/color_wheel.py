@@ -164,7 +164,6 @@ class ColorWheel(QOpenGLWidget):
         self.res = 1
         self.colorModel = ColorModel.Rgb
         self.shape = WheelShape.Square
-        self.compileShader()
         self.constantPos = 0
         self.outOfGamut = None
         self.color = 0, 0, 0
@@ -179,6 +178,7 @@ class ColorWheel(QOpenGLWidget):
 
         self.variablesChanged = variablesChanged
         self.constantChanged = constantChanged
+        self.compileShader()
 
     def updateOutOfGamutColor(self, srgb: tuple[float, float, float]):
         self.outOfGamut = srgb
@@ -349,9 +349,14 @@ class ColorWheel(QOpenGLWidget):
         vert = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Vertex)
         vert.compileSourceCode(vertex)
         frag = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Fragment)
-        frag.compileSourceCode(
-            self.shape.modifyShader(self.colorModel.modifyShader(wheel_fragment))
-        )
+        fragCode = self.shape.modifyShader(self.colorModel.modifyShader(wheel_fragment))
+
+        if self.ringThickness < 0.0 and self.ringMargin < 0.0:
+            begin = fragCode.find("BEGIN RING RENDERING")
+            end = fragCode.find("END RING RENDERING")
+            fragCode = fragCode[:begin] + fragCode[end:]
+
+        frag.compileSourceCode(fragCode)
         self.program = QOpenGLShaderProgram(self.context())
         self.program.addShader(vert)
         self.program.addShader(frag)
