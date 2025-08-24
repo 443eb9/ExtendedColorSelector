@@ -266,12 +266,12 @@ class ColorWheel(QOpenGLWidget):
             if settings.ringReversed:
                 c = -c
             return (
-                settings.rotation
+                math.radians(settings.rotation)
                 - (c + 0.5) * 2 * math.pi
                 - math.radians(settings.ringRotation)
             )
         else:
-            return settings.rotation
+            return math.radians(settings.rotation)
 
     def paintGL(self):
         if self.gl == None:
