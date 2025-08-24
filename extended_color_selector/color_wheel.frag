@@ -23,9 +23,6 @@ vec4 drawWheel(vec2 p) {
     float c = cos(rotation);
     p = vec2(p.x * c - p.y * s, p.x * s + p.y * c);
 
-    if(((axesConfig >> 0) & 1) == 1) {
-        p = p.yx;
-    }
     if(((axesConfig >> 1) & 1) == 1) {
         p.x = -p.x;
     }
@@ -35,6 +32,9 @@ vec4 drawWheel(vec2 p) {
 
     vec3 colorCoordAndAntialias = getColorCoordAndAntialias(p, (ringThickness + ringMargin) / (res / 2));
     vec2 colorCoord = colorCoordAndAntialias.xy;
+    if(((axesConfig >> 0) & 1) == 1) {
+        colorCoord = colorCoord.yx;
+    }
     float antialias = colorCoordAndAntialias.z;
     if(any(lessThan(colorCoord, vec2(0.0)))) {
         return vec4(0.0);

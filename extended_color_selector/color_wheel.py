@@ -223,18 +223,17 @@ class ColorWheel(QOpenGLWidget):
         c = math.cos(rot)
         x, y = x * c - y * s, x * s + y * c
 
-        if self.swapAxes:
-            x, y = y, x
         if self.reverseX:
             x = -x
         if self.reverseY:
             y = -y
 
-        self.variablesChanged.emit(
-            self.shape.getColorCoord(
-                (x, y), (self.ringThickness + self.ringMargin) / (self.res / 2)
-            )
+        cx, cy = self.shape.getColorCoord(
+            (x, y), (self.ringThickness + self.ringMargin) / (self.res / 2)
         )
+        if self.swapAxes:
+            cx, cy = cy, cx
+        self.variablesChanged.emit((cx, cy))
         self.update()
 
     def handleRingEdit(self, event: QMouseEvent):
@@ -283,6 +282,8 @@ class ColorWheel(QOpenGLWidget):
                 ix, iy = 0, 2
             case 2:
                 ix, iy = 0, 1
+        if self.swapAxes:
+            ix, iy = iy, ix
 
         x, y = self.shape.getPos(
             (self.color[ix], self.color[iy]),
@@ -292,8 +293,6 @@ class ColorWheel(QOpenGLWidget):
             x = -x
         if self.reverseY:
             y = -y
-        if self.swapAxes:
-            x, y = y, x
 
         rot = self.getActualWheelRotation()
         s = math.sin(-rot)
