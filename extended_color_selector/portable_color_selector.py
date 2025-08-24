@@ -89,7 +89,6 @@ class PortableColorSelector(QDialog):
             keys += "alt+"
         keys += QKeySequence(a0.key()).toString()
         seq = QKeySequence(keys)
-        print(keys)
         if seq == QKeySequence(STATE.globalSettings.portableSelectorShortcut):
             self.hide()
 

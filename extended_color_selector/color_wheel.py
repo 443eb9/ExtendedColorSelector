@@ -457,7 +457,7 @@ class LockedChannelBar(QOpenGLWidget):
         if self.gl == None:
             QMessageBox.critical(
                 self,
-                "Unable to get OpenGL Renderer.\n",
+                "Extended Color Selector - Unable to get OpenGL Renderer\n",
                 "This error is originated from ExtendedColorSelector. \n"
                 "As we are using OpenGL for color wheel rendering, it is required to use OpenGL for rendering.\n"
                 "Please goto Settings -> Configure Krita -> Display -> Canvas Acceleration -> "
