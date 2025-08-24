@@ -176,9 +176,9 @@ class SettingsDialog(QDialog):
                     cm, "wheelRotateWithRing", x
                 )
             )
-            ringSettingsLayouts.addWidget(wheelRotateWithRingBox)
             ringSettingsLayouts.addLayout(ringSettingsLayout1)
             ringSettingsLayouts.addLayout(ringSettingsLayout2)
+            ringSettingsLayouts.addWidget(wheelRotateWithRingBox)
 
             ringEnabled = QCheckBox("Enable Ring")
             ringEnabled.setChecked(settings.ringEnabled)
