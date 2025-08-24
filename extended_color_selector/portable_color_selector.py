@@ -8,6 +8,7 @@ from PyQt5.QtCore import (
     pyqtSignal,
 )
 from PyQt5.QtGui import (
+    QKeyEvent,
     QMouseEvent,
     QResizeEvent,
     QColor,
@@ -75,6 +76,23 @@ class PortableColorSelector(QDialog):
         super().leaveEvent(a0)
         self.hide()
 
+    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
+        if a0 == None:
+            return
+        keys = ""
+        m = int(a0.modifiers())
+        if (m & Qt.KeyboardModifier.ShiftModifier) != 0:
+            keys += "shift+"
+        if (m & Qt.KeyboardModifier.ControlModifier) != 0:
+            keys += "ctrl+"
+        if (m & Qt.KeyboardModifier.AltModifier) != 0:
+            keys += "alt+"
+        keys += QKeySequence(a0.key()).toString()
+        seq = QKeySequence(keys)
+        print(keys)
+        if seq == QKeySequence(STATE.globalSettings.portableSelectorShortcut):
+            self.hide()
+
 
 class PortableColorSelectorHandler(Extension):  # type: ignore
     def __init__(self):
@@ -89,7 +107,10 @@ class PortableColorSelectorHandler(Extension):  # type: ignore
         pass
 
     def createActions(self, window: Window):  # type: ignore
-        self.shortcut = QShortcut(QKeySequence("P"), window.qwindow())
+        self.shortcut = QShortcut(
+            QKeySequence(STATE.globalSettings.portableSelectorShortcut),
+            window.qwindow(),
+        )
         self.shortcut.activated.connect(self.selector.toggle)
 
 
