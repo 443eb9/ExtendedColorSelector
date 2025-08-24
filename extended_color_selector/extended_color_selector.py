@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal, QTimer
+from PyQt5.QtCore import pyqtSignal, QTimer, Qt
 from PyQt5.QtGui import QResizeEvent, QColor
 from PyQt5.QtWidgets import (
     QWidget,
@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (
     QRadioButton,
     QButtonGroup,
     QDoubleSpinBox,
+    QSizePolicy,
 )
 import math
 from krita import *  # type: ignore
@@ -31,8 +32,11 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.setWidget(container)
         self.mainLayout = QVBoxLayout(container)
 
+        colorWheelLayout = QHBoxLayout()
         self.colorWheel = ColorWheel()
-        self.lockedChannelBar = LockedChannelBar()
+        colorWheelLayout.addWidget(self.colorWheel)
+
+        self.lockedChannelBar = LockedChannelBar(False)
 
         self.colorSpaceSwitchers = QHBoxLayout()
         self.lockers = QHBoxLayout()
@@ -61,7 +65,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         settingsButtonLayout.addStretch(1)
         settingsButtonLayout.addWidget(globalSettingsButton)
 
-        self.mainLayout.addWidget(self.colorWheel)
+        self.mainLayout.addLayout(colorWheelLayout)
         self.mainLayout.addWidget(self.lockedChannelBar)
         self.mainLayout.addLayout(self.colorSpaceSwitchers)
         self.mainLayout.addLayout(self.lockers)

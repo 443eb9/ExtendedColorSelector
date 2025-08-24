@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtBoundSignal, QRectF, QPoint, Qt
+from PyQt5.QtCore import QSize, pyqtBoundSignal, QRectF, QPoint, Qt
 from PyQt5.QtGui import (
     QMouseEvent,
     QOpenGLVersionProfile,
@@ -13,11 +13,7 @@ from PyQt5.QtGui import (
     QVector2D,
     QPalette,
 )
-from PyQt5.QtWidgets import (
-    QOpenGLWidget,
-    QWidget,
-    QMessageBox,
-)
+from PyQt5.QtWidgets import QOpenGLWidget, QWidget, QMessageBox, QSizePolicy
 from pathlib import Path
 from enum import IntEnum
 import math
@@ -25,6 +21,7 @@ import math
 from .models import ColorModel, WheelShape, SettingsPerColorModel
 from .setting import SettingsPerColorModel, GlobalSettings
 from .internal_state import STATE
+from .config import *
 
 
 vertex = open(Path(__file__).parent / "fullscreen.vert").read()
@@ -48,14 +45,16 @@ class ColorWheel(QOpenGLWidget):
 
     def __init__(self):
         super().__init__()
-        self.setMinimumHeight(200)
         self.editing = ColorWheel.ColorWheelEditing.Wheel
         self.gl = None
         self.program = None
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         self.res = 1
         self.moveFactor = 1
         self.editStart: QVector2D | None = None
+        self.setMinimumSize(MIN_WHEEL_SIZE, MIN_WHEEL_SIZE)
+        self.setMaximumSize(MAX_WHEEL_SIZE, MAX_WHEEL_SIZE)
 
         STATE.settingsChanged.connect(self.compileShader)
         STATE.colorModelChanged.connect(self.compileShader)
@@ -63,15 +62,25 @@ class ColorWheel(QOpenGLWidget):
         STATE.lockedChannelIndexChanged.connect(self.update)
 
     def resizeEvent(self, e: QResizeEvent | None):
-        super().resizeEvent(e)
-
         if e == None:
             return
 
         size = min(e.size().width(), e.size().height())
-        self.setFixedHeight(size)
+        # self.resize(size, size)
         self.res = size
+        super().resizeEvent(e)
         self.update()
+    
+    def hasHeightForWidth(self) -> bool:
+        return True
+
+    def heightForWidth(self, a0: int) -> int:
+        return a0
+
+    def sizeHint(self) -> QSize:
+        size = super().sizeHint()
+        x = max(size.width(), size.height())
+        return QSize(x, x)
 
     def handleWheelEdit(self, cursor: QVector2D):
         if self.editStart == None:
@@ -248,7 +257,11 @@ class ColorWheel(QOpenGLWidget):
             c = STATE.color[STATE.lockedChannel]
             if settings.ringReversed:
                 c = -c
-            return settings.rotation - (c + 0.5) * 2 * math.pi - math.radians(settings.ringRotation)
+            return (
+                settings.rotation
+                - (c + 0.5) * 2 * math.pi
+                - math.radians(settings.ringRotation)
+            )
         else:
             return settings.rotation
 
@@ -306,7 +319,9 @@ class ColorWheel(QOpenGLWidget):
         self.program.setUniformValue("rotation", self.getActualWheelRotation())
         self.program.setUniformValue("ringThickness", float(settings.ringThickness))
         self.program.setUniformValue("ringMargin", float(settings.ringMargin))
-        self.program.setUniformValue("ringRotation", float(math.radians(settings.ringRotation)))
+        self.program.setUniformValue(
+            "ringRotation", float(math.radians(settings.ringRotation))
+        )
         variables = None
         match STATE.lockedChannel:
             case 0:
@@ -329,7 +344,7 @@ class ColorWheel(QOpenGLWidget):
 
 
 class LockedChannelBar(QOpenGLWidget):
-    def __init__(self):
+    def __init__(self, portable: bool):
         super().__init__()
 
         self.res = 1
@@ -337,18 +352,26 @@ class LockedChannelBar(QOpenGLWidget):
         self.globalSettings = GlobalSettings()
         self.moveFactor = 1
         self.editStart: float | None = None
+        self.portable = portable
         self.compileShader()
         self.updateFromState()
 
+        STATE.colorModelChanged.connect(self.compileShader)
         STATE.settingsChanged.connect(self.updateFromState)
-        STATE.colorModelChanged.connect(self.updateFromState)
         STATE.variablesChanged.connect(self.update)
         STATE.lockedChannelIndexChanged.connect(self.update)
 
     def updateFromState(self):
+        globalSettings = STATE.globalSettings
         settings = STATE.currentSettings()
-        self.setMinimumHeight(settings.barHeight)
-        if settings.barEnabled:
+        barHeight, enabled = (
+            (globalSettings.portableSelectorBarHeight, settings.enabled)
+            if self.portable
+            else (globalSettings.barHeight, settings.barEnabled)
+        )
+
+        self.setMinimumHeight(int(barHeight))
+        if enabled:
             self.show()
         else:
             self.hide()
@@ -445,7 +468,6 @@ class LockedChannelBar(QOpenGLWidget):
             float(STATE.color[ix]),
             float(STATE.color[iy]),
         )
-        print(STATE.color[ix], STATE.color[iy], STATE.lockedChannel)
         self.program.setUniformValue("constantPos", int(STATE.lockedChannel))
         mn, mx = STATE.colorModel.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])

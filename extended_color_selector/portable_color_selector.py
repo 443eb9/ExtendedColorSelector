@@ -35,75 +35,60 @@ from .color_wheel import ColorWheel, LockedChannelBar, WheelShape
 from .models import ColorModel, colorModelFromKrita, transferColorModel
 from .config import SYNC_INTERVAL_MS, DOCKER_NAME, DOCKER_ID
 from .setting import SettingsDialog, GlobalSettingsDialog
+from .internal_state import STATE
 
 
 class PortableColorSelector(QDialog):
-    def __init__(
-        self,
-        variablesChanged: pyqtBoundSignal,
-        constantChanged: pyqtBoundSignal,
-    ):
+    def __init__(self):
         super().__init__()
-        # self.setWindowFlag(Qt.WindowType.Popup, True)
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint, True)
         self.mainLayout = QVBoxLayout(self)
-        self.setFixedWidth(400)
-        self.setMouseTracking(True)
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.installEventFilter(self)
 
         self.colorWheel = ColorWheel()
-        self.lockedChannelBar = LockedChannelBar()
+        self.lockedChannelBar = LockedChannelBar(True)
 
         self.mainLayout.addWidget(self.colorWheel)
         self.mainLayout.addWidget(self.lockedChannelBar)
 
-    def showup(self):
-        self.move(QCursor.pos())
-        self.show()
-        self.activateWindow()
-        self.setFocus()
+        STATE.settingsChanged.connect(self.updateSize)
 
-    # def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
-    #     if a1 != None:
-    #         print(a1.type() == QEvent.Type.MouseButtonRelease)
-    #     return True
+    def updateSize(self):
+        size = STATE.globalSettings.portableSelectorWidth
+        self.setFixedWidth(size + STATE.globalSettings.portableSelectorBarHeight + 2)
+        self.colorWheel.setFixedSize(size, size)
 
-    def mousePressEvent(self, a0: QMouseEvent | None) -> None:
-        print("AAAAAAAAAAAAAAAA")
+    def toggle(self):
+        self.updateSize()
+        print(self.isVisible())
+        if self.isVisible():
+            self.hide()
+        else:
+            print(self.window())
+            self.move(QCursor.pos())
+            self.show()
+            self.activateWindow()
+            self.setFocus()
 
     def focusOutEvent(self, a0: QFocusEvent | None):
         super().focusOutEvent(a0)
         self.hide()
 
+    def leaveEvent(self, a0: QEvent | None) -> None:
+        super().leaveEvent(a0)
+        self.hide()
+
 
 class PortableColorSelectorHandler(Extension):  # type: ignore
-    # def __init__(
-    #     self,
-    #     variablesChanged: pyqtBoundSignal,
-    #     constantChanged: pyqtBoundSignal,
-    # ):
-    def __init__(
-        self
-    ):
+    def __init__(self):
         super().__init__()
-        # self.selector = PortableColorSelector(variablesChanged, constantChanged)
-        # self.bindShortcut()
+        self.selector = PortableColorSelector()
 
     def setup(self):
         pass
 
-    # def bindShortcut(self):
-    #     active = Krita.instance().activeWindow()  # type: ignore
-    #     if active == None:
-    #         return
-    #     window: QWindow = active.qwindow()
-    #     self.shortcut = QShortcut(QKeySequence("P"), window)
-    #     self.shortcut.activated.connect(self.selector.showup)
-
-    def createActions(self, window):
-        # self.shortcut = QShortcut(QKeySequence("P"), window.qwindow())
-        # self.shortcut.activated.connect(self.selector.showup)
-        pass
+    def createActions(self, window: Window):  # type: ignore
+        self.shortcut = QShortcut(QKeySequence("P"), window.qwindow())
+        self.shortcut.activated.connect(self.selector.toggle)
 
 
 Krita.instance().addExtension(PortableColorSelectorHandler())  # type: ignore

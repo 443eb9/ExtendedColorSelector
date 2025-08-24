@@ -672,7 +672,6 @@ class SettingsPerColorModel:
         self.ringReversed = getOrDefault(s, "False") == "True"
         self.wheelRotateWithRing = getOrDefault(s, "False") == "True"
         self.lockedChannelIndex = int(getOrDefault(s, "0"))
-        self.barHeight = int(getOrDefault(s, "20"))
 
     def write(self, colorModel: ColorModel):
         s = [
@@ -719,6 +718,9 @@ class GlobalSettings:
             float(getOrDefault(s, "0.5")),
             float(getOrDefault(s, "0.5")),
         )
+        self.barHeight = int(getOrDefault(s, "20"))
+        self.portableSelectorWidth = int(getOrDefault(s, "400"))
+        self.portableSelectorBarHeight = int(getOrDefault(s, "20"))
 
     def write(self):
         s = [
@@ -726,5 +728,8 @@ class GlobalSettings:
             self.outOfGamutColor[0],
             self.outOfGamutColor[1],
             self.outOfGamutColor[2],
+            self.barHeight,
+            self.portableSelectorWidth,
+            self.portableSelectorBarHeight,
         ]
         Krita.instance().writeSetting(DOCKER_NAME, "global", ",".join([str(x) for x in s]))  # type: ignore

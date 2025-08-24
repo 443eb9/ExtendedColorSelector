@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import (
     QLabel,
     QColorDialog,
     QMessageBox,
+    QGroupBox,
 )
 from krita import *  # type: ignore
 
@@ -85,20 +86,11 @@ class SettingsDialog(QDialog):
             pageLayout = QVBoxLayout()
             page.setLayout(pageLayout)
 
-            barSettingsLayout = QHBoxLayout()
             barEnabled = QCheckBox(f"Enable {colorModel.displayName()} Bar")
             barEnabled.setChecked(settings.barEnabled)
             barEnabled.clicked.connect(
                 lambda x, cm=colorModel: self.changeSetting(cm, "barEnabled", x)
             )
-            barHeightBox = QSpinBox()
-            barHeightBox.setValue(settings.barHeight)
-            barHeightBox.valueChanged.connect(
-                lambda x, cm=colorModel: self.changeSetting(cm, "barHeight", x)
-            )
-            barSettingsLayout.addWidget(barEnabled)
-            barSettingsLayout.addWidget(QLabel("Bar Height"))
-            barSettingsLayout.addWidget(barHeightBox)
 
             channelsSpinBoxEnabled = QCheckBox(f"Display Channel Values")
             channelsSpinBoxEnabled.setChecked(settings.displayChannels)
@@ -119,6 +111,7 @@ class SettingsDialog(QDialog):
 
             wheelRotationBox = QDoubleSpinBox()
             wheelRotationBox.setMaximum(360)
+            wheelRotationBox.setValue(settings.rotation)
             wheelRotationBox.valueChanged.connect(
                 lambda rot, cm=colorModel: self.changeSetting(cm, "rotation", rot)
             )
@@ -168,8 +161,8 @@ class SettingsDialog(QDialog):
                 lambda x, cm=colorModel: self.changeSetting(cm, "ringReversed", x)
             )
             ringRotation = QDoubleSpinBox()
-            ringRotation.setValue(settings.ringRotation)
             ringRotation.setMaximum(360)
+            ringRotation.setValue(settings.ringRotation)
             ringRotation.valueChanged.connect(
                 lambda rot, cm=colorModel: self.changeSetting(cm, "ringRotation", rot)
             )
@@ -193,7 +186,7 @@ class SettingsDialog(QDialog):
                 lambda x, cm=colorModel: self.changeSetting(cm, "ringEnabled", x)
             )
 
-            pageLayout.addLayout(barSettingsLayout)
+            pageLayout.addWidget(barEnabled)
             pageLayout.addWidget(channelsSpinBoxEnabled)
             pageLayout.addLayout(shapeButtonsAndRotLayout)
             pageLayout.addLayout(axesSettingsLayout)
@@ -245,7 +238,9 @@ class SettingsDialog(QDialog):
 
     def write(self):
         Krita.instance().writeSetting(  # type: ignore
-            DOCKER_NAME, "displayOrder", ",".join([str(i) for i in STATE.globalSettings.displayOrder])
+            DOCKER_NAME,
+            "displayOrder",
+            ",".join([str(i) for i in STATE.globalSettings.displayOrder]),
         )
         for colorModel, settings in STATE.settings.items():
             settings.write(colorModel)
@@ -292,7 +287,36 @@ class GlobalSettingsDialog(QDialog):
         outOfGamutColorPicker.enableButton.clicked.connect(
             lambda x: self.changeSetting("outOfGamutColorEnabled", x)
         )
+
+        barHeightLayout = QHBoxLayout()
+        barHeightBox = QSpinBox()
+        barHeightBox.setValue(settings.barHeight)
+        barHeightBox.valueChanged.connect(lambda x: self.changeSetting("barHeight", x))
+        barHeightLayout.addWidget(QLabel("Bar Height"))
+        barHeightLayout.addWidget(barHeightBox)
+
+        portableSelectorSettingsGroup = QGroupBox("Portable Color Selector")
+        pSettingsLayout = QHBoxLayout()
+        pWidthBox = QSpinBox()
+        pWidthBox.setMaximum(1000)
+        pWidthBox.setValue(settings.portableSelectorWidth)
+        pWidthBox.valueChanged.connect(
+            lambda x: self.changeSetting("portableSelectorWidth", x)
+        )
+        pBarHeightBox = QSpinBox()
+        pBarHeightBox.setValue(settings.portableSelectorBarHeight)
+        pBarHeightBox.valueChanged.connect(
+            lambda x: self.changeSetting("portableSelectorBarHeight", x)
+        )
+        pSettingsLayout.addWidget(QLabel("Width"))
+        pSettingsLayout.addWidget(pWidthBox)
+        pSettingsLayout.addWidget(QLabel("Bar Height"))
+        pSettingsLayout.addWidget(pBarHeightBox)
+        portableSelectorSettingsGroup.setLayout(pSettingsLayout)
+
         self.mainLayout.addWidget(outOfGamutColorPicker)
+        self.mainLayout.addLayout(barHeightLayout)
+        self.mainLayout.addWidget(portableSelectorSettingsGroup)
         self.mainLayout.addStretch(1)
 
     def changeSetting(self, name: str, value: object):
@@ -300,4 +324,4 @@ class GlobalSettingsDialog(QDialog):
         STATE.settingsChanged.emit()
 
     def closeEvent(self, a0: QCloseEvent | None) -> None:
-        self.settings.write()
+        STATE.globalSettings.write()
