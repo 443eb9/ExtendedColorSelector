@@ -51,7 +51,8 @@ class ColorWheel(QOpenGLWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         self.res = 1
-        self.editStart: QVector2D | None = None
+        self.editStart = QVector2D()
+        self.shiftStart = QVector2D()
         self.setMinimumSize(MIN_WHEEL_SIZE, MIN_WHEEL_SIZE)
         self.setMaximumSize(MAX_WHEEL_SIZE, MAX_WHEEL_SIZE)
 
@@ -119,12 +120,15 @@ class ColorWheel(QOpenGLWidget):
         STATE.updateLockedChannelValue(v)
 
     def handleMouse(self, event: QMouseEvent | None):
-        if event == None or self.editStart == None:
+        if event == None:
             return
 
-        cursor = self.editStart + (
-            QVector2D(event.pos()) - self.editStart
-        ) * computeMoveFactor(event)
+        f = computeMoveFactor(event)
+        cursor = None
+        if f == 1:
+            cursor = self.editStart + (QVector2D(event.pos()) - self.editStart)
+        else:
+            cursor = self.editStart + (QVector2D(event.pos()) - self.shiftStart) * f
         match self.editing:
             case ColorWheel.ColorWheelEditing.Wheel:
                 self.handleWheelEdit(cursor)
@@ -137,7 +141,10 @@ class ColorWheel(QOpenGLWidget):
 
         STATE.suppressColorSyncing = True
         settings = STATE.currentSettings()
-        self.editStart = QVector2D(a0.pos())
+        x, y = self.getCurrentWheelWidgetCoord()
+        self.editStart = QVector2D(x, y)
+        self.shiftStart = QVector2D(a0.pos())
+
         d = QVector2D(a0.pos()).distanceToPoint(QVector2D(self.res, self.res) * 0.5)
         if (
             settings.ringThickness == 0 and settings.ringMargin == 0
@@ -160,9 +167,7 @@ class ColorWheel(QOpenGLWidget):
     def leaveEvent(self, a0: QEvent | None) -> None:
         STATE.suppressColorSyncing = False
 
-    def paintEvent(self, e: QPaintEvent | None):
-        super().paintEvent(e)
-
+    def getCurrentWheelWidgetCoord(self) -> tuple[float, float]:
         settings = STATE.currentSettings()
         ix, iy = 0, 0
         match STATE.lockedChannel:
@@ -196,16 +201,10 @@ class ColorWheel(QOpenGLWidget):
         y = 1 - y
         x, y = x * self.res, y * self.res
 
-        painter = QPainter(self)
-        painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
-        painter.drawArc(
-            QRectF(x - 4, y - 3, 8, 8),
-            0,
-            360 * 16,
-        )
+        return x, y
 
-        if settings.ringThickness == 0:
-            return
+    def getCurrentRingWidgetCoord(self) -> tuple[float, float]:
+        settings = STATE.currentSettings()
 
         ringX, ringY = settings.shape.getRingPos(
             (
@@ -217,6 +216,25 @@ class ColorWheel(QOpenGLWidget):
             math.radians(settings.ringRotation),
         )
         ringX, ringY = (ringX * 0.5 + 0.5) * self.res, (-ringY * 0.5 + 0.5) * self.res
+        return ringX, ringY
+
+    def paintEvent(self, e: QPaintEvent | None):
+        super().paintEvent(e)
+
+        x, y = self.getCurrentWheelWidgetCoord()
+        painter = QPainter(self)
+        painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
+        painter.drawArc(
+            QRectF(x - 4, y - 3, 8, 8),
+            0,
+            360 * 16,
+        )
+
+        settings = STATE.currentSettings()
+        if settings.ringThickness == 0:
+            return
+
+        ringX, ringY = self.getCurrentRingWidgetCoord()
         painter.drawArc(QRectF(ringX - 4, ringY - 2, 8, 8), 0, 360 * 16)
 
     def initializeGL(self):
@@ -358,7 +376,8 @@ class LockedChannelBar(QOpenGLWidget):
         self.res = 1
         self.settings = SettingsPerColorModel(ColorModel.Rgb)
         self.globalSettings = GlobalSettings()
-        self.editStart: float | None = None
+        self.editStart = 0.0
+        self.shiftStart = 0.0
         self.portable = portable
         self.compileShader()
         self.updateFromState()
@@ -394,10 +413,14 @@ class LockedChannelBar(QOpenGLWidget):
         self.update()
 
     def handleMouse(self, event: QMouseEvent | None):
-        if event == None or self.editStart == None:
+        if event == None:
             return
 
-        x = self.editStart + (event.x() - self.editStart) * computeMoveFactor(event)
+        f = computeMoveFactor(event)
+        if f == 1:
+            x = self.editStart + (event.x() - self.editStart)
+        else:
+            x = self.editStart + (event.x() - self.shiftStart) * f
         x = max(min(x, self.res), 0)
         STATE.updateLockedChannelValue(x / self.res)
         self.update()
@@ -406,13 +429,17 @@ class LockedChannelBar(QOpenGLWidget):
         if a0 == None:
             return
 
-        self.editStart = a0.pos().x()
+        self.editStart = self.getCurrentWidgetCoord()
+        self.shiftStart = a0.pos().x()
         self.handleMouse(a0)
 
     def mouseMoveEvent(self, a0: QMouseEvent | None):
         self.handleMouse(a0)
 
     def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
+        if a0 == None:
+            return
+        self.editStart = a0.pos().x()
         STATE.suppressColorSyncing = False
 
     def enterEvent(self, a0: QEvent | None) -> None:
@@ -421,12 +448,15 @@ class LockedChannelBar(QOpenGLWidget):
     def leaveEvent(self, a0: QEvent | None) -> None:
         STATE.suppressColorSyncing = False
 
+    def getCurrentWidgetCoord(self) -> float:
+        return STATE.color[STATE.lockedChannel] * self.width()
+
     def paintEvent(self, e: QPaintEvent | None):
         super().paintEvent(e)
         painter = QPainter(self)
         painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
 
-        x = int(STATE.color[STATE.lockedChannel] * self.width())
+        x = int(self.getCurrentWidgetCoord())
         painter.drawRect(x - 1, 0, 2, self.height())
 
     def initializeGL(self):
