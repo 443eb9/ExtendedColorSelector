@@ -97,6 +97,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.colorWheel.reverseY = settings.reverseY
         self.colorWheel.ringReversed = settings.ringReversed
         self.colorWheel.ringRotation = math.radians(settings.ringRotation)
+        self.colorWheel.wheelRotateWithRing = settings.wheelRotateWithRing
         self.colorWheel.outOfGamut = (
             settings.outOfGamutColor if settings.outOfGamutColorEnabled else None
         )

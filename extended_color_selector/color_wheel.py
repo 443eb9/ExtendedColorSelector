@@ -106,7 +106,6 @@ class WheelShape(IntEnum):
 
     def getRingValue(self, p: tuple[float, float], rotation: float) -> float:
         x = (math.atan2(p[1], p[0]) + rotation) / 2.0 / math.pi + 0.5
-        print(p, x)
         return x - int(x)
 
     def getPos(
@@ -181,6 +180,7 @@ class ColorWheel(QOpenGLWidget):
         self.ringMargin = 0.0
         self.ringReversed = False
         self.ringRotation = 0.0
+        self.wheelRotateWithRing = False
 
         self.variablesChanged = variablesChanged
         self.constantChanged = constantChanged
@@ -223,8 +223,9 @@ class ColorWheel(QOpenGLWidget):
 
         x, y = x * 2.0 - 1.0, y * 2.0 - 1.0
         y = -y
-        s = math.sin(self.rotation)
-        c = math.cos(self.rotation)
+        rot = self.getActualWheelRotation()
+        s = math.sin(rot)
+        c = math.cos(rot)
         x, y = x * c - y * s, x * s + y * c
 
         if self.swapAxes:
@@ -299,8 +300,9 @@ class ColorWheel(QOpenGLWidget):
         if self.swapAxes:
             x, y = y, x
 
-        s = math.sin(-self.rotation)
-        c = math.cos(-self.rotation)
+        rot = self.getActualWheelRotation()
+        s = math.sin(-rot)
+        c = math.cos(-rot)
         x, y = x * c - y * s, y * c + x * s
 
         x, y = x * 0.5 + 0.5, y * 0.5 + 0.5
@@ -359,6 +361,15 @@ class ColorWheel(QOpenGLWidget):
         self.program.addShader(vert)
         self.program.addShader(frag)
         self.program.link()
+    
+    def getActualWheelRotation(self) -> float:
+        if self.wheelRotateWithRing:
+            c = self.color[self.constantPos]
+            if self.ringReversed:
+                c = -c
+            return self.rotation - (c + 0.5) * 2 * math.pi - self.ringRotation
+        else:
+            return self.rotation
 
     def paintGL(self):
         if self.gl == None:
@@ -400,7 +411,7 @@ class ColorWheel(QOpenGLWidget):
             self.program.setUniformValue(
                 "outOfGamut", self.outOfGamut[0], self.outOfGamut[1], self.outOfGamut[2]
             )
-        self.program.setUniformValue("rotation", self.rotation)
+        self.program.setUniformValue("rotation", self.getActualWheelRotation())
         self.program.setUniformValue("ringThickness", float(self.ringThickness))
         self.program.setUniformValue("ringMargin", float(self.ringMargin))
         self.program.setUniformValue("ringRotation", float(self.ringRotation))

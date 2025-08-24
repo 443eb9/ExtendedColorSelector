@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (
     QColorDialog,
     QToolButton,
     QMessageBox,
-    QGridLayout
+    QGridLayout,
 )
 import math
 from krita import *  # type: ignore
@@ -184,7 +184,6 @@ class SettingsDialog(QDialog):
                 shapesGroup.addButton(button)
 
             wheelRotationBox = QDoubleSpinBox()
-            wheelRotationBox.setMinimum(0)
             wheelRotationBox.setMaximum(360)
             wheelRotationBox.valueChanged.connect(
                 lambda rot, cm=colorModel: self.changeSetting(cm, "rotation", rot)
@@ -236,12 +235,21 @@ class SettingsDialog(QDialog):
             )
             ringRotation = QDoubleSpinBox(self)
             ringRotation.setValue(settings.ringRotation)
+            ringRotation.setMaximum(360)
             ringRotation.valueChanged.connect(
                 lambda rot, cm=colorModel: self.changeSetting(cm, "ringRotation", rot)
             )
             ringSettingsLayout2.addWidget(ringReversed)
             ringSettingsLayout2.addWidget(QLabel("Ring Rotation"))
             ringSettingsLayout2.addWidget(ringRotation)
+            wheelRotateWithRingBox = QCheckBox("Wheel Rotate With Ring")
+            wheelRotateWithRingBox.setChecked(settings.wheelRotateWithRing)
+            wheelRotateWithRingBox.clicked.connect(
+                lambda x, cm=colorModel: self.changeSetting(
+                    cm, "wheelRotateWithRing", x
+                )
+            )
+            ringSettingsLayouts.addWidget(wheelRotateWithRingBox)
             ringSettingsLayouts.addLayout(ringSettingsLayout1)
             ringSettingsLayouts.addLayout(ringSettingsLayout2)
 
