@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt, pyqtBoundSignal
-from PyQt5.QtGui import QCloseEvent, QColor, QMouseEvent
+from PyQt5.QtCore import Qt, pyqtBoundSignal, pyqtSignal
+from PyQt5.QtGui import QCloseEvent, QColor, QKeyEvent, QMouseEvent, QKeySequence
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (
     QColorDialog,
     QMessageBox,
     QGroupBox,
+    QLineEdit,
 )
 from krita import *  # type: ignore
 
@@ -43,6 +44,7 @@ class OptionalColorPicker(QWidget):
         self.mainLayout.addWidget(self.indicator)
 
         self.indicator.clicked.connect(self.dialog.show)
+        self.indicator.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.dialog.colorSelected.connect(self.updateColor)
 
     def enableChanged(self, enabled: bool):
@@ -296,7 +298,8 @@ class GlobalSettingsDialog(QDialog):
         barHeightLayout.addWidget(barHeightBox)
 
         portableSelectorSettingsGroup = QGroupBox("Portable Color Selector")
-        pSettingsLayout = QHBoxLayout()
+        pSettingsLayouts = QVBoxLayout()
+        pSettingsLayout1 = QHBoxLayout()
         pWidthBox = QSpinBox()
         pWidthBox.setMaximum(1000)
         pWidthBox.setValue(settings.portableSelectorWidth)
@@ -308,11 +311,28 @@ class GlobalSettingsDialog(QDialog):
         pBarHeightBox.valueChanged.connect(
             lambda x: self.changeSetting("portableSelectorBarHeight", x)
         )
-        pSettingsLayout.addWidget(QLabel("Width"))
-        pSettingsLayout.addWidget(pWidthBox)
-        pSettingsLayout.addWidget(QLabel("Bar Height"))
-        pSettingsLayout.addWidget(pBarHeightBox)
-        portableSelectorSettingsGroup.setLayout(pSettingsLayout)
+        pSettingsLayout1.addWidget(QLabel("Width"))
+        pSettingsLayout1.addWidget(pWidthBox)
+        pSettingsLayout1.addWidget(QLabel("Bar Height"))
+        pSettingsLayout1.addWidget(pBarHeightBox)
+        pSettingsLayout2 = QHBoxLayout()
+        pShortcut = QLineEdit(settings.portableSelectorShortcut)
+
+        def setShortcut():
+            try:
+                x = pShortcut.text()
+                _ = QKeySequence(x)
+                self.changeSetting("portableSelectorShortcut", x)
+            except:
+                pShortcut.setText(settings.portableSelectorShortcut)
+                return
+
+        pShortcut.editingFinished.connect(setShortcut)
+        pSettingsLayout2.addWidget(QLabel("Shortcut"))
+        pSettingsLayout2.addWidget(pShortcut)
+        pSettingsLayouts.addLayout(pSettingsLayout1)
+        pSettingsLayouts.addLayout(pSettingsLayout2)
+        portableSelectorSettingsGroup.setLayout(pSettingsLayouts)
 
         self.mainLayout.addWidget(outOfGamutColorPicker)
         self.mainLayout.addLayout(barHeightLayout)

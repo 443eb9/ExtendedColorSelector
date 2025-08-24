@@ -721,6 +721,7 @@ class GlobalSettings:
         self.barHeight = int(getOrDefault(s, "20"))
         self.portableSelectorWidth = int(getOrDefault(s, "400"))
         self.portableSelectorBarHeight = int(getOrDefault(s, "20"))
+        self.portableSelectorShortcut = getOrDefault(s, "Y")
 
     def write(self):
         s = [
@@ -731,5 +732,6 @@ class GlobalSettings:
             self.barHeight,
             self.portableSelectorWidth,
             self.portableSelectorBarHeight,
+            self.portableSelectorShortcut,
         ]
         Krita.instance().writeSetting(DOCKER_NAME, "global", ",".join([str(x) for x in s]))  # type: ignore

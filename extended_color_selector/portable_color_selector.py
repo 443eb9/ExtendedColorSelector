@@ -50,20 +50,18 @@ class PortableColorSelector(QDialog):
         self.mainLayout.addWidget(self.colorWheel)
         self.mainLayout.addWidget(self.lockedChannelBar)
 
-        STATE.settingsChanged.connect(self.updateSize)
+        STATE.settingsChanged.connect(self.updateFromSettings)
 
-    def updateSize(self):
+    def updateFromSettings(self):
         size = STATE.globalSettings.portableSelectorWidth
         self.setFixedWidth(size + STATE.globalSettings.portableSelectorBarHeight + 2)
         self.colorWheel.setFixedSize(size, size)
 
     def toggle(self):
-        self.updateSize()
-        print(self.isVisible())
+        self.updateFromSettings()
         if self.isVisible():
             self.hide()
         else:
-            print(self.window())
             self.move(QCursor.pos())
             self.show()
             self.activateWindow()
@@ -82,6 +80,10 @@ class PortableColorSelectorHandler(Extension):  # type: ignore
     def __init__(self):
         super().__init__()
         self.selector = PortableColorSelector()
+        STATE.settingsChanged.connect(self.updateFromSettings)
+
+    def updateFromSettings(self):
+        self.shortcut.setKey(STATE.globalSettings.portableSelectorShortcut)
 
     def setup(self):
         pass
