@@ -51,7 +51,6 @@ class ColorWheel(QOpenGLWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         self.res = 1
-        self.moveFactor = 1
         self.editStart: QVector2D | None = None
         self.setMinimumSize(MIN_WHEEL_SIZE, MIN_WHEEL_SIZE)
         self.setMaximumSize(MAX_WHEEL_SIZE, MAX_WHEEL_SIZE)
@@ -70,7 +69,7 @@ class ColorWheel(QOpenGLWidget):
         self.res = size
         super().resizeEvent(e)
         self.update()
-    
+
     def hasHeightForWidth(self) -> bool:
         return True
 
@@ -123,9 +122,9 @@ class ColorWheel(QOpenGLWidget):
         if event == None or self.editStart == None:
             return
 
-        cursor = (
-            self.editStart + (QVector2D(event.pos()) - self.editStart) * self.moveFactor
-        )
+        cursor = self.editStart + (
+            QVector2D(event.pos()) - self.editStart
+        ) * computeMoveFactor(event)
         match self.editing:
             case ColorWheel.ColorWheelEditing.Wheel:
                 self.handleWheelEdit(cursor)
@@ -137,7 +136,6 @@ class ColorWheel(QOpenGLWidget):
             return
 
         settings = STATE.currentSettings()
-        self.moveFactor = computeMoveFactor(a0)
         self.editStart = QVector2D(a0.pos())
         d = QVector2D(a0.pos()).distanceToPoint(QVector2D(self.res, self.res) * 0.5)
         if (
@@ -350,7 +348,6 @@ class LockedChannelBar(QOpenGLWidget):
         self.res = 1
         self.settings = SettingsPerColorModel(ColorModel.Rgb)
         self.globalSettings = GlobalSettings()
-        self.moveFactor = 1
         self.editStart: float | None = None
         self.portable = portable
         self.compileShader()
@@ -390,7 +387,7 @@ class LockedChannelBar(QOpenGLWidget):
         if event == None or self.editStart == None:
             return
 
-        x = self.editStart + (event.x() - self.editStart) * self.moveFactor
+        x = self.editStart + (event.x() - self.editStart) * computeMoveFactor(event)
         x = max(min(x, self.res), 0)
         STATE.updateLockedChannelValue(x / self.res)
         self.update()
@@ -399,7 +396,6 @@ class LockedChannelBar(QOpenGLWidget):
         if a0 == None:
             return
 
-        self.moveFactor = computeMoveFactor(a0)
         self.editStart = a0.pos().x()
         self.handleMouse(a0)
 
