@@ -12,6 +12,8 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
   - Color picker rotate with ring.
 - Flexible and tiny. Thanks to OpenGL shaders and mathemagics, we can draw color wheels realtime.
 - Portable color selector. Open the selector at anywhere on canvas using shortcut.
+- `Shift` and `Alt` modifiers to move slowly.
+- Out of gamut hinting.
 
 ## How to use
 
