@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt, pyqtBoundSignal
-from PyQt5.QtGui import QCloseEvent, QColor
+from PyQt5.QtGui import QCloseEvent, QColor, QMouseEvent
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -21,63 +21,9 @@ from PyQt5.QtWidgets import (
 from krita import *  # type: ignore
 
 from .color_wheel import WheelShape
-from .models import ColorModel
+from .models import ColorModel, SettingsPerColorModel, GlobalSettings
 from .config import *
-
-
-def getOrDefault(l: list[str], default: str) -> str:
-    try:
-        s = l.pop()
-        return s
-    except:
-        return default
-
-
-class SettingsPerColorModel:
-    def __init__(self, settings: str) -> None:
-        try:
-            self.initFrom(settings)
-        except:
-            self.initFrom("")
-
-    def initFrom(self, settings: str):
-        s = [] if len(settings) == 0 else list(reversed(settings.split(",")))
-        self.enabled = getOrDefault(s, "True") == "True"
-        self.barEnabled = getOrDefault(s, "True") == "True"
-        self.shape = WheelShape(int(getOrDefault(s, "0")))
-        self.displayChannels = getOrDefault(s, "True") == "True"
-        self.swapAxes = getOrDefault(s, "False") == "True"
-        self.reverseX = getOrDefault(s, "False") == "True"
-        self.reverseY = getOrDefault(s, "False") == "True"
-        self.rotation = float(getOrDefault(s, "0"))
-        self.ringEnabled = getOrDefault(s, "False") == "True"
-        self.ringThickness = float(getOrDefault(s, "0"))
-        self.ringMargin = float(getOrDefault(s, "0"))
-        self.ringRotation = float(getOrDefault(s, "0"))
-        self.ringReversed = getOrDefault(s, "False") == "True"
-        self.wheelRotateWithRing = getOrDefault(s, "False") == "True"
-        self.lockedChannelIndex = int(getOrDefault(s, "0"))
-        self.barHeight = int(getOrDefault(s, "20"))
-
-    def write(self, colorModel: ColorModel):
-        s = [
-            self.enabled,
-            self.barEnabled,
-            int(self.shape),
-            self.displayChannels,
-            self.swapAxes,
-            self.reverseX,
-            self.reverseY,
-            self.rotation,
-            self.ringEnabled,
-            self.ringThickness,
-            self.ringMargin,
-            self.ringRotation,
-            self.ringReversed,
-            self.wheelRotateWithRing,
-            self.lockedChannelIndex,
-        ]
-        Krita.instance().writeSetting(DOCKER_NAME, colorModel.displayName(), ",".join([str(x) for x in s]))  # type: ignore
+from .internal_state import STATE
 
 
 class OptionalColorPicker(QWidget):
@@ -115,24 +61,9 @@ class OptionalColorPicker(QWidget):
 
 
 class SettingsDialog(QDialog):
-    def __init__(self, settingsChanged: pyqtBoundSignal) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self.settingsChanged = settingsChanged
-
-        self.colorModelSettings: dict[ColorModel, SettingsPerColorModel] = {}
-        for colorModel in ColorModel:
-            raw = Krita.instance().readSetting(DOCKER_NAME, colorModel.displayName(), "")  # type: ignore
-            self.colorModelSettings[colorModel] = SettingsPerColorModel(raw)
-
-        order: str = Krita.instance().readSetting(DOCKER_NAME, "displayOrder", "")  # type: ignore
-        orderList = order.split(",")
-        self.displayOrder = (
-            list(range(len(ColorModel)))
-            if len(order) == 0
-            else [int(cmi) for cmi in orderList]
-        )
-
-        self.setFixedSize(SETTINGS_FIALOG_SIZE[0], SETTINGS_FIALOG_SIZE[1])
+        self.setFixedSize(SETTINGS_DIALOG_SIZE[0], SETTINGS_DIALOG_SIZE[1])
         self.mainLayout = QHBoxLayout(self)
         self.setWindowTitle("Extended Color Selector - Settings")
 
@@ -140,7 +71,7 @@ class SettingsDialog(QDialog):
         pageSwitchers.setDropIndicatorShown(True)
         pageSwitchers.setDragDropMode(QListWidget.DragDropMode.InternalMove)
         pages = QStackedLayout()
-        for colorModel, settings in self.colorModelSettings.items():
+        for colorModel, settings in STATE.settings.items():
             pageSwitchers.addItem(colorModel.displayName())
             button = pageSwitchers.item(pageSwitchers.count() - 1)
             if button == None:
@@ -286,14 +217,14 @@ class SettingsDialog(QDialog):
         self.mainLayout.addLayout(pages)
 
     def changeSetting(self, colorModel: ColorModel, name: str, value: object):
-        setattr(self.colorModelSettings[colorModel], name, value)
-        self.settingsChanged.emit()
+        setattr(STATE.settings[colorModel], name, value)
+        STATE.settingsChanged.emit()
 
     def handleColorModelEnabledChange(self, widget: QListWidgetItem):
         colorModel = ColorModel(
             [cm.displayName() for cm in ColorModel].index(widget.text())
         )
-        self.colorModelSettings[colorModel].enabled = (
+        STATE.settings[colorModel].enabled = (
             widget.checkState() == Qt.CheckState.Checked
         )
         self.updateOrder()
@@ -305,72 +236,42 @@ class SettingsDialog(QDialog):
 
         widgets: list[QListWidgetItem] = widgets
         names = [cm.displayName() for cm in ColorModel]
-        self.displayOrder.clear()
+        STATE.globalSettings.displayOrder.clear()
         for colorModel in [ColorModel(names.index(w.text())) for w in widgets]:
-            if self.colorModelSettings[colorModel].enabled:
-                self.displayOrder.append(int(colorModel))
+            if STATE.settings[colorModel].enabled:
+                STATE.globalSettings.displayOrder.append(int(colorModel))
 
-        self.settingsChanged.emit()
+        STATE.settingsChanged.emit()
 
     def write(self):
         Krita.instance().writeSetting(  # type: ignore
-            DOCKER_NAME, "displayOrder", ",".join([str(i) for i in self.displayOrder])
+            DOCKER_NAME, "displayOrder", ",".join([str(i) for i in STATE.globalSettings.displayOrder])
         )
-        for colorModel, settings in self.colorModelSettings.items():
+        for colorModel, settings in STATE.settings.items():
             settings.write(colorModel)
 
     def closeEvent(self, a0: QCloseEvent | None) -> None:
-        if len(self.displayOrder) == 0:
+        if len(STATE.globalSettings.displayOrder) == 0:
             QMessageBox.warning(
                 self,
                 "Extended Color Selector - Warn",
                 "You need to enable at least one color model.",
             )
-            self.colorModelSettings[ColorModel.Rgb].enabled = True
+            STATE.settings[ColorModel.Rgb].enabled = True
             self.displayOrder.append(0)
-            self.settingsChanged.emit()
+            STATE.settingsChanged.emit()
             return
         self.write()
 
 
-class GlobalSettings:
-    def __init__(self):
-        settings: str = Krita.instance().readSetting(DOCKER_NAME, "global", "")  # type: ignore
-        try:
-            self.initFrom(settings)
-        except:
-            self.initFrom("")
-
-    def initFrom(self, settings: str):
-        s = [] if len(settings) == 0 else list(reversed(settings.split(",")))
-        self.outOfGamutColorEnabled = getOrDefault(s, "True") == "True"
-        self.outOfGamutColor = (
-            float(getOrDefault(s, "0.5")),
-            float(getOrDefault(s, "0.5")),
-            float(getOrDefault(s, "0.5")),
-        )
-
-    def write(self):
-        s = [
-            self.outOfGamutColorEnabled,
-            self.outOfGamutColor[0],
-            self.outOfGamutColor[1],
-            self.outOfGamutColor[2],
-        ]
-        Krita.instance().writeSetting(DOCKER_NAME, "global", ",".join([str(x) for x in s]))  # type: ignore
-
-
 class GlobalSettingsDialog(QDialog):
-    def __init__(self, settingsChanged: pyqtBoundSignal):
+    def __init__(self):
         super().__init__()
-        settings = GlobalSettings()
-        self.settings = settings
-        self.settingsChanged = settingsChanged
-
+        settings = STATE.globalSettings
         self.mainLayout = QVBoxLayout(self)
         self.setWindowTitle("Extended Color Selector - Global Settings")
         self.setFixedSize(
-            GLOBAL_SETTINGS_FIALOG_SIZE[0], GLOBAL_SETTINGS_FIALOG_SIZE[1]
+            GLOBAL_SETTINGS_DIALOG_SIZE[0], GLOBAL_SETTINGS_DIALOG_SIZE[1]
         )
 
         outOfGamutColorPicker = OptionalColorPicker(
@@ -395,8 +296,8 @@ class GlobalSettingsDialog(QDialog):
         self.mainLayout.addStretch(1)
 
     def changeSetting(self, name: str, value: object):
-        setattr(self.settings, name, value)
-        self.settingsChanged.emit()
+        setattr(STATE.globalSettings, name, value)
+        STATE.settingsChanged.emit()
 
     def closeEvent(self, a0: QCloseEvent | None) -> None:
         self.settings.write()

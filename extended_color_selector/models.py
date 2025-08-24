@@ -1,6 +1,147 @@
-from enum import IntEnum
+from PyQt5.QtCore import pyqtBoundSignal, QRectF, QPoint, Qt
+from PyQt5.QtGui import (
+    QMouseEvent,
+    QOpenGLVersionProfile,
+    QPaintEvent,
+    QResizeEvent,
+    QSurfaceFormat,
+    QOpenGLShader,
+    QOpenGLShaderProgram,
+    QPainter,
+    QBrush,
+    QColor,
+    QVector2D,
+    QPalette,
+)
+from PyQt5.QtWidgets import (
+    QOpenGLWidget,
+    QWidget,
+    QMessageBox,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+)
 from pathlib import Path
+from enum import IntEnum
 import math
+
+from .config import DOCKER_NAME
+
+
+class WheelShape(IntEnum):
+    Square = 0
+    Triangle = 1
+    Circle = 2
+
+    def displayName(self) -> str:
+        match self:
+            case WheelShape.Square:
+                return "Square"
+            case WheelShape.Triangle:
+                return "Triangle"
+            case WheelShape.Circle:
+                return "Circle"
+
+    def modifyShader(self, shader: str) -> str:
+        name = None
+        match self:
+            case WheelShape.Square:
+                name = "square"
+            case WheelShape.Triangle:
+                name = "triangle"
+            case WheelShape.Circle:
+                name = "circle"
+
+        component = open(
+            Path(__file__).parent / "shader_components" / "shapes" / f"{name}.glsl"
+        ).read()[
+            18:
+        ]  # To strip the version directive
+        return shader.replace(
+            "vec3 getColorCoordAndAntialias(vec2 p, float normalizedRingThickness);",
+            component,
+        )
+
+    def getColorCoord(
+        self, p: tuple[float, float], normalizedRingThickness: float
+    ) -> tuple[float, float]:
+        x, y = p
+        match self:
+            case WheelShape.Square:
+                if normalizedRingThickness == 0:
+                    return x * 0.5 + 0.5, y * 0.5 + 0.5
+
+                d = 2.0 - normalizedRingThickness * 2
+                halfA = d / math.sqrt(2.0) * 0.5
+                x, y = min(max(x, -halfA), halfA), min(max(y, -halfA), halfA)
+
+                return x / halfA * 0.5 + 0.5, y / halfA * 0.5 + 0.5
+            case WheelShape.Triangle:
+                p = QVector2D(x, y)
+                RAD_120 = math.pi * 120.0 / 180.0
+                t = 1.0 - normalizedRingThickness
+                v0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0)) * t
+                v1 = QVector2D(math.cos(RAD_120 * 1.0), math.sin(RAD_120 * 1.0)) * t
+                v2 = QVector2D(math.cos(RAD_120 * 2.0), math.sin(RAD_120 * 2.0)) * t
+                vc = (v1 + v2) / 2.0
+                vh = vc - v0
+                a = (v0 - v1).length()
+                h = max(vh.length(), 1e-6)
+
+                y = QVector2D.dotProduct(p - v0, vh / h) / h
+                b = p - (v0 * (1 - y) + v1 * y)
+                x = b.length() / max(y * a, 1e-6)
+                if QVector2D.dotProduct(b, v2 - v1) < 0.0:
+                    x = 0
+
+                x, y = min(max(x, 0.0), 1.0), min(max(y, 0.0), 1.0)
+
+                return x, y
+            case WheelShape.Circle:
+                r = math.sqrt(x * x + y * y)
+                r = min(r, 1 - normalizedRingThickness)
+                a = math.atan2(y, x) / math.pi * 0.5 + 0.5
+                return (r / (1 - normalizedRingThickness), a)
+
+    def getRingValue(self, p: tuple[float, float], rotation: float) -> float:
+        x = (math.atan2(p[1], p[0]) + rotation) / 2.0 / math.pi + 0.5
+        return x - int(x)
+
+    def getPos(
+        self, coord: tuple[float, float], normalizedRingThickness: float
+    ) -> tuple[float, float]:
+        x, y = coord
+        match self:
+            case WheelShape.Square:
+                if normalizedRingThickness == 0:
+                    return x * 2.0 - 1.0, y * 2.0 - 1.0
+
+                d = 2.0 - normalizedRingThickness * 2
+                a = d / math.sqrt(2.0)
+
+                return x * a - a * 0.5, y * a - a * 0.5
+            case WheelShape.Triangle:
+                RAD_120 = math.pi * 120.0 / 180.0
+                t = 1.0 - normalizedRingThickness
+                v0 = QVector2D(math.cos(RAD_120 * 0.0), math.sin(RAD_120 * 0.0)) * t
+                v1 = QVector2D(math.cos(RAD_120 * 1.0), math.sin(RAD_120 * 1.0)) * t
+                v2 = QVector2D(math.cos(RAD_120 * 2.0), math.sin(RAD_120 * 2.0)) * t
+
+                p = (v0 * (1 - y) + v1 * y) + (v2 - v1) * y * x
+                return p.x(), p.y()
+            case WheelShape.Circle:
+                y *= 2 * math.pi
+                y += math.pi
+                x *= 1 - normalizedRingThickness
+                x, y = math.cos(y) * x, math.sin(y) * x
+                return x, y
+
+    def getRingPos(
+        self, value: float, normalizedRingThickness: float, rotation: float
+    ) -> tuple[float, float]:
+        value = (value + 0.5) * 2 * math.pi - rotation
+        r = 1 - normalizedRingThickness * 0.5
+        return math.cos(value) * r, math.sin(value) * r
 
 
 class ColorModel(IntEnum):
@@ -224,10 +365,11 @@ def transferColorModel(
 def cbrt(x: float) -> float:
     return x ** (1.0 / 3) if x > 0 else -((-x) ** (1.0 / 3))
 
+
 # The following color model conversion code is translate from `bevy` under MIT license
-# 
+#
 # Original license:
-# 
+#
 # MIT License
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -490,3 +632,99 @@ def xyzToOklch(color: tuple[float, float, float]) -> tuple[float, float, float]:
     hue = hue + 360.0 if hue < 0.0 else hue
 
     return l, chroma, hue
+
+
+# -----------------------
+# End bevy code reference
+# -----------------------
+
+
+def getOrDefault(l: list[str], default: str) -> str:
+    try:
+        s = l.pop()
+        return s
+    except:
+        return default
+
+
+class SettingsPerColorModel:
+    def __init__(self, colorModel: ColorModel) -> None:
+        settings = Krita.instance().readSetting(DOCKER_NAME, colorModel.displayName(), "")  # type: ignore
+        try:
+            self.initFrom(settings)
+        except:
+            self.initFrom("")
+
+    def initFrom(self, settings: str):
+        s = [] if len(settings) == 0 else list(reversed(settings.split(",")))
+        self.enabled = getOrDefault(s, "True") == "True"
+        self.barEnabled = getOrDefault(s, "True") == "True"
+        self.shape = WheelShape(int(getOrDefault(s, "0")))
+        self.displayChannels = getOrDefault(s, "True") == "True"
+        self.swapAxes = getOrDefault(s, "False") == "True"
+        self.reverseX = getOrDefault(s, "False") == "True"
+        self.reverseY = getOrDefault(s, "False") == "True"
+        self.rotation = float(getOrDefault(s, "0"))
+        self.ringEnabled = getOrDefault(s, "False") == "True"
+        self.ringThickness = float(getOrDefault(s, "0"))
+        self.ringMargin = float(getOrDefault(s, "0"))
+        self.ringRotation = float(getOrDefault(s, "0"))
+        self.ringReversed = getOrDefault(s, "False") == "True"
+        self.wheelRotateWithRing = getOrDefault(s, "False") == "True"
+        self.lockedChannelIndex = int(getOrDefault(s, "0"))
+        self.barHeight = int(getOrDefault(s, "20"))
+
+    def write(self, colorModel: ColorModel):
+        s = [
+            self.enabled,
+            self.barEnabled,
+            int(self.shape),
+            self.displayChannels,
+            self.swapAxes,
+            self.reverseX,
+            self.reverseY,
+            self.rotation,
+            self.ringEnabled,
+            self.ringThickness,
+            self.ringMargin,
+            self.ringRotation,
+            self.ringReversed,
+            self.wheelRotateWithRing,
+            self.lockedChannelIndex,
+        ]
+        Krita.instance().writeSetting(DOCKER_NAME, colorModel.displayName(), ",".join([str(x) for x in s]))  # type: ignore
+
+
+class GlobalSettings:
+    def __init__(self):
+        settings: str = Krita.instance().readSetting(DOCKER_NAME, "global", "")  # type: ignore
+        try:
+            self.initFrom(settings)
+        except:
+            self.initFrom("")
+
+        order: str = Krita.instance().readSetting(DOCKER_NAME, "displayOrder", "")  # type: ignore
+        orderList = order.split(",")
+        self.displayOrder = (
+            list(range(len(ColorModel)))
+            if len(order) == 0
+            else [int(cmi) for cmi in orderList]
+        )
+
+    def initFrom(self, settings: str):
+        s = [] if len(settings) == 0 else list(reversed(settings.split(",")))
+        self.outOfGamutColorEnabled = getOrDefault(s, "True") == "True"
+        self.outOfGamutColor = (
+            float(getOrDefault(s, "0.5")),
+            float(getOrDefault(s, "0.5")),
+            float(getOrDefault(s, "0.5")),
+        )
+
+    def write(self):
+        s = [
+            self.outOfGamutColorEnabled,
+            self.outOfGamutColor[0],
+            self.outOfGamutColor[1],
+            self.outOfGamutColor[2],
+        ]
+        Krita.instance().writeSetting(DOCKER_NAME, "global", ",".join([str(x) for x in s]))  # type: ignore
