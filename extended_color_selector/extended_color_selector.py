@@ -40,8 +40,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.colorWheel.variablesChanged.connect(self.updateVariableChannelsValue)
         self.lockedChannelBar.constantChanged.connect(self.updateLockedChannelValue)
 
-        self.colorSpaceSwitchers = QHBoxLayout(self)
-        self.lockers = QHBoxLayout(self)
+        self.colorSpaceSwitchers = QHBoxLayout()
+        self.lockers = QHBoxLayout()
 
         self.updateColorModelSwitchers()
         self.lockersGroup = QButtonGroup()
@@ -55,7 +55,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.updateLockers()
 
         self.settings = SettingsDialog(self, self.settingsChanged)
-        settingsButtonLayout = QHBoxLayout(self)
+        settingsButtonLayout = QHBoxLayout()
         settingsButton = QPushButton()
         settingsButton.setIcon(Krita.instance().icon("configure"))  # type: ignore
         settingsButton.setFlat(True)

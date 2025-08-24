@@ -140,7 +140,7 @@ class SettingsDialog(QDialog):
         self.mainLayout = QHBoxLayout(self)
         self.setWindowTitle("Extended Color Selector - Settings")
 
-        pageSwitchers = QListWidget(self)
+        pageSwitchers = QListWidget()
         pageSwitchers.setDropIndicatorShown(True)
         pageSwitchers.setDragDropMode(QListWidget.DragDropMode.InternalMove)
         pages = QStackedLayout()
@@ -155,16 +155,16 @@ class SettingsDialog(QDialog):
             )
 
             page = QWidget()
-            pageLayout = QVBoxLayout(self)
+            pageLayout = QVBoxLayout()
             page.setLayout(pageLayout)
 
-            barSettingsLayout = QHBoxLayout(self)
+            barSettingsLayout = QHBoxLayout()
             barEnabled = QCheckBox(f"Enable {colorModel.displayName()} Bar")
             barEnabled.setChecked(settings.barEnabled)
             barEnabled.clicked.connect(
                 lambda x, cm=colorModel: self.changeSetting(cm, "barEnabled", x)
             )
-            barHeightBox = QSpinBox(self)
+            barHeightBox = QSpinBox()
             barHeightBox.setValue(settings.barHeight)
             barHeightBox.valueChanged.connect(
                 lambda x, cm=colorModel: self.changeSetting(cm, "barHeight", x)
@@ -179,7 +179,7 @@ class SettingsDialog(QDialog):
                 lambda x, cm=colorModel: self.changeSetting(cm, "displayChannels", x)
             )
 
-            shapeButtonsAndRotLayout = QHBoxLayout(self)
+            shapeButtonsAndRotLayout = QHBoxLayout()
             shapesGroup = QButtonGroup()
             for shape in WheelShape:
                 button = QRadioButton(shape.displayName())
@@ -198,7 +198,7 @@ class SettingsDialog(QDialog):
             shapeButtonsAndRotLayout.addWidget(QLabel("Rotation"))
             shapeButtonsAndRotLayout.addWidget(wheelRotationBox)
 
-            axesSettingsLayout = QHBoxLayout(self)
+            axesSettingsLayout = QHBoxLayout()
             swapAxesButton = QCheckBox("Swap Axes")
             swapAxesButton.setChecked(settings.swapAxes)
             swapAxesButton.clicked.connect(
@@ -220,12 +220,12 @@ class SettingsDialog(QDialog):
 
             ringSettingsLayouts = QVBoxLayout()
             ringSettingsLayout1 = QHBoxLayout()
-            ringThicknessBox = QDoubleSpinBox(self)
+            ringThicknessBox = QDoubleSpinBox()
             ringThicknessBox.setValue(settings.ringThickness)
             ringThicknessBox.valueChanged.connect(
                 lambda x, cm=colorModel: self.changeSetting(cm, "ringThickness", x)
             )
-            ringMarginBox = QDoubleSpinBox(self)
+            ringMarginBox = QDoubleSpinBox()
             ringMarginBox.setValue(settings.ringMargin)
             ringMarginBox.valueChanged.connect(
                 lambda x, cm=colorModel: self.changeSetting(cm, "ringMargin", x)
@@ -240,7 +240,7 @@ class SettingsDialog(QDialog):
             ringReversed.clicked.connect(
                 lambda x, cm=colorModel: self.changeSetting(cm, "ringReversed", x)
             )
-            ringRotation = QDoubleSpinBox(self)
+            ringRotation = QDoubleSpinBox()
             ringRotation.setValue(settings.ringRotation)
             ringRotation.setMaximum(360)
             ringRotation.valueChanged.connect(
