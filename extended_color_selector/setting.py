@@ -57,7 +57,7 @@ class SettingsPerColorModel:
             float(getOrDefault(s, "0.5")),
         )
         self.lockedChannelIndex = int(getOrDefault(s, "0"))
-        self.barHeight = int(getOrDefault(s, "0"))
+        self.barHeight = int(getOrDefault(s, "20"))
 
     def write(self, colorModel: ColorModel):
         s = [

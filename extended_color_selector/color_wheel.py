@@ -226,16 +226,15 @@ class ColorWheel(QOpenGLWidget):
         c = math.cos(rot)
         x, y = x * c - y * s, x * s + y * c
 
-        if self.reverseX:
-            x = -x
-        if self.reverseY:
-            y = -y
-
         cx, cy = self.shape.getColorCoord(
             (x, y), (self.ringThickness + self.ringMargin) / (self.res / 2)
         )
         if self.swapAxes:
             cx, cy = cy, cx
+        if self.reverseX:
+            cx = 1 - cx
+        if self.reverseY:
+            cy = 1 - cy
         self.variablesChanged.emit((cx, cy))
         self.update()
 
@@ -285,17 +284,19 @@ class ColorWheel(QOpenGLWidget):
                 ix, iy = 0, 2
             case 2:
                 ix, iy = 0, 1
+
+        cx, cy = self.color[ix], self.color[iy]
+        if self.reverseX:
+            cx = 1 - cx
+        if self.reverseY:
+            cy = 1 - cy
         if self.swapAxes:
-            ix, iy = iy, ix
+            cx, cy = cy, cx
 
         x, y = self.shape.getPos(
-            (self.color[ix], self.color[iy]),
+            (cx, cy),
             (self.ringThickness + self.ringMargin) / (self.res / 2),
         )
-        if self.reverseX:
-            x = -x
-        if self.reverseY:
-            y = -y
 
         rot = self.getActualWheelRotation()
         s = math.sin(-rot)

@@ -25,19 +25,20 @@ vec4 drawWheel(vec2 p) {
     float c = cos(rotation);
     p = vec2(p.x * c - p.y * s, p.x * s + p.y * c);
 
-    if(((axesConfig >> 1) & 1) == 1) {
-        p.x = -p.x;
-    }
-    if(((axesConfig >> 2) & 1) == 1) {
-        p.y = -p.y;
-    }
-
     vec3 colorCoordAndAntialias = getColorCoordAndAntialias(p, (ringThickness + ringMargin) / (res / 2));
     vec2 colorCoord = colorCoordAndAntialias.xy;
+
+    if(((axesConfig >> 1) & 1) == 1) {
+        colorCoord.x = 1 - colorCoord.x;
+    }
+    if(((axesConfig >> 2) & 1) == 1) {
+        colorCoord.y = 1 - colorCoord.y;
+    }
     if(((axesConfig >> 0) & 1) == 1) {
         colorCoord = colorCoord.yx;
     }
     float antialias = colorCoordAndAntialias.z;
+
     if(any(lessThan(colorCoord, vec2(0.0)))) {
         return vec4(0.0);
     }
