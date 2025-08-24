@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
     QColorDialog,
     QToolButton,
     QMessageBox,
+    QGridLayout
 )
 import math
 from krita import *  # type: ignore
@@ -39,7 +40,6 @@ def getOrDefault(l: list[str], default: str) -> str:
 class SettingsPerColorModel:
     def __init__(self, settings: str) -> None:
         s = [] if len(settings) == 0 else list(reversed(settings.split(",")))
-        print(s)
         self.enabled = getOrDefault(s, "True") == "True"
         self.barEnabled = getOrDefault(s, "True") == "True"
         self.shape = WheelShape(int(getOrDefault(s, "0")))
@@ -52,15 +52,14 @@ class SettingsPerColorModel:
         self.ringThickness = float(getOrDefault(s, "0"))
         self.ringMargin = float(getOrDefault(s, "0"))
         self.ringRotation = float(getOrDefault(s, "0"))
-        self.ringInverse = getOrDefault(s, "False") == "True"
-        self.ringRotateWithColor = getOrDefault(s, "False") == "True"
+        self.ringReversed = getOrDefault(s, "False") == "True"
+        self.wheelRotateWithRing = getOrDefault(s, "False") == "True"
         self.outOfGamutColorEnabled = getOrDefault(s, "False") == "True"
         self.outOfGamutColor = (
             float(getOrDefault(s, "0.5")),
             float(getOrDefault(s, "0.5")),
             float(getOrDefault(s, "0.5")),
         )
-        print(self.outOfGamutColor)
         self.lockedChannelIndex = int(getOrDefault(s, "0"))
 
     def write(self, colorModel: ColorModel):
@@ -77,8 +76,8 @@ class SettingsPerColorModel:
             self.ringThickness,
             self.ringMargin,
             self.ringRotation,
-            self.ringInverse,
-            self.ringRotateWithColor,
+            self.ringReversed,
+            self.wheelRotateWithRing,
             self.outOfGamutColorEnabled,
             self.outOfGamutColor[0],
             self.outOfGamutColor[1],
@@ -92,7 +91,6 @@ class OptionalColorPicker(QWidget):
     def __init__(self, parent: QWidget, text: str, defaultColor: QColor):
         super().__init__(parent)
 
-        print(defaultColor.redF(), defaultColor.greenF(), defaultColor.blueF())
         self.mainLayout = QHBoxLayout(self)
         self.indicator = QPushButton()
         self.updateColor(defaultColor)
@@ -214,7 +212,8 @@ class SettingsDialog(QDialog):
             axesSettingsLayout.addWidget(reverseXAxisButton)
             axesSettingsLayout.addWidget(reverseYAxisButton)
 
-            ringSettingsLayout = QHBoxLayout()
+            ringSettingsLayouts = QVBoxLayout()
+            ringSettingsLayout1 = QHBoxLayout()
             ringThicknessBox = QDoubleSpinBox(self)
             ringThicknessBox.setValue(settings.ringThickness)
             ringThicknessBox.valueChanged.connect(
@@ -225,10 +224,26 @@ class SettingsDialog(QDialog):
             ringMarginBox.valueChanged.connect(
                 lambda x, cm=colorModel: self.changeSetting(cm, "ringMargin", x)
             )
-            ringSettingsLayout.addWidget(QLabel("Ring Thickness"))
-            ringSettingsLayout.addWidget(ringThicknessBox)
-            ringSettingsLayout.addWidget(QLabel("Ring Margin"))
-            ringSettingsLayout.addWidget(ringMarginBox)
+            ringSettingsLayout1.addWidget(QLabel("Ring Thickness"))
+            ringSettingsLayout1.addWidget(ringThicknessBox)
+            ringSettingsLayout1.addWidget(QLabel("Ring Margin"))
+            ringSettingsLayout1.addWidget(ringMarginBox)
+            ringSettingsLayout2 = QHBoxLayout()
+            ringReversed = QCheckBox("Ring Reversed")
+            ringReversed.setChecked(settings.ringReversed)
+            ringReversed.clicked.connect(
+                lambda x, cm=colorModel: self.changeSetting(cm, "ringReversed", x)
+            )
+            ringRotation = QDoubleSpinBox(self)
+            ringRotation.setValue(settings.ringRotation)
+            ringRotation.valueChanged.connect(
+                lambda rot, cm=colorModel: self.changeSetting(cm, "ringRotation", rot)
+            )
+            ringSettingsLayout2.addWidget(ringReversed)
+            ringSettingsLayout2.addWidget(QLabel("Ring Rotation"))
+            ringSettingsLayout2.addWidget(ringRotation)
+            ringSettingsLayouts.addLayout(ringSettingsLayout1)
+            ringSettingsLayouts.addLayout(ringSettingsLayout2)
 
             ringEnabled = QCheckBox("Enable Ring")
             ringEnabled.setChecked(settings.ringEnabled)
@@ -262,7 +277,7 @@ class SettingsDialog(QDialog):
             pageLayout.addLayout(shapeButtonsAndRotLayout)
             pageLayout.addLayout(axesSettingsLayout)
             pageLayout.addWidget(ringEnabled)
-            pageLayout.addLayout(ringSettingsLayout)
+            pageLayout.addLayout(ringSettingsLayouts)
             pageLayout.addWidget(outOfGamutColorPicker)
             pageLayout.addStretch(1)
             pages.addWidget(page)

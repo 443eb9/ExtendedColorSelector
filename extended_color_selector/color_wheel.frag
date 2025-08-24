@@ -11,6 +11,7 @@ uniform int res;
 uniform float rotation;
 uniform float ringThickness;
 uniform float ringMargin;
+uniform float ringRotation;
 out vec4 out_color;
 
 vec3 colorToSrgb(vec3 color);
@@ -98,7 +99,12 @@ void main() {
     color = mix(color, wheel.rgb, wheel.a);
 
     if(ringThickness > 0 && d < res * 0.5 && d > res * 0.5 - ringThickness) {
-        vec4 ring = drawRing(atan(p.y, p.x) / 2.0 / 3.141592653589 + 0.5, d);
+        float ringValue = fract((atan(p.y, p.x) + ringRotation) / 2.0 / 3.141592653589 + 0.5);
+        if(((axesConfig >> 3) & 1) == 1) {
+            ringValue = 1.0 - ringValue;
+        }
+
+        vec4 ring = drawRing(ringValue, d);
         color = mix(color, ring.rgb, ring.a);
     }
 

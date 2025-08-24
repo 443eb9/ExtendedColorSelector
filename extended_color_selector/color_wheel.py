@@ -104,6 +104,11 @@ class WheelShape(IntEnum):
                 a = math.atan2(y, x) / math.pi * 0.5 + 0.5
                 return (r / (1 - normalizedRingThickness), a)
 
+    def getRingValue(self, p: tuple[float, float], rotation: float) -> float:
+        x = (math.atan2(p[1], p[0]) + rotation) / 2.0 / math.pi + 0.5
+        print(p, x)
+        return x - int(x)
+
     def getPos(
         self, coord: tuple[float, float], normalizedRingThickness: float
     ) -> tuple[float, float]:
@@ -134,9 +139,9 @@ class WheelShape(IntEnum):
                 return x, y
 
     def getRingPos(
-        self, value: float, normalizedRingThickness: float
+        self, value: float, normalizedRingThickness: float, rotation: float
     ) -> tuple[float, float]:
-        value = (value + 0.5) * 2 * math.pi
+        value = (value + 0.5) * 2 * math.pi - rotation
         r = 1 - normalizedRingThickness * 0.5
         return math.cos(value) * r, math.sin(value) * r
 
@@ -174,6 +179,8 @@ class ColorWheel(QOpenGLWidget):
         self.reverseY = False
         self.ringThickness = 0.0
         self.ringMargin = 0.0
+        self.ringReversed = False
+        self.ringRotation = 0.0
 
         self.variablesChanged = variablesChanged
         self.constantChanged = constantChanged
@@ -235,9 +242,12 @@ class ColorWheel(QOpenGLWidget):
         self.update()
 
     def handleRingEdit(self, event: QMouseEvent):
-        x, y = event.pos().x(), event.pos().y()
-        value = math.atan2(y - self.res / 2, x - self.res / 2) / math.pi * 0.5 + 0.5
-        self.constantChanged.emit(value)
+        x, y = event.pos().x() / self.res * 2 - 1, event.pos().y() / self.res * 2 - 1
+        y = -y
+        v = self.shape.getRingValue((x, y), self.ringRotation)
+        if self.ringReversed:
+            v = 1 - v
+        self.constantChanged.emit(v)
 
     def handleMouse(self, event: QMouseEvent | None):
         if event == None:
@@ -315,10 +325,15 @@ class ColorWheel(QOpenGLWidget):
             return
 
         ringX, ringY = self.shape.getRingPos(
-            self.color[self.constantPos],
+            (
+                1.0 - self.color[self.constantPos]
+                if self.ringReversed
+                else self.color[self.constantPos]
+            ),
             self.ringThickness / (self.res / 2),
+            self.ringRotation,
         )
-        ringX, ringY = (ringX * 0.5 + 0.5) * self.res, (ringY * 0.5 + 0.5) * self.res
+        ringX, ringY = (ringX * 0.5 + 0.5) * self.res, (-ringY * 0.5 + 0.5) * self.res
         painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
         painter.drawArc(QRectF(ringX - 4, ringY - 4, 8, 8), 0, 360 * 16)
         painter.drawArc(QRectF(ringX - 5, ringY - 5, 10, 10), 0, 360 * 16)
@@ -371,6 +386,8 @@ class ColorWheel(QOpenGLWidget):
             axesConfig |= 1 << 1
         if self.reverseY:
             axesConfig |= 1 << 2
+        if self.ringReversed:
+            axesConfig |= 1 << 3
 
         self.program.setUniformValue("axesConfig", axesConfig)
         mn, mx = self.colorModel.limits()
@@ -386,6 +403,7 @@ class ColorWheel(QOpenGLWidget):
         self.program.setUniformValue("rotation", self.rotation)
         self.program.setUniformValue("ringThickness", float(self.ringThickness))
         self.program.setUniformValue("ringMargin", float(self.ringMargin))
+        self.program.setUniformValue("ringRotation", float(self.ringRotation))
         variables = None
         match self.constantPos:
             case 0:
