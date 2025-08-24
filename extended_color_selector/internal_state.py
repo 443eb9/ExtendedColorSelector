@@ -57,6 +57,7 @@ class InternalState(QObject):
         self.lockedChannel = 0
         self.settings = dict([(cm, SettingsPerColorModel(cm)) for cm in ColorModel])
         self.globalSettings = GlobalSettings()
+        self.suppressColorSyncing = False
 
         self.syncTimer = QTimer()
         self.syncTimer.timeout.connect(self.syncColor)
@@ -141,13 +142,8 @@ class InternalState(QObject):
         kritaView.setForeGroundColor(color)
 
     def syncColor(self):
-        return
-        # if (
-        #     self.colorWheel.underMouse()
-        #     or self.lockedChannelBar.underMouse()
-        #     or any([b.underMouse() for b in self.channelSpinBoxes])
-        # ):
-        #     return
+        if self.suppressColorSyncing:
+            return
 
         kritaWindow = Krita.instance().activeWindow()  # type: ignore
         if kritaWindow == None:
@@ -169,7 +165,14 @@ class InternalState(QObject):
             self.colorModel,
         )
 
-        self.color = color
+        self.updateLockedChannelValue(color[self.lockedChannel])
+        match self.lockedChannel:
+            case 0:
+                self.updateVariableChannelsValue((color[1], color[2]))
+            case 1:
+                self.updateVariableChannelsValue((color[0], color[2]))
+            case 2:
+                self.updateVariableChannelsValue((color[0], color[1]))
 
 
 STATE = InternalState()

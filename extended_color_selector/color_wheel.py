@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QSize, pyqtBoundSignal, QRectF, QPoint, Qt
+from PyQt5.QtCore import QEvent, QSize, pyqtBoundSignal, QRectF, QPoint, Qt
 from PyQt5.QtGui import (
     QMouseEvent,
     QOpenGLVersionProfile,
@@ -135,6 +135,7 @@ class ColorWheel(QOpenGLWidget):
         if a0 == None:
             return
 
+        STATE.suppressColorSyncing = True
         settings = STATE.currentSettings()
         self.editStart = QVector2D(a0.pos())
         d = QVector2D(a0.pos()).distanceToPoint(QVector2D(self.res, self.res) * 0.5)
@@ -149,6 +150,15 @@ class ColorWheel(QOpenGLWidget):
 
     def mouseMoveEvent(self, a0: QMouseEvent | None):
         self.handleMouse(a0)
+
+    def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
+        STATE.suppressColorSyncing = False
+
+    def enterEvent(self, a0: QEvent | None) -> None:
+        STATE.suppressColorSyncing = True
+
+    def leaveEvent(self, a0: QEvent | None) -> None:
+        STATE.suppressColorSyncing = False
 
     def paintEvent(self, e: QPaintEvent | None):
         super().paintEvent(e)
@@ -401,6 +411,15 @@ class LockedChannelBar(QOpenGLWidget):
 
     def mouseMoveEvent(self, a0: QMouseEvent | None):
         self.handleMouse(a0)
+
+    def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
+        STATE.suppressColorSyncing = False
+
+    def enterEvent(self, a0: QEvent | None) -> None:
+        STATE.suppressColorSyncing = True
+
+    def leaveEvent(self, a0: QEvent | None) -> None:
+        STATE.suppressColorSyncing = False
 
     def paintEvent(self, e: QPaintEvent | None):
         super().paintEvent(e)

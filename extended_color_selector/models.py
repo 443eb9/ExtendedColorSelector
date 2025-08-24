@@ -303,6 +303,10 @@ def colorModelFromKrita(model: str) -> ColorModel | None:
     match model:
         case "RGBA":
             return ColorModel.Rgb
+        case "LABA":
+            return ColorModel.Lab
+        case "XYZA":
+            return ColorModel.Xyz
         case _:
             return None
 
