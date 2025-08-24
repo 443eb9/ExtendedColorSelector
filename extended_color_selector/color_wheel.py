@@ -310,13 +310,7 @@ class ColorWheel(QOpenGLWidget):
         painter = QPainter(self)
         painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
         painter.drawArc(
-            QRectF(x - 4, y - 4, 8, 8),
-            0,
-            360 * 16,
-        )
-        painter.setBrush(QBrush(QColor(0, 0, 0, 255)))
-        painter.drawArc(
-            QRectF(x - 5, y - 5, 10, 10),
+            QRectF(x - 4, y - 2, 8, 8),
             0,
             360 * 16,
         )
@@ -330,13 +324,11 @@ class ColorWheel(QOpenGLWidget):
                 if self.ringReversed
                 else self.color[self.constantPos]
             ),
-            self.ringThickness / (self.res / 2),
+            (self.ringThickness + self.ringMargin) / (self.res / 2),
             self.ringRotation,
         )
         ringX, ringY = (ringX * 0.5 + 0.5) * self.res, (-ringY * 0.5 + 0.5) * self.res
-        painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
-        painter.drawArc(QRectF(ringX - 4, ringY - 4, 8, 8), 0, 360 * 16)
-        painter.drawArc(QRectF(ringX - 5, ringY - 5, 10, 10), 0, 360 * 16)
+        painter.drawArc(QRectF(ringX - 4, ringY - 2, 8, 8), 0, 360 * 16)
 
     def initializeGL(self):
         context = self.context()
@@ -506,20 +498,12 @@ class LockedChannelBar(QOpenGLWidget):
         self.handleMouse(a0)
 
     def paintEvent(self, e: QPaintEvent | None):
-        def drawHollowRect(painter: QPainter, x: int, y: int, w: int, h: int):
-            painter.drawLine(QLineF(x, y, x + w, y))
-            painter.drawLine(QLineF(x + w, y, x + w, y + h))
-            painter.drawLine(QLineF(x + w, y + h, x, y + h))
-            painter.drawLine(QLineF(x, y + h, x, y))
-
         super().paintEvent(e)
         painter = QPainter(self)
         painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
 
         x = int(self.color[self.constantPos] * self.width())
-        drawHollowRect(painter, x - 4, 0, 8, self.height())
-        painter.setBrush(QBrush(QColor(0, 0, 0, 255)))
-        drawHollowRect(painter, x - 5, 0, 10, self.height())
+        painter.drawRect(x - 1, 0, 2, self.height())
 
     def initializeGL(self):
         context = self.context()
