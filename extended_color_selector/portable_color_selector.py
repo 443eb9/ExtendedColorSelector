@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QEvent, Qt
+from PyQt5.QtCore import QEvent, Qt, QPoint
 from PyQt5.QtGui import QKeyEvent, QFocusEvent, QCursor, QKeySequence
 from PyQt5.QtWidgets import QVBoxLayout, QDialog, QShortcut
 from krita import *  # type: ignore
@@ -31,7 +31,8 @@ class PortableColorSelector(QDialog):
         if self.isVisible():
             self.hide()
         else:
-            self.move(QCursor.pos())
+            halfSize = QPoint(int(self.width() * 0.5), int(self.height() * 0.5))
+            self.move(QCursor.pos() - halfSize)
             self.show()
             self.activateWindow()
             self.setFocus()

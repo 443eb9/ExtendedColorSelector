@@ -1,0 +1,17 @@
+# Unreleased
+
+- Open portable color selector at center of cursor.
+
+# v0.1.1
+
+- Fixed some OpenGL rendering issues on Linux platform.
+
+
+# v0.1.0 Initial release. 🥳 
+
+- Color picking in 7 color models: `RGB`, `HSV`, `HSL`, `OkLab`, `XYZ`, `Lab`, `OkLch`
+- 3 wheel shapes: square, triangle, circle
+- Out of gamut hint.
+- Axes swapping, reverting.
+- Color ring and bar. Color picker can rotate with ring.
+- `Shift` and `Alt` modifiers to shift slowly.
