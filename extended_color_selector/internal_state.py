@@ -20,6 +20,27 @@ from .models import (
 from .config import SYNC_INTERVAL_MS
 
 
+def getKritaColor() -> tuple[tuple[float, float, float], ColorModel] | None:
+    kritaWindow = Krita.instance().activeWindow()  # type: ignore
+    if kritaWindow == None:
+        return
+    kritaView = kritaWindow.activeView()  # type: ignore
+    if kritaView == None:
+        return
+    mc = kritaView.foregroundColor()
+    if mc == None:
+        return
+    colorModel = colorModelFromKrita(mc.colorModel())
+    if colorModel == None:
+        return
+
+    components = mc.componentsOrdered()
+    return (
+        colorModel.normalize((components[0], components[1], components[2])),
+        colorModel,
+    )
+
+
 class InternalState(QObject):
     variablesChanged = pyqtSignal(object)
     constantChanged = pyqtSignal(float)
@@ -109,7 +130,17 @@ class InternalState(QObject):
         if kritaView == None:
             return
 
-        r, g, b = transferColorModel(self.color, self.colorModel, ColorModel.Rgb)
+        kritaColor = getKritaColor()
+        if kritaColor == None:
+            return
+
+        kritaColor, kritaColorModel = kritaColor
+        r, g, b = transferColorModel(
+            self.color,
+            self.colorModel,
+            ColorModel.Rgb,
+            transferColorModel(kritaColor, kritaColorModel, ColorModel.Rgb),
+        )
         r = min(int(r * 256), 255)
         g = min(int(g * 256), 255)
         b = min(int(b * 256), 255)
@@ -122,38 +153,30 @@ class InternalState(QObject):
         if self.suppressColorSyncing:
             return
 
-        kritaWindow = Krita.instance().activeWindow()  # type: ignore
-        if kritaWindow == None:
+        kritaColor = getKritaColor()
+        if kritaColor == None:
             return
-        kritaView = kritaWindow.activeView()  # type: ignore
-        if kritaView == None:
-            return
-        mc = kritaView.foregroundColor()
-        if mc == None:
-            return
-        colorModel = colorModelFromKrita(mc.colorModel())
-        if colorModel == None:
-            return
+        kritaColor, colorModel = kritaColor
 
-        curColor = transferColorModel(
-            self.color, self.colorModel, colorModel, clamp=False
-        )
+        if STATE.globalSettings.dontSyncIfOutOfGamut:
+            curColor = transferColorModel(
+                self.color, self.colorModel, colorModel, clamp=False
+            )
+            if (
+                curColor[0] > 1 + 1e-4
+                or curColor[0] < -1e-4
+                or curColor[1] > 1 + 1e-4
+                or curColor[1] < -1e-4
+                or curColor[2] > 1 + 1e-4
+                or curColor[2] < -1e-4
+            ):
+                return
 
-        if STATE.globalSettings.dontSyncIfOutOfGamut and (
-            curColor[0] > 1
-            or curColor[0] < 0
-            or curColor[1] > 1
-            or curColor[1] < 0
-            or curColor[2] > 1
-            or curColor[2] < 0
-        ):
-            return
-
-        components = mc.componentsOrdered()
         color = transferColorModel(
-            colorModel.normalize((components[0], components[1], components[2])),
+            kritaColor,
             colorModel,
             self.colorModel,
+            self.color,
         )
 
         self.updateLockedChannelValue(color[self.lockedChannel])

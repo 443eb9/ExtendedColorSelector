@@ -289,10 +289,16 @@ def colorModelFromKrita(model: str) -> ColorModel | None:
             return None
 
 
+# Reference color is a color represented using `toModel` color model.
+# It's used to eliminate some indeterminable values.
+# For example, when input color is RGB [0, 0, 0], and we need to convert
+# it into HSV, then the hue is indeterminable. In this case, we will use
+# the hue in reference color.
 def transferColorModel(
     color: tuple[float, float, float],
     fromModel: ColorModel,
     toModel: ColorModel,
+    referenceColor: tuple[float, float, float] | None = None,
     clamp: bool = True,
 ) -> tuple[float, float, float]:
     if fromModel == toModel:
@@ -334,7 +340,33 @@ def transferColorModel(
         case ColorModel.Oklch:
             unnormalized = xyzToOklch(xyz)
 
-    result = toModel.normalize(unnormalized)
+    c0, c1, c2 = toModel.normalize(unnormalized)
+
+    if referenceColor != None:
+        rc0, rc1, rc2 = referenceColor
+
+        # Eliminate indetermination
+        match toModel:
+            case ColorModel.Rgb:
+                pass
+            case ColorModel.Hsv:
+                c0 = c0 if c1 > 1e-4 else rc0
+                c0, c1 = (c0, c1) if c2 > 1e-4 else (rc0, rc1)
+            case ColorModel.Hsl:
+                c0 = c0 if c1 > 1e-4 else rc0
+                c0, c1 = (c0, c1) if (c2 > 1e-4 and c2 < 1 - 1e-4) else (rc0, rc1)
+            case ColorModel.Oklab:
+                c1, c2 = (c1, c2) if (c0 > 1e-4 and c0 < 1 - 1e-4) else (rc1, rc2)
+            case ColorModel.Xyz:
+                pass
+            case ColorModel.Lab:
+                c1, c2 = (c1, c2) if (c0 > 1e-4 and c0 < 1 - 1e-4) else (rc1, rc2)
+            case ColorModel.Oklch:
+                c0 = c0 if (c1 < 1e-4) else rc0
+                c1, c2 = (c1, c2) if (c0 > 1e-4 and 1 - 1e-4) else (rc1, rc2)
+
+    result = c0, c1, c2
+
     if clamp:
         result = (
             min(max(result[0], 0.0), 1.0),

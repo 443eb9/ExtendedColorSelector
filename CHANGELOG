@@ -1,6 +1,7 @@
 # Unreleased
 
 - Open portable color selector at center of cursor.
+- Avoid indeterminable values during color model transferring.
 
 # v0.1.1
 
