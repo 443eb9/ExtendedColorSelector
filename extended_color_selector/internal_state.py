@@ -179,14 +179,14 @@ class InternalState(QObject):
             self.color,
         )
 
-        self.updateLockedChannelValue(color[self.lockedChannel])
+        self.constantChanged.emit(color[self.lockedChannel])
         match self.lockedChannel:
             case 0:
-                self.updateVariableChannelsValue((color[1], color[2]))
+                self.variablesChanged.emit((color[1], color[2]))
             case 1:
-                self.updateVariableChannelsValue((color[0], color[2]))
+                self.variablesChanged.emit((color[0], color[2]))
             case 2:
-                self.updateVariableChannelsValue((color[0], color[1]))
+                self.variablesChanged.emit((color[0], color[1]))
 
 
 STATE = InternalState()
