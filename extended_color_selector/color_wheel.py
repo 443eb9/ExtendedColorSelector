@@ -2,10 +2,8 @@ from ctypes import CFUNCTYPE, c_int
 from PyQt5.QtCore import QSize, QRectF, Qt
 from PyQt5.QtGui import (
     QMouseEvent,
-    QOpenGLVersionProfile,
     QPaintEvent,
     QResizeEvent,
-    QSurfaceFormat,
     QOpenGLShader,
     QOpenGLShaderProgram,
     QPainter,
@@ -70,14 +68,24 @@ class OpenGLRenderer(QOpenGLWidget):
 
         # From https://krita-artists.org/t/opengl-plugin-on-windows/92731/5
         def getVersionHeader(self):
-            version = self.context.format().version()
+            major, minor = self.context.format().version()
             if self.context.isOpenGLES():
                 profile = "es"
                 precision = "precision highp float;\n"
             else:
                 profile = "core"
                 precision = ""
-            versionHeader = f"#version {version[0]}{version[1]}0 {profile}\n{precision}"
+
+            if OPENGL_VER_OVERRIDE_MAJOR != None:
+                major = OPENGL_VER_OVERRIDE_MAJOR
+            if OPENGL_VER_OVERRIDE_MINOR != None:
+                minor = OPENGL_VER_OVERRIDE_MINOR
+            if OPENGL_PROFILE_OVERRIDE != None:
+                profile = OPENGL_PROFILE_OVERRIDE
+
+            versionHeader = f"#version {major}{minor}0 {profile}\n{precision}"
+            if OPENGL_INJECT_HEADERS != None:
+                versionHeader = OPENGL_INJECT_HEADERS + versionHeader
             return versionHeader
 
     def __init__(self, parent: QWidget | None) -> None:
@@ -100,6 +108,9 @@ class OpenGLRenderer(QOpenGLWidget):
         self.gl = OpenGLRenderer.OpenGLWrapper(context)
 
     def compileShader(self):
+        if len(self.vertex) == 0 or len(self.fragment) == 0:
+            return
+
         self.program = QOpenGLShaderProgram(self.context())
         vert = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Vertex)
         vert.compileSourceCode(self.vertex)

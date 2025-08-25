@@ -29,8 +29,6 @@ Unzip the plugin package into `pykrita` folder. So there will be one more `exten
 
 Launch Krita.
 
-***!!IMPORTANT!!*** If you see an error message that tells you OpenGL context is missing, please set canvas acceleration method to OpenGL in settings. `Settings -> Configure Krita -> Display -> Canvas Acceleration -> Preferred Renderer` and select OpenGL.
-
 Go to `Settings -> Configure Krita -> Python Plugin Manager`, find `Extended Color Selector`, enable it, and restart Krita.
 
 ## Why the name
