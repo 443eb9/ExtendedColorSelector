@@ -5,7 +5,7 @@ uniform int constantPos;
 uniform vec3 lim_min;
 uniform vec3 lim_max;
 uniform vec3 outOfGamut;
-uniform int res;
+uniform float res;
 out vec4 out_color;
 
 vec3 colorToSrgb(vec3 color);

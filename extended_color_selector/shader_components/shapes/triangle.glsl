@@ -1,7 +1,7 @@
 #version 410 core
 
 vec3 getColorCoordAndAntialias(vec2 p, float normalizedRingThickness) {
-    const float SMOOTH = 2;
+    const float SMOOTH = 2.0;
     float t = 1.0 - normalizedRingThickness;
 
     const float PI = 3.1415926535897932384626433832795;
@@ -27,10 +27,10 @@ vec3 getColorCoordAndAntialias(vec2 p, float normalizedRingThickness) {
 
     // `res` will be available after shader concat as a uniform variable.
     float aa = a * res * 0.5;
-    float rx0 = smoothstep(0, SMOOTH, x * aa * y);
+    float rx0 = smoothstep(0.0, SMOOTH, x * aa * y);
     // TODO better antialiasing for rx1
-    float rx1 = 1 - smoothstep(1.0 - SMOOTH / aa * y * 2, 1.0, x);
-    float ry = 1 - smoothstep(aa - SMOOTH, aa, y * aa);
+    float rx1 = 1.0 - smoothstep(1.0 - SMOOTH / aa * y * 2.0, 1.0, x);
+    float ry = 1.0 - smoothstep(aa - SMOOTH, aa, y * aa);
     float antialias = rx0 * rx1 * ry;
 
     return vec3(x, y, antialias);

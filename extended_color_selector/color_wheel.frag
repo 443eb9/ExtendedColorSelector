@@ -7,7 +7,7 @@ uniform vec3 lim_min;
 uniform vec3 lim_max;
 uniform vec3 outOfGamut;
 uniform int axesConfig;
-uniform int res;
+uniform float res;
 uniform float rotation;
 uniform float ringThickness;
 uniform float ringMargin;
@@ -25,14 +25,14 @@ vec4 drawWheel(vec2 p) {
     float c = cos(rotation);
     p = vec2(p.x * c - p.y * s, p.x * s + p.y * c);
 
-    vec3 colorCoordAndAntialias = getColorCoordAndAntialias(p, (ringThickness + ringMargin) / (res / 2));
+    vec3 colorCoordAndAntialias = getColorCoordAndAntialias(p, (ringThickness + ringMargin) / (res / 2.0));
     vec2 colorCoord = colorCoordAndAntialias.xy;
 
     if(((axesConfig >> 1) & 1) == 1) {
-        colorCoord.x = 1 - colorCoord.x;
+        colorCoord.x = 1.0 - colorCoord.x;
     }
     if(((axesConfig >> 2) & 1) == 1) {
-        colorCoord.y = 1 - colorCoord.y;
+        colorCoord.y = 1.0 - colorCoord.y;
     }
     if(((axesConfig >> 0) & 1) == 1) {
         colorCoord = colorCoord.yx;
@@ -102,7 +102,7 @@ void main() {
     color = mix(color, wheel.rgb, wheel.a);
 
     // --BEGIN RING RENDERING--
-    if(ringThickness > 0 && d < res * 0.5 && d > res * 0.5 - ringThickness) {
+    if(ringThickness > 0.0 && d < res * 0.5 && d > res * 0.5 - ringThickness) {
         float ringValue = fract((atan(p.y, p.x) + ringRotation) / 2.0 / 3.141592653589 + 0.5);
         if(((axesConfig >> 3) & 1) == 1) {
             ringValue = 1.0 - ringValue;

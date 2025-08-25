@@ -1,7 +1,7 @@
 #version 410 core
 
 vec3 getColorCoordAndAntialias(vec2 p, float normalizedRingThickness) {
-    const float SMOOTH = 2;
+    const float SMOOTH = 2.0;
 
     float r = length(p);
     float nrt = normalizedRingThickness;
