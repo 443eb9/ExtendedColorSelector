@@ -15,6 +15,10 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 - `Shift` and `Alt` modifiers to move slowly.
 - Out of gamut hinting.
 
+## Known Issues
+
+- Tested on Ubuntu 24.04.3(GNOME) and KUbuntu 24.04.0(KDE) in VMWare Workstation Pro 17, not working if using `OpenGL` as canvas acceleration. `OpenGL ES` or with canvas acceleration disabled works.
+
 ## How to use
 
 Go to Releases, download the latest package.

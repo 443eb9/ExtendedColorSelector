@@ -157,7 +157,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
     def canvasChanged(self, canvas):
         STATE.syncColor()
-        self.colorWheel.compileShader()
+        self.colorWheel.updateShaders()
+        self.lockedChannelBar.updateShaders()
 
 
 dock_widget_factory = DockWidgetFactory(  # type: ignore
