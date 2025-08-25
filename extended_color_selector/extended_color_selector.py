@@ -29,10 +29,10 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.mainLayout = QVBoxLayout(container)
 
         colorWheelLayout = QHBoxLayout()
-        self.colorWheel = ColorWheel()
+        self.colorWheel = ColorWheel(self)
         colorWheelLayout.addWidget(self.colorWheel)
 
-        self.lockedChannelBar = LockedChannelBar(False)
+        self.lockedChannelBar = LockedChannelBar(False, self)
 
         self.colorSpaceSwitchers = QHBoxLayout()
         self.lockers = QHBoxLayout()

@@ -60,6 +60,7 @@ class InternalState(QObject):
         self.syncTimer = QTimer()
         self.syncTimer.timeout.connect(self.syncColor)
         self.syncTimer.start(SYNC_INTERVAL_MS)
+        self.syncColor()
 
     def currentSettings(self):
         return self.settings[self.colorModel]

@@ -1,9 +1,9 @@
 from PyQt5.QtCore import QEvent, Qt, QPoint
-from PyQt5.QtGui import QKeyEvent, QFocusEvent, QCursor, QKeySequence
+from PyQt5.QtGui import QKeyEvent, QFocusEvent, QCursor, QKeySequence, QMouseEvent
 from PyQt5.QtWidgets import QVBoxLayout, QDialog, QShortcut
 from krita import *  # type: ignore
 
-from .color_wheel import ColorWheel, LockedChannelBar
+from .color_wheel import ColorWheel, LockedChannelBar, ColorIndicatorBlocks
 from .internal_state import STATE
 
 
@@ -13,8 +13,8 @@ class PortableColorSelector(QDialog):
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint, True)
         self.mainLayout = QVBoxLayout(self)
 
-        self.colorWheel = ColorWheel()
-        self.lockedChannelBar = LockedChannelBar(True)
+        self.colorWheel = ColorWheel(self)
+        self.lockedChannelBar = LockedChannelBar(True, self)
 
         self.mainLayout.addWidget(self.colorWheel)
         self.mainLayout.addWidget(self.lockedChannelBar)

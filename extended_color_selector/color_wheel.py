@@ -1,5 +1,5 @@
 from ctypes import CFUNCTYPE, c_int
-from PyQt5.QtCore import QSize, QRectF, Qt
+from PyQt5.QtCore import QSize, QRectF, Qt, QPoint
 from PyQt5.QtGui import (
     QMouseEvent,
     QPaintEvent,
@@ -13,7 +13,15 @@ from PyQt5.QtGui import (
     QPalette,
     QOpenGLContext,
 )
-from PyQt5.QtWidgets import QOpenGLWidget, QMessageBox, QSizePolicy, QWidget
+from PyQt5.QtWidgets import (
+    QOpenGLWidget,
+    QMessageBox,
+    QSizePolicy,
+    QWidget,
+    QDialog,
+    QVBoxLayout,
+    QFrame,
+)
 from pathlib import Path
 from enum import IntEnum
 import math
@@ -23,6 +31,7 @@ from .models import (
     SettingsPerColorModel,
     SettingsPerColorModel,
     GlobalSettings,
+    transferColorModel,
 )
 from .internal_state import STATE
 from .config import *
@@ -56,6 +65,53 @@ def getGLFunc(context: QOpenGLContext, name: str):
     if sipPointer == None or funcType == None:
         raise Exception("Never happens")
     return funcType(int(sipPointer))
+
+
+class ColorIndicatorBlocks(QDialog):
+    def __init__(self) -> None:
+        super().__init__()
+        self.mainLayout = QVBoxLayout(self)
+        self.setFixedSize(100, 150)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.mainLayout.setSpacing(0)
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint, True)
+        self.setWindowFlag(Qt.WindowType.Tool, True)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
+        self.currentColorBox = QFrame()
+        self.lastColorBox = QFrame()
+
+        self.mainLayout.addWidget(self.currentColorBox, 1)
+        self.mainLayout.addWidget(self.lastColorBox, 1)
+
+        STATE.constantChanged.connect(self.updateColor)
+        STATE.variablesChanged.connect(self.updateColor)
+
+    def updateColor(self):
+        r, g, b = transferColorModel(STATE.color, STATE.colorModel, ColorModel.Rgb)
+        r, g, b = (
+            min(max(int(r * 256), 0), 255),
+            min(max(int(g * 256), 0), 255),
+            min(max(int(b * 256), 0), 255),
+        )
+        color = QColor(r, g, b)
+        self.currentColorBox.setStyleSheet(f"background-color: {color.name()}")
+
+    def popup(self, pos: QPoint):
+        self.lastColor = STATE.color
+        self.move(pos)
+        r, g, b = transferColorModel(self.lastColor, STATE.colorModel, ColorModel.Rgb)
+        r, g, b = (
+            min(max(int(r * 256), 0), 255),
+            min(max(int(g * 256), 0), 255),
+            min(max(int(b * 256), 0), 255),
+        )
+        color = QColor(r, g, b)
+        self.lastColorBox.setStyleSheet(f"background-color: {color.name()}")
+        self.show()
+
+
+INDICATOR_BLOCKS = ColorIndicatorBlocks()
 
 
 class OpenGLRenderer(QOpenGLWidget):
@@ -132,11 +188,14 @@ class ColorWheel(OpenGLRenderer):
         Wheel = 1
         Ring = 2
 
-    def __init__(self):
+    def __init__(self, indicatorBind: QWidget):
         super().__init__(None)
+        self.indicatorBind = indicatorBind
         self.editing = ColorWheel.ColorWheelEditing.Wheel
         self.renderer = None
-        self.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)
+        self.setSizePolicy(
+            QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding
+        )
 
         self.res = 1
         self.editStart = QVector2D()
@@ -245,8 +304,15 @@ class ColorWheel(OpenGLRenderer):
 
         self.handleMouse(a0)
 
+        INDICATOR_BLOCKS.popup(
+            self.mapToGlobal(QPoint()) - QPoint(INDICATOR_BLOCKS.width(), 0)
+        )
+
     def mouseMoveEvent(self, a0: QMouseEvent | None):
         self.handleMouse(a0)
+
+    def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
+        INDICATOR_BLOCKS.hide()
 
     def getCurrentWheelWidgetCoord(self) -> tuple[float, float]:
         settings = STATE.currentSettings()
@@ -426,7 +492,7 @@ class ColorWheel(OpenGLRenderer):
 
 
 class LockedChannelBar(OpenGLRenderer):
-    def __init__(self, portable: bool):
+    def __init__(self, portable: bool, indicatorBind: QWidget):
         super().__init__(None)
 
         self.res = 1
@@ -435,6 +501,7 @@ class LockedChannelBar(OpenGLRenderer):
         self.editStart = 0.0
         self.shiftStart = 0.0
         self.portable = portable
+        self.indicatorBind = indicatorBind
         self.updateFromState()
 
         STATE.colorModelChanged.connect(self.updateShaders)
@@ -481,6 +548,10 @@ class LockedChannelBar(OpenGLRenderer):
         self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None):
+        INDICATOR_BLOCKS.popup(
+            self.mapToGlobal(QPoint()) - QPoint(INDICATOR_BLOCKS.width(), 0)
+        )
+
         if a0 == None:
             return
 
@@ -492,6 +563,7 @@ class LockedChannelBar(OpenGLRenderer):
         self.handleMouse(a0)
 
     def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
+        INDICATOR_BLOCKS.hide()
         if a0 == None:
             return
         self.editStart = a0.pos().x()

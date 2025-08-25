@@ -3,6 +3,7 @@
 - Open portable color selector at center of cursor.
 - Avoid indeterminable values during color model transferring.
 - Removed redundant color sending, which causes eraser mode of brushes being overridden.
+- Display two indicators when selecting colors: current color and last picked color.
 
 # v0.1.1
 
