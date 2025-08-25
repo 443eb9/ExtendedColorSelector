@@ -100,7 +100,7 @@ class OpenGLRenderer(QOpenGLWidget):
         if context == None:
             QMessageBox.critical(
                 self,
-                "Extended Color Selector - Unable To Get OpenGL Context\n",
+                "Extended Color Selector - Unable To Get OpenGL Context",
                 "This shouldn't happen theoretically. Please open a issue on Github and provide your OS and hardware info.",
             )
             return
@@ -136,7 +136,7 @@ class ColorWheel(OpenGLRenderer):
         super().__init__(None)
         self.editing = ColorWheel.ColorWheelEditing.Wheel
         self.renderer = None
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)
 
         self.res = 1
         self.editStart = QVector2D()
@@ -154,7 +154,10 @@ class ColorWheel(OpenGLRenderer):
             return
 
         size = min(e.size().width(), e.size().height())
-        # self.resize(size, size)
+        if e.size().width() != size or e.size().height() != size:
+            self.resize(size, size)
+            return
+
         self.res = size
         super().resizeEvent(e)
         self.update()
