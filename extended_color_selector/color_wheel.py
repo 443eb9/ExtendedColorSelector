@@ -15,7 +15,7 @@ from PyQt5.QtGui import (
     QPalette,
     QOpenGLContext,
 )
-from PyQt5.QtWidgets import QOpenGLWidget, QMessageBox, QSizePolicy
+from PyQt5.QtWidgets import QOpenGLWidget, QMessageBox, QSizePolicy, QWidget
 from pathlib import Path
 from enum import IntEnum
 import math
@@ -31,7 +31,7 @@ from .config import *
 
 
 # Use [18:] to strip the version header, and add new one later before compiling
-vertex = open(Path(__file__).parent / "fullscreen.vert").read()[18:]
+fullscreenVertex = open(Path(__file__).parent / "fullscreen.vert").read()[18:]
 wheelFragment = open(Path(__file__).parent / "color_wheel.frag").read()[18:]
 barFragment = open(Path(__file__).parent / "locked_channel_bar.frag").read()[18:]
 
@@ -60,28 +60,71 @@ def getGLFunc(context: QOpenGLContext, name: str):
     return funcType(int(sipPointer))
 
 
-# From https://krita-artists.org/t/opengl-plugin-on-windows/92731/5
-def getVersionHeader(context: QOpenGLContext):
-    version = context.format().version()
-    if context.isOpenGLES():
-        profile = "es"
-        precision = "precision highp float;\n"
-    else:
-        profile = "core"
-        precision = ""
-    versionHeader = f"#version {version[0]}{version[1]}0 {profile}\n{precision}"
-    return versionHeader
+class OpenGLRenderer(QOpenGLWidget):
+    class OpenGLWrapper:
+        def __init__(self, context: QOpenGLContext) -> None:
+            self.context = context
+            self.glDrawArrays = getGLFunc(context, "glDrawArrays")
+            self.glViewport = getGLFunc(context, "glViewport")
+            self.GL_TRIANGLE_STRIP = 0x0005
+
+        # From https://krita-artists.org/t/opengl-plugin-on-windows/92731/5
+        def getVersionHeader(self):
+            version = self.context.format().version()
+            if self.context.isOpenGLES():
+                profile = "es"
+                precision = "precision highp float;\n"
+            else:
+                profile = "core"
+                precision = ""
+            versionHeader = f"#version {version[0]}{version[1]}0 {profile}\n{precision}"
+            return versionHeader
+
+    def __init__(self, parent: QWidget | None) -> None:
+        super().__init__(parent)
+        self.gl = None
+        self.program = None
+        self.fragment = ""
+        self.vertex = ""
+
+    def initializeGL(self) -> None:
+        context = self.context()
+        if context == None:
+            QMessageBox.critical(
+                self,
+                "Extended Color Selector - Unable To Get OpenGL Context\n",
+                "This shouldn't happen theoretically. Please open a issue on Github and provide your OS and hardware info.",
+            )
+            return
+        self.program = QOpenGLShaderProgram(self.context())
+        self.gl = OpenGLRenderer.OpenGLWrapper(context)
+
+    def compileShader(self):
+        self.program = QOpenGLShaderProgram(self.context())
+        vert = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Vertex)
+        vert.compileSourceCode(self.vertex)
+        frag = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Fragment)
+        frag.compileSourceCode(self.fragment)
+        self.program.addShader(vert)
+        self.program.addShader(frag)
+        self.program.link()
+        self.update()
+
+    def resizeGL(self, w: int, h: int):
+        if self.gl == None:
+            return
+        self.gl.glViewport(0, 0, w, h)
 
 
-class ColorWheel(QOpenGLWidget):
+class ColorWheel(OpenGLRenderer):
     class ColorWheelEditing(IntEnum):
         Wheel = 1
         Ring = 2
 
     def __init__(self):
-        super().__init__()
+        super().__init__(None)
         self.editing = ColorWheel.ColorWheelEditing.Wheel
-        self.program = None
+        self.renderer = None
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         self.res = 1
@@ -90,8 +133,8 @@ class ColorWheel(QOpenGLWidget):
         self.setMinimumSize(MIN_WHEEL_SIZE, MIN_WHEEL_SIZE)
         self.setMaximumSize(MAX_WHEEL_SIZE, MAX_WHEEL_SIZE)
 
-        STATE.settingsChanged.connect(self.compileShader)
-        STATE.colorModelChanged.connect(self.compileShader)
+        STATE.settingsChanged.connect(self.updateShaders)
+        STATE.colorModelChanged.connect(self.updateShaders)
         STATE.constantChanged.connect(self.update)
         STATE.lockedChannelIndexChanged.connect(self.update)
 
@@ -262,33 +305,17 @@ class ColorWheel(QOpenGLWidget):
         painter.drawArc(QRectF(ringX - 4, ringY - 2, 8, 8), 0, 360 * 16)
 
     def initializeGL(self):
-        context = self.context()
-        if context == None:
-            QMessageBox.critical(
-                self,
-                "Extended Color Selector - Unable To Get OpenGL Context\n",
-                "This error is originated from ExtendedColorSelector. \n"
-                "As we are using OpenGL for color wheel rendering, it is required to use OpenGL for rendering.\n"
-                "Please goto Settings -> Configure Krita -> Display -> Canvas Acceleration -> "
-                "Preferred Renderer, and select OpenGL. \n\n"
-                "Krita WILL CRASH if you enter the canvas. So please change the settings in start menu.",
-            )
-            return
-        self.glDrawArrays = getGLFunc(context, "glDrawArrays")
-        self.glViewport = getGLFunc(context, "glViewport")
-        self.GL_TRIANGLE_STRIP = 0x0005
-        self.compileShader()
+        super().initializeGL()
+        self.updateShaders()
 
-    def compileShader(self):
-        context = self.context()
-        if context == None:
+    def updateShaders(self):
+        if self.gl == None or self.program == None:
             return
 
         settings = STATE.currentSettings()
-        header = getVersionHeader(context)
-        vert = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Vertex)
-        vert.compileSourceCode(header + vertex)
-        frag = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Fragment)
+        header = self.gl.getVersionHeader()
+        self.vertex = header + fullscreenVertex
+
         fragCode = settings.shape.modifyShader(
             STATE.colorModel.modifyShader(wheelFragment)
         )
@@ -306,13 +333,9 @@ class ColorWheel(QOpenGLWidget):
             "const vec3 BACKGROUND_COLOR = vec3(0.0);",
             f"const vec3 BACKGROUND_COLOR = vec3({bgColor.redF()}, {bgColor.greenF()}, {bgColor.blueF()});",
         )
+        self.fragment = header + fragCode
 
-        frag.compileSourceCode(header + fragCode)
-        self.program = QOpenGLShaderProgram(self.context())
-        self.program.addShader(vert)
-        self.program.addShader(frag)
-        self.program.link()
-        self.update()
+        self.compileShader()
 
     def getActualWheelRotation(self) -> float:
         settings = STATE.currentSettings()
@@ -329,7 +352,7 @@ class ColorWheel(QOpenGLWidget):
             return math.radians(settings.rotation)
 
     def paintGL(self):
-        if self.program == None:
+        if self.gl == None or self.program == None:
             return
 
         self.program.bind()
@@ -385,15 +408,12 @@ class ColorWheel(QOpenGLWidget):
                 return
         self.program.setUniformValue("variables", variables[0], variables[1])
 
-        self.glDrawArrays(self.GL_TRIANGLE_STRIP, 0, 4)
-
-    def resizeGL(self, w, h):
-        self.glViewport(0, 0, w, h)
+        self.gl.glDrawArrays(self.gl.GL_TRIANGLE_STRIP, 0, 4)
 
 
-class LockedChannelBar(QOpenGLWidget):
+class LockedChannelBar(OpenGLRenderer):
     def __init__(self, portable: bool):
-        super().__init__()
+        super().__init__(None)
 
         self.res = 1
         self.settings = SettingsPerColorModel(ColorModel.Rgb)
@@ -401,10 +421,9 @@ class LockedChannelBar(QOpenGLWidget):
         self.editStart = 0.0
         self.shiftStart = 0.0
         self.portable = portable
-        self.compileShader()
         self.updateFromState()
 
-        STATE.colorModelChanged.connect(self.compileShader)
+        STATE.colorModelChanged.connect(self.updateShaders)
         STATE.settingsChanged.connect(self.updateFromState)
         STATE.variablesChanged.connect(self.update)
         STATE.lockedChannelIndexChanged.connect(self.update)
@@ -475,45 +494,26 @@ class LockedChannelBar(QOpenGLWidget):
         painter.drawRect(x - 1, 0, 2, self.height())
 
     def initializeGL(self):
-        context = self.context()
-        if context == None:
-            QMessageBox.critical(
-                self,
-                "Extended Color Selector - Unable to get OpenGL Renderer\n",
-                "This error is originated from ExtendedColorSelector. \n"
-                "As we are using OpenGL for color wheel rendering, it is required to use OpenGL for rendering.\n"
-                "Please goto Settings -> Configure Krita -> Display -> Canvas Acceleration -> "
-                "Preferred Renderer, and select OpenGL. \n\n"
-                "Krita WILL CRASH if you enter the canvas. So please change the settings in start menu.",
-            )
-            return
-        self.glDrawArrays = getGLFunc(context, "glDrawArrays")
-        self.glViewport = getGLFunc(context, "glViewport")
-        self.GL_TRIANGLE_STRIP = 0x0005
-        self.compileShader()
+        super().initializeGL()
+        self.updateShaders()
 
-    def compileShader(self):
-        context = self.context()
-        if context == None:
+    def updateShaders(self):
+        if self.gl == None:
             return
 
         settings = STATE.currentSettings()
-        header = getVersionHeader(context)
-        vert = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Vertex)
-        vert.compileSourceCode(header + vertex)
-        frag = QOpenGLShader(QOpenGLShader.ShaderTypeBit.Fragment)
-        frag.compileSourceCode(
-            header
-            + settings.shape.modifyShader(STATE.colorModel.modifyShader(barFragment))
+        header = self.gl.getVersionHeader()
+
+        self.vertex = header + fullscreenVertex
+        self.fragment = header + settings.shape.modifyShader(
+            STATE.colorModel.modifyShader(barFragment)
         )
         self.program = QOpenGLShaderProgram(self.context())
-        self.program.addShader(vert)
-        self.program.addShader(frag)
-        self.program.link()
-        self.update()
+
+        self.compileShader()
 
     def paintGL(self):
-        if self.glDrawArrays == None:
+        if self.gl == None:
             return
 
         self.program.bind()
@@ -551,9 +551,4 @@ class LockedChannelBar(QOpenGLWidget):
         self.program.setAttributeArray(
             0, [QVector2D(-1, -1), QVector2D(1, -1), QVector2D(-1, 1), QVector2D(1, 1)]
         )
-        self.glDrawArrays(self.GL_TRIANGLE_STRIP, 0, 4)
-
-    def resizeGL(self, w, h):
-        if self.glViewport == None:
-            return
-        self.glViewport(0, 0, w, h)
+        self.gl.glDrawArrays(self.gl.GL_TRIANGLE_STRIP, 0, 4)
