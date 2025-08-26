@@ -1,9 +1,9 @@
 from PyQt5.QtCore import QEvent, Qt, QPoint
-from PyQt5.QtGui import QKeyEvent, QFocusEvent, QCursor, QKeySequence, QMouseEvent
+from PyQt5.QtGui import QKeyEvent, QFocusEvent, QCursor, QKeySequence
 from PyQt5.QtWidgets import QVBoxLayout, QDialog, QShortcut
 from krita import *  # type: ignore
 
-from .color_wheel import ColorWheel, LockedChannelBar, ColorIndicatorBlocks
+from .color_wheel import ColorWheel, LockedChannelBar, INDICATOR_BLOCKS
 from .internal_state import STATE
 
 
@@ -29,6 +29,7 @@ class PortableColorSelector(QDialog):
     def toggle(self):
         self.updateFromSettings()
         if self.isVisible():
+            INDICATOR_BLOCKS.shut()
             self.hide()
         else:
             halfSize = QPoint(int(self.width() * 0.5), int(self.height() * 0.5))
@@ -44,6 +45,7 @@ class PortableColorSelector(QDialog):
     def leaveEvent(self, a0: QEvent | None) -> None:
         super().leaveEvent(a0)
         self.hide()
+        INDICATOR_BLOCKS.shut()
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0 == None:

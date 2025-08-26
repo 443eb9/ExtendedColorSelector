@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
 )
 from krita import *  # type: ignore
 
-from .color_wheel import ColorWheel, LockedChannelBar
+from .color_wheel import ColorWheel, LockedChannelBar, INDICATOR_BLOCKS
 from .models import ColorModel
 from .config import DOCKER_NAME, DOCKER_ID
 from .setting import SettingsDialog, GlobalSettingsDialog
@@ -151,6 +151,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
     def leaveEvent(self, event: QMouseEvent):
         STATE.suppressColorSyncing = False
+        INDICATOR_BLOCKS.shut()
 
     def resizeEvent(self, e: QResizeEvent):
         self.colorWheel.resizeEvent(e)

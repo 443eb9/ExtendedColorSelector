@@ -86,19 +86,22 @@ class ColorIndicatorBlocks(QDialog):
 
         STATE.constantChanged.connect(self.updateColor)
         STATE.variablesChanged.connect(self.updateColor)
+        self.lastColor = STATE.color
 
     def updateColor(self):
-        r, g, b = transferColorModel(STATE.color, STATE.colorModel, ColorModel.Rgb)
-        r, g, b = (
-            min(max(int(r * 256), 0), 255),
-            min(max(int(g * 256), 0), 255),
-            min(max(int(b * 256), 0), 255),
-        )
-        color = QColor(r, g, b)
-        self.currentColorBox.setStyleSheet(f"background-color: {color.name()}")
+        if self.isVisible():
+            r, g, b = transferColorModel(STATE.color, STATE.colorModel, ColorModel.Rgb)
+            r, g, b = (
+                min(max(int(r * 256), 0), 255),
+                min(max(int(g * 256), 0), 255),
+                min(max(int(b * 256), 0), 255),
+            )
+            color = QColor(r, g, b)
+            self.currentColorBox.setStyleSheet(f"background-color: {color.name()}")
+        else:
+            self.lastColor = STATE.color
 
     def popup(self, pos: QPoint):
-        self.lastColor = STATE.color
         self.move(pos)
         r, g, b = transferColorModel(self.lastColor, STATE.colorModel, ColorModel.Rgb)
         r, g, b = (
@@ -109,6 +112,10 @@ class ColorIndicatorBlocks(QDialog):
         color = QColor(r, g, b)
         self.lastColorBox.setStyleSheet(f"background-color: {color.name()}")
         self.show()
+
+    def shut(self):
+        self.lastColor = STATE.color
+        self.hide()
 
 
 INDICATOR_BLOCKS = ColorIndicatorBlocks()
@@ -310,9 +317,6 @@ class ColorWheel(OpenGLRenderer):
 
     def mouseMoveEvent(self, a0: QMouseEvent | None):
         self.handleMouse(a0)
-
-    def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
-        INDICATOR_BLOCKS.hide()
 
     def getCurrentWheelWidgetCoord(self) -> tuple[float, float]:
         settings = STATE.currentSettings()
@@ -563,7 +567,6 @@ class LockedChannelBar(OpenGLRenderer):
         self.handleMouse(a0)
 
     def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
-        INDICATOR_BLOCKS.hide()
         if a0 == None:
             return
         self.editStart = a0.pos().x()
