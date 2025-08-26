@@ -513,12 +513,12 @@ class LockedChannelBar(OpenGLRenderer):
         globalSettings = STATE.globalSettings
         settings = STATE.currentSettings()
         barHeight, enabled = (
-            (globalSettings.portableSelectorBarHeight, settings.enabled)
+            (globalSettings.portableSelectorBarHeight, settings.barEnabled)
             if self.portable
             else (globalSettings.barHeight, settings.barEnabled)
         )
 
-        self.setMinimumHeight(int(barHeight))
+        self.setFixedHeight(int(barHeight))
         if enabled:
             self.show()
         else:
