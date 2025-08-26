@@ -38,19 +38,22 @@ class PortableColorSelector(QDialog):
     def toggle(self):
         self.updateFromSettings()
         if self.isVisible():
-            INDICATOR_BLOCKS.shut()
             self.hide()
+            INDICATOR_BLOCKS.shut()
+            STATE.suppressColorSyncing = False
         else:
             halfSize = QPoint(int(self.width() * 0.5), int(self.height() * 0.5))
             self.move(QCursor.pos() - halfSize)
             self.show()
             self.activateWindow()
             self.setFocus()
+            STATE.suppressColorSyncing = True
 
     def leaveEvent(self, a0: QEvent | None) -> None:
         super().leaveEvent(a0)
         self.hide()
         INDICATOR_BLOCKS.shut()
+        STATE.suppressColorSyncing = False
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0 == None:

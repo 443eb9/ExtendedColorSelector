@@ -7,6 +7,7 @@
 - Support colorful ring for `HSV`, `HSL` and `OkLch` color models.
 - Remembering last used color model.
 - Optional color model switchers on portable color selector.
+- Portable color selector won't stop syncing color from Krita, which causes jittering.
 
 # v0.1.1
 
