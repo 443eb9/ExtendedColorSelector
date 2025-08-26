@@ -1,5 +1,8 @@
 # Unreleased
 
+
+# v0.2.0
+
 - Open portable color selector at center of cursor.
 - Avoid indeterminable values during color model transferring.
 - Removed redundant color sending, which causes eraser mode of brushes being overridden.
