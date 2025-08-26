@@ -211,23 +211,45 @@ class ColorModel(IntEnum):
             case ColorModel.Oklch:
                 return (0, 0, 0), (1, 1, 360)
 
-    # Returns the factor to multiply to the normalized color when displaying.
-    def displayScales(self) -> tuple[float, float, float]:
+    def toDisplayValues(
+        self, color: tuple[float, float, float]
+    ) -> tuple[float, float, float]:
+        c0, c1, c2 = color
         match self:
             case ColorModel.Rgb:
-                return 100, 100, 100
+                return c0 * 100, c1 * 100, c2 * 100
             case ColorModel.Hsv:
-                return 360, 100, 100
+                return c0 * 360, c1 * 100, c2 * 100
             case ColorModel.Hsl:
-                return 360, 100, 100
+                return c0 * 360, c1 * 100, c2 * 100
             case ColorModel.Oklab:
-                return 100, 100, 100
+                return c0 * 100, (c1 - 0.5) * 200, (c2 - 0.5) * 200
             case ColorModel.Xyz:
-                return 100, 100, 100
+                return c0 * 100, c1 * 100, c2 * 100
             case ColorModel.Lab:
-                return 100, 100, 100
+                return c0 * 100, (c1 - 0.5) * 200, (c2 - 0.5) * 200
             case ColorModel.Oklch:
-                return 100, 100, 100
+                return c0 * 100, c1 * 100, c2 * 360
+
+    def fromDisplayValues(
+        self, displayed: tuple[float, float, float]
+    ) -> tuple[float, float, float]:
+        c0, c1, c2 = displayed
+        match self:
+            case ColorModel.Rgb:
+                return c0 / 100, c1 / 100, c2 / 100
+            case ColorModel.Hsv:
+                return c0 / 360, c1 / 100, c2 / 100
+            case ColorModel.Hsl:
+                return c0 / 360, c1 / 100, c2 / 100
+            case ColorModel.Oklab:
+                return c0 / 100, (c1 + 0.5) / 200, (c2 + 0.5) / 200
+            case ColorModel.Xyz:
+                return c0 / 100, c1 / 100, c2 / 100
+            case ColorModel.Lab:
+                return c0 / 100, (c1 + 0.5) / 200, (c2 + 0.5) / 200
+            case ColorModel.Oklch:
+                return c0 / 100, c1 / 100, c2 / 360
 
     def displayLimits(
         self,

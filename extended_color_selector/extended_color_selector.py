@@ -69,7 +69,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.mainLayout.addLayout(settingsButtonLayout)
 
         STATE.settingsChanged.connect(self.updateFromSettings)
-        STATE.colorModelChanged.connect(self.updateChannelIndicators)
+        STATE.colorModelChanged.connect(self.updateColorModel)
         STATE.colorChanged.connect(self.updateChannelSpinBoxes)
         self.updateFromSettings()
 
@@ -89,13 +89,13 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             for b in self.channelSpinBoxes:
                 b.hide()
 
-    def updateColorModel(self, colorModel: ColorModel):
-        STATE.updateColorModel(colorModel)
+    def updateColorModel(self):
+        self.updateChannelIndicators()
+        self.updateChannelSpinBoxes()
         self.colorWheel.compileShader()
         self.lockedChannelBar.compileShader()
 
     def updateChannelIndicators(self):
-        displayScales = STATE.colorModel.displayScales()
         displayMin, displayMax = STATE.colorModel.displayLimits()
         self.updateChannelSpinBoxes()
         for i, channel in enumerate(STATE.colorModel.channels()):
@@ -107,8 +107,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             valueBox = self.channelSpinBoxes[i]
             valueBox.setRange(displayMin[i], displayMax[i])
             valueBox.valueChanged.connect(
-                lambda value, ch=i, scale=displayScales[i]: STATE.updateChannelValue(
-                    ch, value / scale
+                lambda value, ch=i: STATE.updateChannelValue(
+                    ch, STATE.colorModel.fromDisplayValues((value, value, value))[i]
                 )
             )
 
@@ -116,11 +116,10 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.update()
 
     def updateChannelSpinBoxes(self):
-        displayScale = STATE.colorModel.displayScales()
+        display = STATE.colorModel.toDisplayValues(STATE.color)
         for i in range(3):
-            x = STATE.color[i] * displayScale[i]
             self.channelSpinBoxes[i].blockSignals(True)
-            self.channelSpinBoxes[i].setValue(x)
+            self.channelSpinBoxes[i].setValue(display[i])
             self.channelSpinBoxes[i].blockSignals(False)
 
     def enterEvent(self, event: QMouseEvent):
