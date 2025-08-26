@@ -70,8 +70,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
         STATE.settingsChanged.connect(self.updateFromSettings)
         STATE.colorModelChanged.connect(self.updateChannelIndicators)
-        STATE.constantChanged.connect(self.updateChannelSpinBoxes)
-        STATE.variablesChanged.connect(self.updateChannelSpinBoxes)
+        STATE.colorChanged.connect(self.updateChannelSpinBoxes)
         self.updateFromSettings()
 
     def updateFromSettings(self):

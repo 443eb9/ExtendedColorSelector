@@ -84,8 +84,7 @@ class ColorIndicatorBlocks(QDialog):
         self.mainLayout.addWidget(self.currentColorBox, 1)
         self.mainLayout.addWidget(self.lastColorBox, 1)
 
-        STATE.constantChanged.connect(self.updateColor)
-        STATE.variablesChanged.connect(self.updateColor)
+        STATE.colorChanged.connect(self.updateColor)
         self.lastColor = STATE.color
 
     def updateColor(self):
@@ -212,7 +211,7 @@ class ColorWheel(OpenGLRenderer):
 
         STATE.settingsChanged.connect(self.updateShaders)
         STATE.colorModelChanged.connect(self.updateShaders)
-        STATE.constantChanged.connect(self.update)
+        STATE.colorChanged.connect(self.update)
         STATE.lockedChannelIndexChanged.connect(self.update)
 
     def resizeEvent(self, e: QResizeEvent | None):
@@ -510,7 +509,7 @@ class LockedChannelBar(OpenGLRenderer):
 
         STATE.colorModelChanged.connect(self.updateShaders)
         STATE.settingsChanged.connect(self.updateFromState)
-        STATE.variablesChanged.connect(self.update)
+        STATE.colorChanged.connect(self.update)
         STATE.lockedChannelIndexChanged.connect(self.update)
 
     def updateFromState(self):

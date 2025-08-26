@@ -42,10 +42,9 @@ def getKritaColor() -> tuple[tuple[float, float, float], ColorModel] | None:
 
 
 class InternalState(QObject):
-    variablesChanged = pyqtSignal(object)
-    constantChanged = pyqtSignal(float)
-    colorModelChanged = pyqtSignal(ColorModel)
-    lockedChannelIndexChanged = pyqtSignal(int)
+    colorChanged = pyqtSignal()
+    colorModelChanged = pyqtSignal()
+    lockedChannelIndexChanged = pyqtSignal()
     settingsChanged = pyqtSignal()
 
     def __init__(self) -> None:
@@ -69,6 +68,24 @@ class InternalState(QObject):
         self.lockedChannel = channel
         self.lockedChannelIndexChanged.emit(channel)
 
+    def lockedChannelValue(self) -> float:
+        return self.color[self.lockedChannel]
+
+    def variableChannelsValue(self) -> tuple[float, float]:
+        match self.lockedChannel:
+            case 0:
+                return self.color[1], self.color[2]
+            case 1:
+                return self.color[0], self.color[2]
+            case 2:
+                return self.color[0], self.color[2]
+            case _:
+                raise Exception("Invalid locked channel")
+
+    def updateColor(self, color: tuple[float, float, float]):
+        self.color = color
+        self.colorChanged.emit()
+
     def updateChannelValue(self, channel: int, value: float):
         match channel:
             case 0:
@@ -78,17 +95,8 @@ class InternalState(QObject):
             case 2:
                 self.color = self.color[0], self.color[1], value
 
-        self.constantChanged.emit(self.color[self.lockedChannel])
-
-        match self.lockedChannel:
-            case 0:
-                self.variablesChanged.emit((self.color[1], self.color[2]))
-            case 1:
-                self.variablesChanged.emit((self.color[0], self.color[2]))
-            case 2:
-                self.variablesChanged.emit((self.color[0], self.color[1]))
-
         self.sendColor()
+        self.colorChanged.emit()
 
     def updateLockedChannelValue(self, value: float):
         match self.lockedChannel:
@@ -99,8 +107,8 @@ class InternalState(QObject):
             case 2:
                 self.color = self.color[0], self.color[1], value
 
-        self.constantChanged.emit(value)
         self.sendColor()
+        self.colorChanged.emit()
 
     def updateVariableChannelsValue(self, variables: tuple[float, float]):
         match self.lockedChannel:
@@ -111,7 +119,7 @@ class InternalState(QObject):
             case 2:
                 self.color = variables[0], variables[1], self.color[2]
 
-        self.variablesChanged.emit(variables)
+        self.colorChanged.emit()
         self.sendColor()
 
     def updateColorModel(self, colorModel: ColorModel):
@@ -180,15 +188,7 @@ class InternalState(QObject):
             self.color,
         )
 
-        self.color = color
-        self.constantChanged.emit(color[self.lockedChannel])
-        match self.lockedChannel:
-            case 0:
-                self.variablesChanged.emit((color[1], color[2]))
-            case 1:
-                self.variablesChanged.emit((color[0], color[2]))
-            case 2:
-                self.variablesChanged.emit((color[0], color[1]))
+        self.updateColor(color)
 
 
 STATE = InternalState()
