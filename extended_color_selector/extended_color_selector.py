@@ -15,6 +15,7 @@ from .models import ColorModel
 from .config import DOCKER_NAME, DOCKER_ID
 from .setting import SettingsDialog, GlobalSettingsDialog
 from .internal_state import STATE
+from .color_model_switcher import ColorModelSwitcher
 
 
 class ExtendedColorSelector(DockWidget):  # type: ignore
@@ -34,10 +35,9 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
         self.lockedChannelBar = LockedChannelBar(False, self)
 
-        self.colorSpaceSwitchers = QHBoxLayout()
+        self.colorSpaceSwitcher = ColorModelSwitcher()
         self.lockers = QHBoxLayout()
 
-        self.updateColorModelSwitchers()
         self.lockersGroup = QButtonGroup()
         self.lockersGroup.setExclusive(True)
         self.channelSpinBoxes = QDoubleSpinBox(), QDoubleSpinBox(), QDoubleSpinBox()
@@ -63,7 +63,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
         self.mainLayout.addLayout(colorWheelLayout)
         self.mainLayout.addWidget(self.lockedChannelBar)
-        self.mainLayout.addLayout(self.colorSpaceSwitchers)
+        self.mainLayout.addWidget(self.colorSpaceSwitcher)
         self.mainLayout.addLayout(self.lockers)
         self.mainLayout.addStretch(1)
         self.mainLayout.addLayout(settingsButtonLayout)
@@ -80,7 +80,6 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             settings = STATE.settings[STATE.colorModel]
 
         self.updateChannelIndicators()
-        self.updateColorModelSwitchers()
 
         if settings.displayChannels:
             self.updateChannelSpinBoxes()
@@ -89,28 +88,6 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         else:
             for b in self.channelSpinBoxes:
                 b.hide()
-
-    def updateColorModelSwitchers(self):
-        while True:
-            widget = self.colorSpaceSwitchers.takeAt(0)
-            if widget == None:
-                break
-            widget = widget.widget()
-            if widget != None:
-                widget.deleteLater()
-
-        self.colorModelSwitchersGroup = QButtonGroup()
-        self.colorModelSwitchersGroup.setExclusive(True)
-        for colorModel in [ColorModel(i) for i in STATE.globalSettings.displayOrder]:
-            settings = STATE.settings[colorModel]
-            if not settings.enabled:
-                continue
-
-            button = QRadioButton(colorModel.displayName())
-            button.setChecked(colorModel == STATE.colorModel)
-            button.clicked.connect(lambda _, cm=colorModel: STATE.updateColorModel(cm))
-            self.colorSpaceSwitchers.addWidget(button)
-            self.colorModelSwitchersGroup.addButton(button)
 
     def updateColorModel(self, colorModel: ColorModel):
         STATE.updateColorModel(colorModel)

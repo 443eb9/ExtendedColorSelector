@@ -309,32 +309,36 @@ class GlobalSettingsDialog(QDialog):
         pSettingsLayout1 = QHBoxLayout()
         pWidthBox = QSpinBox()
         pWidthBox.setMaximum(1000)
-        pWidthBox.setValue(settings.portableSelectorWidth)
-        pWidthBox.valueChanged.connect(
-            lambda x: self.changeSetting("portableSelectorWidth", x)
-        )
+        pWidthBox.setValue(settings.pWidth)
+        pWidthBox.valueChanged.connect(lambda x: self.changeSetting("pWidth", x))
         pBarHeightBox = QSpinBox()
-        pBarHeightBox.setValue(settings.portableSelectorBarHeight)
+        pBarHeightBox.setValue(settings.pBarHeight)
         pBarHeightBox.valueChanged.connect(
-            lambda x: self.changeSetting("portableSelectorBarHeight", x)
+            lambda x: self.changeSetting("pBarHeight", x)
         )
         pSettingsLayout1.addWidget(QLabel("Width"))
         pSettingsLayout1.addWidget(pWidthBox)
         pSettingsLayout1.addWidget(QLabel("Bar Height"))
         pSettingsLayout1.addWidget(pBarHeightBox)
         pSettingsLayout2 = QHBoxLayout()
-        pShortcut = QLineEdit(settings.portableSelectorShortcut)
+        pEnableColorModelSwitcher = QCheckBox("Enable Color Model Switcher")
+        pEnableColorModelSwitcher.setChecked(settings.pEnableColorModelSwitcher)
+        pEnableColorModelSwitcher.clicked.connect(
+            lambda x: self.changeSetting("pEnableColorModelSwitcher", x)
+        )
+        pShortcut = QLineEdit(settings.pShortcut)
 
         def setShortcut():
             try:
                 x = pShortcut.text()
                 _ = QKeySequence(x)
-                self.changeSetting("portableSelectorShortcut", x)
+                self.changeSetting("pShortcut", x)
             except:
-                pShortcut.setText(settings.portableSelectorShortcut)
+                pShortcut.setText(settings.pShortcut)
                 return
 
         pShortcut.editingFinished.connect(setShortcut)
+        pSettingsLayout2.addWidget(pEnableColorModelSwitcher)
         pSettingsLayout2.addWidget(QLabel("Shortcut"))
         pSettingsLayout2.addWidget(pShortcut)
         pSettingsLayouts.addLayout(pSettingsLayout1)

@@ -734,9 +734,10 @@ class GlobalSettings:
         )
         self.barHeight = int(getOrDefault(s, "20"))
         self.dontSyncIfOutOfGamut = getOrDefault(s, "True") == "True"
-        self.portableSelectorWidth = int(getOrDefault(s, "400"))
-        self.portableSelectorBarHeight = int(getOrDefault(s, "20"))
-        self.portableSelectorShortcut = getOrDefault(s, "Y")
+        self.pWidth = int(getOrDefault(s, "400"))
+        self.pBarHeight = int(getOrDefault(s, "20"))
+        self.pShortcut = getOrDefault(s, "Y")
+        self.pEnableColorModelSwitcher = getOrDefault(s, "False") == "True"
 
     def write(self):
         s = [
@@ -746,8 +747,9 @@ class GlobalSettings:
             self.outOfGamutColor[2],
             self.barHeight,
             self.dontSyncIfOutOfGamut,
-            self.portableSelectorWidth,
-            self.portableSelectorBarHeight,
-            self.portableSelectorShortcut,
+            self.pWidth,
+            self.pBarHeight,
+            self.pShortcut,
+            self.pEnableColorModelSwitcher,
         ]
         Krita.instance().writeSetting(DOCKER_NAME, "global", ",".join([str(x) for x in s]))  # type: ignore
