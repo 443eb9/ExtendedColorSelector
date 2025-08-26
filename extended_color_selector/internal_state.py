@@ -66,7 +66,7 @@ class InternalState(QObject):
 
     def updateLockedChannel(self, channel: int):
         self.lockedChannel = channel
-        self.lockedChannelIndexChanged.emit(channel)
+        self.lockedChannelIndexChanged.emit()
 
     def lockedChannelValue(self) -> float:
         return self.color[self.lockedChannel]
