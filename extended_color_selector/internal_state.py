@@ -129,7 +129,7 @@ class InternalState(QObject):
         self.color = transferColorModel(self.color, self.colorModel, colorModel)
         self.colorModel = colorModel
         self.syncColor()
-        self.colorModelChanged.emit(colorModel)
+        self.colorModelChanged.emit()
 
     def sendColor(self):
         kritaWindow = Krita.instance().activeWindow()  # type: ignore
