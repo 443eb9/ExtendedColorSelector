@@ -276,6 +276,39 @@ class ColorModel(IntEnum):
             color[2] * (mx[2] - mn[2]) + mn[2],
         )
 
+    def makeColorful(
+        self, color: tuple[float, float, float], channel: int
+    ) -> tuple[float, float, float]:
+        ch = color[channel]
+
+        match self:
+            case ColorModel.Rgb:
+                return color
+            case ColorModel.Hsv:
+                match channel:
+                    case 0:
+                        return ch, 1, 1
+                    case _:
+                        return color
+            case ColorModel.Hsl:
+                match channel:
+                    case 0:
+                        return ch, 1, 0.5
+                    case _:
+                        return color
+            case ColorModel.Oklab:
+                return color
+            case ColorModel.Xyz:
+                return color
+            case ColorModel.Lab:
+                return color
+            case ColorModel.Oklch:
+                match channel:
+                    case 2:
+                        return 1, 1, ch
+                    case _:
+                        return color
+
 
 def colorModelFromKrita(model: str) -> ColorModel | None:
     match model:
@@ -686,6 +719,7 @@ class SettingsPerColorModel:
         self.ringReversed = getOrDefault(s, "False") == "True"
         self.wheelRotateWithRing = getOrDefault(s, "False") == "True"
         self.lockedChannelIndex = int(getOrDefault(s, "0"))
+        self.colorfulLockedChannel = getOrDefault(s, "False") == "True"
 
     def write(self, colorModel: ColorModel):
         s = [
@@ -704,6 +738,7 @@ class SettingsPerColorModel:
             self.ringReversed,
             self.wheelRotateWithRing,
             self.lockedChannelIndex,
+            self.colorfulLockedChannel,
         ]
         Krita.instance().writeSetting(DOCKER_NAME, colorModel.displayName(), ",".join([str(x) for x in s]))  # type: ignore
 

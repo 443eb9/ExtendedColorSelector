@@ -93,6 +93,12 @@ class SettingsDialog(QDialog):
                 lambda x, cm=colorModel: self.changeSetting(cm, "barEnabled", x)
             )
 
+            colorfulLockedChannel = QCheckBox("Colorful Locked Channel")
+            colorfulLockedChannel.setChecked(settings.colorfulLockedChannel)
+            colorfulLockedChannel.clicked.connect(
+                lambda x, cm=colorModel: self.changeSetting(cm, "colorfulLockedChannel", x)
+            )
+
             channelsSpinBoxEnabled = QCheckBox(f"Display Channel Values")
             channelsSpinBoxEnabled.setChecked(settings.displayChannels)
             channelsSpinBoxEnabled.clicked.connect(
@@ -188,6 +194,7 @@ class SettingsDialog(QDialog):
             )
 
             pageLayout.addWidget(barEnabled)
+            pageLayout.addWidget(colorfulLockedChannel)
             pageLayout.addWidget(channelsSpinBoxEnabled)
             pageLayout.addLayout(shapeButtonsAndRotLayout)
             pageLayout.addLayout(axesSettingsLayout)

@@ -479,14 +479,20 @@ class ColorWheel(OpenGLRenderer):
         self.program.setUniformValue(
             "ringRotation", float(math.radians(settings.ringRotation))
         )
+
+        maybeColorfuledColor = (
+            STATE.colorModel.makeColorful(STATE.color, STATE.lockedChannel)
+            if settings.colorfulLockedChannel
+            else STATE.color
+        )
         variables = None
         match STATE.lockedChannel:
             case 0:
-                variables = STATE.color[1], STATE.color[2]
+                variables = maybeColorfuledColor[1], maybeColorfuledColor[2]
             case 1:
-                variables = STATE.color[0], STATE.color[2]
+                variables = maybeColorfuledColor[0], maybeColorfuledColor[2]
             case 2:
-                variables = STATE.color[0], STATE.color[1]
+                variables = maybeColorfuledColor[0], maybeColorfuledColor[1]
             case _:
                 return
         self.program.setUniformValue("variables", variables[0], variables[1])
@@ -604,23 +610,10 @@ class LockedChannelBar(OpenGLRenderer):
         if self.gl == None:
             return
 
+        settings = STATE.currentSettings()
         self.program.bind()
 
-        ix, iy = 0, 0
-        match STATE.lockedChannel:
-            case 0:
-                ix, iy = 1, 2
-            case 1:
-                ix, iy = 0, 2
-            case 2:
-                ix, iy = 0, 1
-
         self.program.setUniformValue("res", float(self.res))
-        self.program.setUniformValue(
-            "variables",
-            float(STATE.color[ix]),
-            float(STATE.color[iy]),
-        )
         self.program.setUniformValue("constantPos", int(STATE.lockedChannel))
         mn, mx = STATE.colorModel.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
@@ -635,6 +628,23 @@ class LockedChannelBar(OpenGLRenderer):
             )
         else:
             self.program.setUniformValue("outOfGamut", -1.0, -1.0, -1.0)
+
+        maybeColorfuledColor = (
+            STATE.colorModel.makeColorful(STATE.color, STATE.lockedChannel)
+            if settings.colorfulLockedChannel
+            else STATE.color
+        )
+        variables = None
+        match STATE.lockedChannel:
+            case 0:
+                variables = maybeColorfuledColor[1], maybeColorfuledColor[2]
+            case 1:
+                variables = maybeColorfuledColor[0], maybeColorfuledColor[2]
+            case 2:
+                variables = maybeColorfuledColor[0], maybeColorfuledColor[1]
+            case _:
+                return
+        self.program.setUniformValue("variables", variables[0], variables[1])
 
         self.program.setAttributeArray(
             0, [QVector2D(-1, -1), QVector2D(1, -1), QVector2D(-1, 1), QVector2D(1, 1)]
