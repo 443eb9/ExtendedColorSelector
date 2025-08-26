@@ -56,6 +56,16 @@ class InternalState(QObject):
         self.globalSettings = GlobalSettings()
         self.suppressColorSyncing = False
 
+        if self.settings[self.globalSettings.currentColorModel].enabled:
+            self.updateColorModel(self.globalSettings.currentColorModel)
+        else:
+            for colorModel in ColorModel:
+                if self.settings[colorModel].enabled:
+                    self.updateColorModel(colorModel)
+                    break
+            else:
+                self.settings[ColorModel.Rgb].enabled = True
+
         self.syncTimer = QTimer()
         self.syncTimer.timeout.connect(self.syncColor)
         self.syncTimer.start(SYNC_INTERVAL_MS)
@@ -130,6 +140,8 @@ class InternalState(QObject):
         self.colorModel = colorModel
         self.syncColor()
         self.colorModelChanged.emit()
+        self.globalSettings.currentColorModel = colorModel
+        self.globalSettings.write()
 
     def sendColor(self):
         kritaWindow = Krita.instance().activeWindow()  # type: ignore

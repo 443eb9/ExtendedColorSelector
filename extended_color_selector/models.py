@@ -773,6 +773,7 @@ class GlobalSettings:
         self.pBarHeight = int(getOrDefault(s, "20"))
         self.pShortcut = getOrDefault(s, "Y")
         self.pEnableColorModelSwitcher = getOrDefault(s, "False") == "True"
+        self.currentColorModel = ColorModel(int(getOrDefault(s, "0")))
 
     def write(self):
         s = [
@@ -786,5 +787,6 @@ class GlobalSettings:
             self.pBarHeight,
             self.pShortcut,
             self.pEnableColorModelSwitcher,
+            int(self.currentColorModel),
         ]
         Krita.instance().writeSetting(DOCKER_NAME, "global", ",".join([str(x) for x in s]))  # type: ignore
