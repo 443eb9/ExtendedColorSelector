@@ -180,6 +180,7 @@ class InternalState(QObject):
             self.color,
         )
 
+        self.color = color
         self.constantChanged.emit(color[self.lockedChannel])
         match self.lockedChannel:
             case 0:
