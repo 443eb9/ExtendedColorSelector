@@ -121,6 +121,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
     def updateChannelIndicators(self):
         displayScales = STATE.colorModel.displayScales()
         displayMin, displayMax = STATE.colorModel.displayLimits()
+        self.updateChannelSpinBoxes()
         for i, channel in enumerate(STATE.colorModel.channels()):
             button = self.channelButtons[i]
             button.setText(channel)
