@@ -325,11 +325,8 @@ class ColorModel(IntEnum):
             case ColorModel.Lab:
                 return color
             case ColorModel.Oklch:
-                match channel:
-                    case 2:
-                        return 1, 1, ch
-                    case _:
-                        return color
+                # TODO maybe?
+                return color
 
 
 NON_SRGB_GAMUT_MODELS = [

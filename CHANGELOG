@@ -11,7 +11,7 @@
 - Avoid indeterminable values during color model transferring.
 - Removed redundant color sending, which causes eraser mode of brushes being overridden.
 - Display two indicators when selecting colors: current color and last picked color.
-- Support colorful ring for `HSV`, `HSL` and `OkLch` color models.
+- Support colorful ring for `HSV` and `HSL` color models.
 - Remembering last used color model.
 - Optional color model switchers on portable color selector.
 - Portable color selector won't stop syncing color from Krita, which causes jittering.
