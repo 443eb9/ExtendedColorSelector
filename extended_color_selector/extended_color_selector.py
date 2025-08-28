@@ -111,7 +111,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         for i, channel in enumerate(STATE.colorModel.channels()):
             button = self.channelButtons[i]
             button.setText(channel)
-            button.clicked.connect(lambda _, i=i: STATE.updateLockedChannel(i))
+            button.clicked.connect(lambda _, ch=i: STATE.updateLockedChannel(ch))
             button.setChecked(STATE.lockedChannel == i)
 
             valueBox = self.channelSpinBoxes[i]

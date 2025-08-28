@@ -75,6 +75,7 @@ class InternalState(QObject):
         return self.settings[self.colorModel]
 
     def updateLockedChannel(self, channel: int):
+        self.currentSettings().lockedChannelIndex = channel
         self.lockedChannel = channel
         self.lockedChannelIndexChanged.emit()
 
@@ -138,6 +139,7 @@ class InternalState(QObject):
 
         self.color = transferColorModel(self.color, self.colorModel, colorModel)
         self.colorModel = colorModel
+        self.updateLockedChannel(self.currentSettings().lockedChannelIndex)
         self.syncColor()
         self.colorModelChanged.emit()
         self.globalSettings.currentColorModel = colorModel

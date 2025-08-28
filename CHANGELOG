@@ -4,6 +4,7 @@
 - Clipping the selector area to SRGB gamut. This is disabled by default and can be enabled in settings for each color model.
 - Fixed not-working channel spin boxes.
 - Stop syncing color from Krita when editing channel spin boxes.
+- Index of locked channel is not updating when switching between color models.
 
 # v0.2.0
 
