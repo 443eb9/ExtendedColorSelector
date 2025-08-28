@@ -35,6 +35,11 @@ from .models import (
 )
 from .internal_state import STATE
 from .config import *
+from .gamut_clipping import (
+    getAxesLimitsInterpolated,
+    mapAxesToLimited,
+    unmapAxesFromLimited,
+)
 
 
 # Use [18:] to strip the version header, and add new one later before compiling
@@ -257,12 +262,22 @@ class ColorWheel(OpenGLRenderer):
             (x, y),
             (settings.ringThickness + settings.ringMargin) / (self.res / 2),
         )
-        if settings.swapAxes:
-            cx, cy = cy, cx
+
         if settings.reverseX:
             cx = 1 - cx
         if settings.reverseY:
             cy = 1 - cy
+        if settings.swapAxes:
+            cx, cy = cy, cx
+
+        if settings.clipToSrgbGamut:
+            cx, cy = mapAxesToLimited(
+                STATE.colorModel,
+                STATE.lockedChannel,
+                STATE.lockedChannelValue(),
+                (cx, cy),
+            )
+
         STATE.updateVariableChannelsValue((cx, cy))
         self.update()
 
@@ -329,12 +344,21 @@ class ColorWheel(OpenGLRenderer):
                 ix, iy = 0, 1
 
         cx, cy = STATE.color[ix], STATE.color[iy]
+
+        if settings.clipToSrgbGamut:
+            cx, cy = unmapAxesFromLimited(
+                STATE.colorModel,
+                STATE.lockedChannel,
+                STATE.lockedChannelValue(),
+                (cx, cy),
+            )
+
+        if settings.swapAxes:
+            cx, cy = cy, cx
         if settings.reverseX:
             cx = 1 - cx
         if settings.reverseY:
             cy = 1 - cy
-        if settings.swapAxes:
-            cx, cy = cy, cx
 
         settings = STATE.currentSettings()
         x, y = settings.shape.getPos(
@@ -496,6 +520,21 @@ class ColorWheel(OpenGLRenderer):
             case _:
                 return
         self.program.setUniformValue("variables", variables[0], variables[1])
+
+        axesLimits = (
+            getAxesLimitsInterpolated(
+                STATE.colorModel, STATE.lockedChannel, STATE.lockedChannelValue()
+            )
+            if settings.clipToSrgbGamut
+            else ((-1.0, -1.0), (-1.0, -1.0))
+        )
+        self.program.setUniformValue(
+            "axesLimits",
+            axesLimits[0][0],
+            axesLimits[0][1],
+            axesLimits[1][0],
+            axesLimits[1][1],
+        )
 
         self.gl.glDrawArrays(self.gl.GL_TRIANGLE_STRIP, 0, 4)
 

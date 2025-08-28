@@ -1,0 +1,8 @@
+[package]
+name = "axes_limits_compute"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy_color = { version = "0.16", default-features = false, features = ["std"] }
+rayon = "1"

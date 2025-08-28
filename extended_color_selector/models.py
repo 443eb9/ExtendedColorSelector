@@ -332,6 +332,14 @@ class ColorModel(IntEnum):
                         return color
 
 
+NON_SRGB_GAMUT_MODELS = [
+    ColorModel.Oklab,
+    ColorModel.Xyz,
+    ColorModel.Lab,
+    ColorModel.Oklch,
+]
+
+
 def colorModelFromKrita(model: str) -> ColorModel | None:
     match model:
         case "RGBA":
@@ -742,6 +750,7 @@ class SettingsPerColorModel:
         self.wheelRotateWithRing = getOrDefault(s, "False") == "True"
         self.lockedChannelIndex = int(getOrDefault(s, "0"))
         self.colorfulLockedChannel = getOrDefault(s, "False") == "True"
+        self.clipToSrgbGamut = getOrDefault(s, "False") == "True"
 
     def write(self, colorModel: ColorModel):
         s = [
@@ -761,6 +770,7 @@ class SettingsPerColorModel:
             self.wheelRotateWithRing,
             self.lockedChannelIndex,
             self.colorfulLockedChannel,
+            self.clipToSrgbGamut,
         ]
         Krita.instance().writeSetting(DOCKER_NAME, colorModel.displayName(), ",".join([str(x) for x in s]))  # type: ignore
 

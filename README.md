@@ -39,6 +39,12 @@ Go to `Settings -> Configure Krita -> Python Plugin Manager`, find `Extended Col
 
 To make it looks/sounds like a native Krita docker, just like wide-gamut color selector and advanced color selector.
 
+## Baking the axes limit file.
+
+Go to release page, download the corresponding `axes_limits_compute` executable according to your operating system.
+
+Put that executable inside `pykrita`, then run it.
+
 ## Screenshots
 
 ![](./images/screenshot_0.png)

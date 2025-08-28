@@ -1,4 +1,6 @@
-.venv
+.venv/
 .python-version
 pyproject.toml
 uv.lock
+target/
+artifacts/

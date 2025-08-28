@@ -12,6 +12,7 @@ uniform float rotation;
 uniform float ringThickness;
 uniform float ringMargin;
 uniform float ringRotation;
+uniform vec4 axesLimits;
 out vec4 out_color;
 
 const vec3 BACKGROUND_COLOR = vec3(0.0);
@@ -41,6 +42,10 @@ vec4 drawWheel(vec2 p) {
 
     if(any(lessThan(colorCoord, vec2(0.0)))) {
         return vec4(0.0);
+    }
+
+    if(all(greaterThanEqual(axesLimits, vec4(0.0)))) {
+        colorCoord = mix(axesLimits.xz, axesLimits.yw, colorCoord);
     }
 
     vec3 t;

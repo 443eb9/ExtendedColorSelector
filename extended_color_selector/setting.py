@@ -96,13 +96,21 @@ class SettingsDialog(QDialog):
             colorfulLockedChannel = QCheckBox("Colorful Locked Channel")
             colorfulLockedChannel.setChecked(settings.colorfulLockedChannel)
             colorfulLockedChannel.clicked.connect(
-                lambda x, cm=colorModel: self.changeSetting(cm, "colorfulLockedChannel", x)
+                lambda x, cm=colorModel: self.changeSetting(
+                    cm, "colorfulLockedChannel", x
+                )
             )
 
             channelsSpinBoxEnabled = QCheckBox(f"Display Channel Values")
             channelsSpinBoxEnabled.setChecked(settings.displayChannels)
             channelsSpinBoxEnabled.clicked.connect(
                 lambda x, cm=colorModel: self.changeSetting(cm, "displayChannels", x)
+            )
+
+            clipGamutBox = QCheckBox("Clip Gamut To SRGB Range")
+            clipGamutBox.setChecked(settings.clipToSrgbGamut)
+            clipGamutBox.clicked.connect(
+                lambda x, cm=colorModel: self.changeSetting(cm, "clipToSrgbGamut", x)
             )
 
             shapeButtonsAndRotLayout = QHBoxLayout()
@@ -196,6 +204,7 @@ class SettingsDialog(QDialog):
             pageLayout.addWidget(barEnabled)
             pageLayout.addWidget(colorfulLockedChannel)
             pageLayout.addWidget(channelsSpinBoxEnabled)
+            pageLayout.addWidget(clipGamutBox)
             pageLayout.addLayout(shapeButtonsAndRotLayout)
             pageLayout.addLayout(axesSettingsLayout)
             pageLayout.addWidget(ringEnabled)
