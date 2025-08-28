@@ -98,6 +98,16 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
     def updateChannelIndicators(self):
         displayMin, displayMax = STATE.colorModel.displayLimits()
         self.updateChannelSpinBoxes()
+
+        def update(value: float, ch: int):
+            STATE.suppressColorSyncing = True
+            STATE.updateChannelValue(
+                ch, STATE.colorModel.fromDisplayValues((value, value, value))[ch]
+            )
+
+        def finished():
+            STATE.suppressColorSyncing = False
+
         for i, channel in enumerate(STATE.colorModel.channels()):
             button = self.channelButtons[i]
             button.setText(channel)
@@ -106,11 +116,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
 
             valueBox = self.channelSpinBoxes[i]
             valueBox.setRange(displayMin[i], displayMax[i])
-            valueBox.valueChanged.connect(
-                lambda value, ch=i: STATE.updateChannelValue(
-                    ch, STATE.colorModel.fromDisplayValues((value, value, value))[i]
-                )
-            )
+            valueBox.valueChanged.connect(lambda value, ch=i: update(value, ch))
+            valueBox.editingFinished.connect(finished)
 
         self.lockers.update()
         self.update()

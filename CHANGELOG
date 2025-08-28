@@ -1,6 +1,9 @@
 # Unreleased
 
 - Channel spin boxes display incorrect values, and won't update value range when color model changes.
+- Clipping the selector area to SRGB gamut. This is disabled by default and can be enabled in settings for each color model.
+- Fixed not-working channel spin boxes.
+- Stop syncing color from Krita when editing channel spin boxes.
 
 # v0.2.0
 
