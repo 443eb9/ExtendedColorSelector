@@ -11,9 +11,15 @@ class ColorModelSwitcher(QWidget):
 
         self.group = QButtonGroup()
         self.group.setExclusive(True)
+        self.buttons: list[tuple[ColorModel, QRadioButton]] = []
         self.updateFromSettings()
 
         STATE.settingsChanged.connect(self.updateFromSettings)
+        STATE.colorModelChanged.connect(self.colorModelChanged)
+
+    def colorModelChanged(self):
+        for colorModel, button in self.buttons:
+            button.setChecked(colorModel == STATE.colorModel)
 
     def updateFromSettings(self):
         while True:
@@ -24,6 +30,7 @@ class ColorModelSwitcher(QWidget):
             if widget != None:
                 widget.deleteLater()
 
+        self.buttons.clear()
         for colorModel in [ColorModel(i) for i in STATE.globalSettings.displayOrder]:
             settings = STATE.settings[colorModel]
             if not settings.enabled:
@@ -32,5 +39,6 @@ class ColorModelSwitcher(QWidget):
             button = QRadioButton(colorModel.displayName())
             button.setChecked(colorModel == STATE.colorModel)
             button.clicked.connect(lambda _, cm=colorModel: STATE.updateColorModel(cm))
+            self.buttons.append((colorModel, button))
             self.mainLayout.addWidget(button)
             self.group.addButton(button)
