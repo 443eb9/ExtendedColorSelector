@@ -422,8 +422,8 @@ def transferColorModel(
             case ColorModel.Lab:
                 c1, c2 = (c1, c2) if (c0 > 1e-4 and c0 < 1 - 1e-4) else (rc1, rc2)
             case ColorModel.Oklch:
-                c0 = c0 if (c1 < 1e-4) else rc0
-                c1, c2 = (c1, c2) if (c0 > 1e-4 and 1 - 1e-4) else (rc1, rc2)
+                c0 = c0 if (c1 > 1e-4) else rc0
+                c1, c2 = (c1, c2) if (c0 > 1e-4 and c0 < 1 - 1e-4) else (rc1, rc2)
 
     result = c0, c1, c2
 
