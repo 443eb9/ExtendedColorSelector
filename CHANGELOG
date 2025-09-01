@@ -5,8 +5,9 @@
 - Fixed not-working channel spin boxes.
 - Stop syncing color from Krita when editing channel spin boxes.
 - Index of locked channel is not updating when switching between color models.
-- Fixes `L` channel of Oklch not updating, caused by mistyping `>` into `<`.
-- Fixes color model switchers not updating when switching from another selector.
+- Fixed `L` channel of Oklch not updating, caused by mistyping `>` into `<`.
+- Fixed color model switchers not updating when switching from another selector.
+- Fixed order of color models are not saving.
 
 # v0.2.0
 

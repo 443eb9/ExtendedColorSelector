@@ -73,7 +73,11 @@ class SettingsDialog(QDialog):
         pageSwitchers.setDropIndicatorShown(True)
         pageSwitchers.setDragDropMode(QListWidget.DragDropMode.InternalMove)
         pages = QStackedLayout()
-        for colorModel, settings in STATE.settings.items():
+
+        print(STATE.globalSettings.displayOrder)
+        for colorModel in [ColorModel(i) for i in STATE.globalSettings.displayOrder]:
+            settings = STATE.settings[colorModel]
+
             pageSwitchers.addItem(colorModel.displayName())
             button = pageSwitchers.item(pageSwitchers.count() - 1)
             if button == None:
@@ -248,8 +252,7 @@ class SettingsDialog(QDialog):
         names = [cm.displayName() for cm in ColorModel]
         STATE.globalSettings.displayOrder.clear()
         for colorModel in [ColorModel(names.index(w.text())) for w in widgets]:
-            if STATE.settings[colorModel].enabled:
-                STATE.globalSettings.displayOrder.append(int(colorModel))
+            STATE.globalSettings.displayOrder.append(int(colorModel))
 
         STATE.settingsChanged.emit()
 

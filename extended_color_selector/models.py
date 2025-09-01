@@ -784,7 +784,7 @@ class GlobalSettings:
         orderList = order.split(",")
         self.displayOrder = (
             list(range(len(ColorModel)))
-            if len(order) == 0
+            if len(orderList) != len(ColorModel)
             else [int(cmi) for cmi in orderList]
         )
 
@@ -818,4 +818,9 @@ class GlobalSettings:
             self.pEnableColorModelSwitcher,
             int(self.currentColorModel),
         ]
-        Krita.instance().writeSetting(DOCKER_NAME, "global", ",".join([str(x) for x in s]))  # type: ignore
+        Krita.instance().writeSetting(  # type: ignore
+            DOCKER_NAME, "global", ",".join([str(x) for x in s])
+        )
+        Krita.instance().writeSetting(  # type: ignore
+            DOCKER_NAME, "displayOrder", ",".join([str(x) for x in self.displayOrder])
+        )
