@@ -1,6 +1,6 @@
 #version 410 core
 
-// The following color model conversion code is translate from `bevy` under MIT license
+// The following color model conversion code is translated from `bevy` under MIT license
 // 
 // Original license:
 // 

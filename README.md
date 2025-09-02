@@ -5,19 +5,20 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 ## Features
 
 - Supports color picking in 7 color models. (`RGB`, `HSV`, `HSL`, `OkLab`, `XYZ`, `Lab`, `OkLch`)
-- Fully modular, and high customizable.
+- Fully modular, and highly customizable.
   - Three wheel shapes: square, triangle, and circle.
   - Horizontal bar and ring to modify the third channel.
   - Swappable and revertable axes.
   - Color picker rotate with ring.
+  - Scale to fit SRGB gamut for color models in CIE color space.
 - Flexible and tiny. Thanks to OpenGL shaders and mathemagics, we can draw color wheels realtime.
 - Portable color selector. Open the selector at anywhere on canvas using shortcut.
-- `Shift` and `Alt` modifiers to move slowly.
+- `Shift` and `Alt` modifiers to shift slowly.
 - Out of gamut hinting.
 
 ## Known Issues
 
-- Tested on Ubuntu 24.04.3(GNOME) and KUbuntu 24.04.0(KDE) in VMWare Workstation Pro 17, not working if using `OpenGL` as canvas acceleration. `OpenGL ES` or with canvas acceleration disabled works.
+- Tested on Ubuntu 24.04.3(GNOME) and KUbuntu 24.04.0(KDE) in VMWare Workstation Pro 17, not working if using `OpenGL` for canvas acceleration. `OpenGL ES` or with canvas acceleration disabled works.
 
 ## How to use
 

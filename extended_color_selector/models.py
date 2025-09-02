@@ -440,7 +440,7 @@ def cbrt(x: float) -> float:
     return x ** (1.0 / 3) if x > 0 else -((-x) ** (1.0 / 3))
 
 
-# The following color model conversion code is translate from `bevy` under MIT license
+# The following color model conversion code is translated from `bevy` under MIT license
 #
 # Original license:
 #
@@ -586,47 +586,6 @@ def srgbToHsl(color: tuple[float, float, float]) -> tuple[float, float, float]:
     return h, s, l
 
 
-# https://bottosson.github.io/posts/oklab/
-def xyzToOklab(color: tuple[float, float, float]) -> tuple[float, float, float]:
-    x = color[0]
-    y = color[1]
-    z = color[2]
-
-    l_ = 0.8189330101 * x + 0.3618667424 * y - 0.1288597137 * z
-    m_ = 0.0329845436 * x + 0.9293118715 * y + 0.0361456387 * z
-    s_ = 0.0482003018 * x + 0.2643662691 * y + 0.6338517070 * z
-
-    l_ = cbrt(l_)
-    m_ = cbrt(m_)
-    s_ = cbrt(s_)
-
-    l = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
-    a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
-    b = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
-
-    return l, a, b
-
-
-def oklabToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
-    l = color[0]
-    a = color[1]
-    b = color[2]
-
-    l_ = 0.9999999984 * l + 0.3963377921 * a + 0.2158037580 * b
-    m_ = 1.0000000088 * l - 0.10556134232 * a - 0.0638541747 * b
-    s_ = 1.0000000546 * l - 0.08948418209 * a - 1.2914855378 * b
-
-    l_ = l_**3
-    m_ = m_**3
-    s_ = s_**3
-
-    x = +1.2270138511 * l_ - 0.5577999806 * m_ + 0.2812561489 * s_
-    y = -0.0405801784 * l_ + 1.1122568696 * m_ - 0.0716766786 * s_
-    z = -0.0763812845 * l_ - 0.4214819784 * m_ + 1.5861632204 * s_
-
-    return x, y, z
-
-
 def xyzToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
     x, y, z = color
     r = x * 3.2404542 + y * -1.5371385 + z * -0.4985314
@@ -711,6 +670,48 @@ def xyzToOklch(color: tuple[float, float, float]) -> tuple[float, float, float]:
 # -----------------------
 # End bevy code reference
 # -----------------------
+
+
+# https://bottosson.github.io/posts/oklab/#converting-from-xyz-to-oklab
+def xyzToOklab(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    x = color[0]
+    y = color[1]
+    z = color[2]
+
+    l_ = 0.8189330101 * x + 0.3618667424 * y - 0.1288597137 * z
+    m_ = 0.0329845436 * x + 0.9293118715 * y + 0.0361456387 * z
+    s_ = 0.0482003018 * x + 0.2643662691 * y + 0.6338517070 * z
+
+    l_ = cbrt(l_)
+    m_ = cbrt(m_)
+    s_ = cbrt(s_)
+
+    l = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
+    a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
+    b = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
+
+    return l, a, b
+
+# https://bottosson.github.io/posts/oklab/#converting-from-xyz-to-oklab
+# Inverse matrices are computed from the matrix in the post
+def oklabToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
+    l = color[0]
+    a = color[1]
+    b = color[2]
+
+    l_ = 0.9999999984 * l + 0.3963377921 * a + 0.2158037580 * b
+    m_ = 1.0000000088 * l - 0.10556134232 * a - 0.0638541747 * b
+    s_ = 1.0000000546 * l - 0.08948418209 * a - 1.2914855378 * b
+
+    l_ = l_**3
+    m_ = m_**3
+    s_ = s_**3
+
+    x = +1.2270138511 * l_ - 0.5577999806 * m_ + 0.2812561489 * s_
+    y = -0.0405801784 * l_ + 1.1122568696 * m_ - 0.0716766786 * s_
+    z = -0.0763812845 * l_ - 0.4214819784 * m_ + 1.5861632204 * s_
+
+    return x, y, z
 
 
 def getOrDefault(l: list[str], default: str) -> str:
