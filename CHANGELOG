@@ -2,6 +2,7 @@
 
 - Added `OkHsv` and `OkHsl` color picker.
 - Fixed incorrect gamut clipping for srgb based color models.
+- Fixed setting pages and color model not matching if reordered.
 
 # v0.3.0
 

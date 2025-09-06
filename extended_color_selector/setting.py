@@ -220,7 +220,14 @@ class SettingsDialog(QDialog):
         pageSwitchers.itemChanged.connect(self.handleColorModelEnabledChange)
         pageSwitchers.itemClicked.connect(
             lambda w: pages.setCurrentIndex(
-                list([m.displayName() for m in ColorModel]).index(w.text())
+                list(
+                    [
+                        m.displayName()
+                        for m in [
+                            ColorModel(d) for d in STATE.globalSettings.displayOrder
+                        ]
+                    ]
+                ).index(w.text())
             )
         )
         self.pageSwitchers = pageSwitchers
