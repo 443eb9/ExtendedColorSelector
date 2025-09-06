@@ -205,9 +205,11 @@ class SettingsDialog(QDialog):
             )
 
             pageLayout.addWidget(barEnabled)
-            pageLayout.addWidget(colorfulLockedChannel)
+            if colorModel.isColorfulable():
+                pageLayout.addWidget(colorfulLockedChannel)
             pageLayout.addWidget(channelsSpinBoxEnabled)
-            pageLayout.addWidget(clipGamutBox)
+            if colorModel.isNotSrgbBased():
+                pageLayout.addWidget(clipGamutBox)
             pageLayout.addLayout(shapeButtonsAndRotLayout)
             pageLayout.addLayout(axesSettingsLayout)
             pageLayout.addWidget(ringEnabled)

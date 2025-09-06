@@ -370,13 +370,21 @@ class ColorModel(IntEnum):
                     case _:
                         return color
 
-
-NON_SRGB_GAMUT_MODELS = [
-    ColorModel.Oklab,
-    ColorModel.Xyz,
-    ColorModel.Lab,
-    ColorModel.Oklch,
-]
+    def isNotSrgbBased(self) -> bool:
+        return self in [
+            ColorModel.Oklab,
+            ColorModel.Xyz,
+            ColorModel.Lab,
+            ColorModel.Oklch,
+        ]
+    
+    def isColorfulable(self) -> bool:
+        return self in [
+            ColorModel.Hsv,
+            ColorModel.Hsl,
+            ColorModel.Okhsv,
+            ColorModel.Okhsl,
+        ]
 
 
 def colorModelFromKrita(model: str) -> ColorModel | None:
@@ -766,6 +774,7 @@ def oklabToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
     z = -0.0763812845 * l_ - 0.4214819784 * m_ + 1.5861632204 * s_
 
     return x, y, z
+
 
 # https://bottosson.github.io/posts/colorpicker/
 # Copyright (c) 2021 Björn Ottosson

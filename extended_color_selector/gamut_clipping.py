@@ -6,14 +6,19 @@ from pathlib import Path
 import array
 import math
 
-from .models import ColorModel, NON_SRGB_GAMUT_MODELS
+from .models import ColorModel
 from .config import AXES_LIMITS_SEGMENTS, AXES_LIMITS_OFFSET
 
 limitsBytes = (Path(__file__).parent / "axes_limits.bytes").read_bytes()
 limits = array.array("f")
 limits.frombytes(limitsBytes)
 
-expectedLen = len(NON_SRGB_GAMUT_MODELS) * (AXES_LIMITS_SEGMENTS + 1) * 4 * 3
+expectedLen = (
+    sum([(1 if cm.isColorfulable() else 0) for cm in ColorModel])
+    * (AXES_LIMITS_SEGMENTS + 1)
+    * 4
+    * 3
+)
 if len(limits) != expectedLen:
     QMessageBox.critical(
         None,
@@ -62,7 +67,7 @@ def getAxesLimitsInterpolated(
 def getAxesLimits(
     colorModel: ColorModel, locked: int, lockedValue: int
 ) -> tuple[tuple[float, float], tuple[float, float]]:
-    if not colorModel in NON_SRGB_GAMUT_MODELS:
+    if not colorModel.isNotSrgbBased():
         return ((0.0, 1.0), (0.0, 1.0))
 
     colorModelIndex = int(colorModel) - 3
