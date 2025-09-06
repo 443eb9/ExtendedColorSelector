@@ -74,7 +74,6 @@ class SettingsDialog(QDialog):
         pageSwitchers.setDragDropMode(QListWidget.DragDropMode.InternalMove)
         pages = QStackedLayout()
 
-        print(STATE.globalSettings.displayOrder)
         for colorModel in [ColorModel(i) for i in STATE.globalSettings.displayOrder]:
             settings = STATE.settings[colorModel]
 

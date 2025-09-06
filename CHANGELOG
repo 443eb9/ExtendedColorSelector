@@ -1,5 +1,7 @@
 # Unreleased
 
+- Added `OkHsv` color picker.
+
 # v0.3.0
 
 - Channel spin boxes display incorrect values, and won't update value range when color model changes.

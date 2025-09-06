@@ -4,7 +4,7 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 
 ## Features
 
-- Supports color picking in 7 color models. (`RGB`, `HSV`, `HSL`, `OkLab`, `XYZ`, `Lab`, `OkLch`)
+- Supports color picking in 8 color models. (`RGB`, `HSV`, `HSL`, `OkLab`, `XYZ`, `Lab`, `OkLch`, `OkHsv`)
 - Fully modular, and highly customizable.
   - Three wheel shapes: square, triangle, and circle.
   - Horizontal bar and ring to modify the third channel.
@@ -40,7 +40,7 @@ Go to `Settings -> Configure Krita -> Python Plugin Manager`, find `Extended Col
 
 To make it looks/sounds like a native Krita docker, just like wide-gamut color selector and advanced color selector.
 
-## Baking the axes limit file.
+## Baking the axes limit file
 
 Go to release page, download the corresponding `axes_limits_compute` executable according to your operating system.
 
