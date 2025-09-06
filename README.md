@@ -55,4 +55,6 @@ Put that executable inside `pykrita`, then run it.
 
 ## Credits
 
-Color model conversion functions are translated from [`Bevy`](https://bevy.org/) project, in `bevy_color` rust crate, and under `MIT` license. It's a very nice open-source game engine written in rust.
+Most color model conversion functions are translated from [`Bevy`](https://bevy.org/) project, in `bevy_color` rust crate, and under `MIT` license. It's a very nice open-source game engine written in rust.
+
+`OkHsv` and `OkHsl` color model, and `toe` functions are translated in [this article](https://bottosson.github.io/posts/colorpicker/) from Björn Ottosson's blog.
