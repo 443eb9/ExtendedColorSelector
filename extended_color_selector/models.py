@@ -751,13 +751,13 @@ def xyzToOklab(color: tuple[float, float, float]) -> tuple[float, float, float]:
     a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
     b = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
 
-    return l, a, b
+    return toe(l), a, b
 
 
 # https:#bottosson.github.io/posts/oklab/#converting-from-xyz-to-oklab
 # Inverse matrices are computed from the matrix in the post
 def oklabToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
-    l = color[0]
+    l = toeInv(color[0])
     a = color[1]
     b = color[2]
 
