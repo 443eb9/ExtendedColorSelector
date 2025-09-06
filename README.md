@@ -4,7 +4,7 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 
 ## Features
 
-- Supports color picking in 8 color models. (`RGB`, `HSV`, `HSL`, `OkLab`, `XYZ`, `Lab`, `OkLch`, `OkHsv`)
+- Supports color picking in 9 color models. (`RGB`, `HSV`, `HSL`, `OkLab`, `XYZ`, `Lab`, `OkLch`, `OkHsv`, `OkHsl`)
 - Fully modular, and highly customizable.
   - Three wheel shapes: square, triangle, and circle.
   - Horizontal bar and ring to modify the third channel.

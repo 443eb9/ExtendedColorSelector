@@ -131,6 +131,7 @@ class ColorModel(IntEnum):
     Lab = 5
     Oklch = 6
     Okhsv = 7
+    Okhsl = 8
 
     def modifyShader(self, shader: str) -> str:
         name = None
@@ -151,6 +152,8 @@ class ColorModel(IntEnum):
                 name = "oklch"
             case ColorModel.Okhsv:
                 name = "okhsv"
+            case ColorModel.Okhsl:
+                name = "okhsl"
 
         component = open(
             Path(__file__).parent
@@ -180,6 +183,8 @@ class ColorModel(IntEnum):
                 return "OkLch"
             case ColorModel.Okhsv:
                 return "OkHsv"
+            case ColorModel.Okhsl:
+                return "OkHsl"
 
     def channels(self) -> list[str]:
         match self:
@@ -199,6 +204,8 @@ class ColorModel(IntEnum):
                 return ["L", "C", "H"]
             case ColorModel.Okhsv:
                 return ["H", "S", "V"]
+            case ColorModel.Okhsl:
+                return ["H", "S", "L"]
 
     # Returns the minimum and maximum values for each channel in their own space.
     def limits(self) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
@@ -218,6 +225,8 @@ class ColorModel(IntEnum):
             case ColorModel.Oklch:
                 return (0, 0, 0), (1, 1, 360)
             case ColorModel.Okhsv:
+                return (0, 0, 0), (360, 100, 100)
+            case ColorModel.Okhsl:
                 return (0, 0, 0), (360, 100, 100)
 
     def toDisplayValues(
@@ -241,6 +250,8 @@ class ColorModel(IntEnum):
                 return c0 * 100, c1 * 100, c2 * 360
             case ColorModel.Okhsv:
                 return c0 * 360, c1 * 100, c2 * 100
+            case ColorModel.Okhsl:
+                return c0 * 360, c1 * 100, c2 * 100
 
     def fromDisplayValues(
         self, displayed: tuple[float, float, float]
@@ -263,6 +274,8 @@ class ColorModel(IntEnum):
                 return c0 / 100, c1 / 100, c2 / 360
             case ColorModel.Okhsv:
                 return c0 / 360, c1 / 100, c2 / 100
+            case ColorModel.Okhsl:
+                return c0 / 360, c1 / 100, c2 / 100
 
     def displayLimits(
         self,
@@ -283,6 +296,8 @@ class ColorModel(IntEnum):
             case ColorModel.Oklch:
                 return (0, 0, 0), (100, 100, 360)
             case ColorModel.Okhsv:
+                return (0, 0, 0), (360, 100, 100)
+            case ColorModel.Okhsl:
                 return (0, 0, 0), (360, 100, 100)
 
     def clamp(self, color: tuple[float, float, float]) -> tuple[float, float, float]:
@@ -348,6 +363,12 @@ class ColorModel(IntEnum):
                         return ch, 1, 1
                     case _:
                         return color
+            case ColorModel.Okhsl:
+                match channel:
+                    case 0:
+                        return ch, 1, 0.5
+                    case _:
+                        return color
 
 
 NON_SRGB_GAMUT_MODELS = [
@@ -405,6 +426,8 @@ def transferColorModel(
             xyz = oklchToXyz(color)
         case ColorModel.Okhsv:
             xyz = srgbToXyz(okhsvToSrgb(color))
+        case ColorModel.Okhsl:
+            xyz = srgbToXyz(okhslToSrgb(color))
 
     unnormalized = None
     match toModel:
@@ -424,6 +447,8 @@ def transferColorModel(
             unnormalized = xyzToOklch(xyz)
         case ColorModel.Okhsv:
             unnormalized = srgbToOkhsv(xyzToSrgb(xyz))
+        case ColorModel.Okhsl:
+            unnormalized = srgbToOkhsl(xyzToSrgb(xyz))
 
     c0, c1, c2 = toModel.normalize(unnormalized)
 
@@ -742,6 +767,27 @@ def oklabToXyz(color: tuple[float, float, float]) -> tuple[float, float, float]:
 
     return x, y, z
 
+# https://bottosson.github.io/posts/colorpicker/
+# Copyright (c) 2021 Björn Ottosson
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+# of the Software, and to permit persons to whom the Software is furnished to do
+# so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 
 def linearSrgbToOklab(color: tuple[float, float, float]) -> tuple[float, float, float]:
     r, g, b = color
@@ -1020,9 +1066,8 @@ def okhsvToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]
 
 
 def srgbToOkhsv(rgb: tuple[float, float, float]) -> tuple[float, float, float]:
-    rgb = srgbToLinear(rgb)
     rgb = max(rgb[0], 1e-5), max(rgb[1], 1e-5), max(rgb[2], 1e-5)
-    lab = linearSrgbToOklab(rgb)
+    lab = linearSrgbToOklab(srgbToLinear(rgb))
 
     C = (lab[1] * lab[1] + lab[2] * lab[2]) ** 0.5
     a_ = lab[1] / C
@@ -1060,9 +1105,177 @@ def srgbToOkhsv(rgb: tuple[float, float, float]) -> tuple[float, float, float]:
     v = L / L_v
     s = (S_0 + T_max) * C_v / ((T_max * S_0) + T_max * k * C_v)
 
-    print(h, s, v)
-
     return h * 360, s * 100, v * 100
+
+
+# Returns a smooth approximation of the location of the cusp
+# This polynomial was created by an optimization process
+# It has been designed so that S_mid < S_max and T_mid < T_max
+def get_ST_mid(a_: float, b_: float) -> tuple[float, float]:
+    S = 0.11516993 + 1 / (
+        +7.44778970
+        + 4.15901240 * b_
+        + a_
+        * (
+            -2.19557347
+            + 1.75198401 * b_
+            + a_
+            * (
+                -2.13704948
+                - 10.02301043 * b_
+                + a_ * (-4.24894561 + 5.38770819 * b_ + 4.69891013 * a_)
+            )
+        )
+    )
+
+    T = 0.11239642 + 1.0 / (
+        +1.61320320
+        - 0.68124379 * b_
+        + a_
+        * (
+            +0.40370612
+            + 0.90148123 * b_
+            + a_
+            * (
+                -0.27087943
+                + 0.61223990 * b_
+                + a_ * (+0.00299215 - 0.45399568 * b_ - 0.14661872 * a_)
+            )
+        )
+    )
+
+    return S, T
+
+
+def get_Cs(L: float, a_: float, b_: float) -> tuple[float, float, float]:
+    cusp = findCusp(a_, b_)
+
+    C_max = findGamutIntersection(a_, b_, L, 1, L)
+    ST_max = toST(cusp[0], cusp[1])
+
+    # Scale factor to compensate for the curved part of gamut shape:
+    k = C_max / min((L * ST_max[0]), (1 - L) * ST_max[1])
+
+    C_mid = 0.0
+
+    ST_mid = get_ST_mid(a_, b_)
+
+    # Use a soft minimum function, instead of a sharp triangle shape to get a smooth value for chroma.
+    C_a = L * ST_mid[0]
+    C_b = (1 - L) * ST_mid[1]
+    C_mid = (
+        0.9
+        * k
+        * math.sqrt(
+            math.sqrt(1 / (1 / (C_a * C_a * C_a * C_a) + 1 / (C_b * C_b * C_b * C_b)))
+        )
+    )
+
+    # for C_0, the shape is independent of hue, so ST are constant. Values picked to roughly be the average values of ST.
+    C_a = L * 0.4
+    C_b = (1 - L) * 0.8
+
+    # Use a soft minimum function, instead of a sharp triangle shape to get a smooth value for chroma.
+    C_0 = math.sqrt(1 / (1 / (C_a * C_a) + 1 / (C_b * C_b)))
+
+    return C_0, C_mid, C_max
+
+
+def okhslToSrgb(hsl: tuple[float, float, float]) -> tuple[float, float, float]:
+    h, s, l = hsl[0] / 360, hsl[1] / 100, hsl[2] / 100
+
+    if l == 1.0:
+        return 1, 1, 1
+
+    elif l == 0:
+        return 0, 0, 0
+
+    a_ = math.cos(2 * math.pi * h)
+    b_ = math.sin(2 * math.pi * h)
+    L = toeInv(l)
+
+    cs = get_Cs(L, a_, b_)
+    C_0 = cs[0]
+    C_mid = cs[1]
+    C_max = cs[2]
+
+    # Interpolate the three values for C so that:
+    # At s=0: dC/ds = C_0, C=0
+    # At s=0.8: C=C_mid
+    # At s=1.0: C=C_max
+
+    mid = 0.8
+    mid_inv = 1.25
+
+    C = None
+    t = None
+    k_0 = None
+    k_1 = None
+    k_2 = None
+
+    if s < mid:
+
+        t = mid_inv * s
+
+        k_1 = mid * C_0
+        k_2 = 1 - k_1 / C_mid
+
+        C = t * k_1 / (1 - k_2 * t)
+
+    else:
+
+        t = (s - mid) / (1 - mid)
+
+        k_0 = C_mid
+        k_1 = (1 - mid) * C_mid * C_mid * mid_inv * mid_inv / C_0
+        k_2 = 1 - (k_1) / (C_max - C_mid)
+
+        C = k_0 + t * k_1 / (1 - k_2 * t)
+
+    rgb = oklabToLinearSrgb((L, C * a_, C * b_))
+    return linearToSrgb(rgb)
+
+
+def srgbToOkhsl(rgb: tuple[float, float, float]) -> tuple[float, float, float]:
+    rgb = max(rgb[0], 1e-5), max(rgb[1], 1e-5), max(rgb[2], 1e-5)
+    lab = linearSrgbToOklab(srgbToLinear(rgb))
+
+    C = math.sqrt(lab[1] * lab[1] + lab[2] * lab[2])
+    a_ = lab[1] / C
+    b_ = lab[2] / C
+
+    L = lab[0]
+    h = 0.5 + 0.5 * math.atan2(-lab[2], -lab[1]) / math.pi
+
+    cs = get_Cs(L, a_, b_)
+    C_0 = cs[0]
+    C_mid = cs[1]
+    C_max = cs[2]
+
+    # Inverse of the interpolation in okhsl_to_srgb:
+
+    mid = 0.8
+    mid_inv = 1.25
+
+    if C < C_mid:
+
+        k_1 = mid * C_0
+        k_2 = 1 - k_1 / C_mid
+
+        t = C / (k_1 + k_2 * C)
+        s = t * mid
+
+    else:
+
+        k_0 = C_mid
+        k_1 = (1 - mid) * C_mid * C_mid * mid_inv * mid_inv / C_0
+        k_2 = 1 - (k_1) / (C_max - C_mid)
+
+        t = (C - k_0) / (k_1 + k_2 * (C - k_0))
+        s = mid + (1 - mid) * t
+
+    l = toe(L)
+    return h * 360, s * 100, l * 100
 
 
 def getOrDefault(l: list[str], default: str) -> str:

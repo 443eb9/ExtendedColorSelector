@@ -1,6 +1,6 @@
 # Unreleased
 
-- Added `OkHsv` color picker.
+- Added `OkHsv` and `OkHsl` color picker.
 
 # v0.3.0
 
