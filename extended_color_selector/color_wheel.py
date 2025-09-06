@@ -528,6 +528,7 @@ class ColorWheel(OpenGLRenderer):
             if settings.clipToSrgbGamut
             else ((-1.0, -1.0), (-1.0, -1.0))
         )
+
         self.program.setUniformValue(
             "axesLimits",
             axesLimits[0][0],

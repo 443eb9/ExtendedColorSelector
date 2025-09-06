@@ -1,6 +1,7 @@
 # Unreleased
 
 - Added `OkHsv` and `OkHsl` color picker.
+- Fixed incorrect gamut clipping for srgb based color models.
 
 # v0.3.0
 

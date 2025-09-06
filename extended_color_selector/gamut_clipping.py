@@ -63,7 +63,7 @@ def getAxesLimits(
     colorModel: ColorModel, locked: int, lockedValue: int
 ) -> tuple[tuple[float, float], tuple[float, float]]:
     if not colorModel in NON_SRGB_GAMUT_MODELS:
-        return ((0.0, 0.0), (1.0, 1.0))
+        return ((0.0, 1.0), (0.0, 1.0))
 
     colorModelIndex = int(colorModel) - 3
     base = (colorModelIndex * 3 + locked) * (AXES_LIMITS_SEGMENTS + 1) + lockedValue
