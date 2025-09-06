@@ -4,6 +4,7 @@
 - Fixed incorrect gamut clipping for srgb based color models.
 - Fixed setting pages and color model not matching if reordered.
 - Fixed missing toe functions for `OkLab` and `OkLch` color pickers.
+- Fixed ring still visible when `Enable Ring` is not checked in settings.
 
 # v0.3.0
 

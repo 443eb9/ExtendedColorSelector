@@ -258,9 +258,10 @@ class ColorWheel(OpenGLRenderer):
         c = math.cos(rot)
         x, y = x * c - y * s, x * s + y * c
 
+        ringThickness, ringMargin = self.getActualRingThicknessAndMargin()
         cx, cy = settings.shape.getColorCoord(
             (x, y),
-            (settings.ringThickness + settings.ringMargin) / (self.res / 2),
+            (ringThickness + ringMargin) / (self.res / 2),
         )
 
         if settings.reverseX:
@@ -316,9 +317,10 @@ class ColorWheel(OpenGLRenderer):
         self.shiftStart = QVector2D(a0.pos())
 
         d = QVector2D(a0.pos()).distanceToPoint(QVector2D(self.res, self.res) * 0.5)
+        ringThickness, ringMargin = self.getActualRingThicknessAndMargin()
         if (
-            settings.ringThickness == 0 and settings.ringMargin == 0
-        ) or d < self.res * 0.5 - settings.ringThickness - settings.ringMargin:
+            ringThickness == 0 and ringMargin == 0
+        ) or d < self.res * 0.5 - ringThickness - ringMargin:
             self.editing = ColorWheel.ColorWheelEditing.Wheel
         else:
             self.editing = ColorWheel.ColorWheelEditing.Ring
@@ -331,6 +333,13 @@ class ColorWheel(OpenGLRenderer):
 
     def mouseMoveEvent(self, a0: QMouseEvent | None):
         self.handleMouse(a0)
+
+    def getActualRingThicknessAndMargin(self) -> tuple[float, float]:
+        settings = STATE.currentSettings()
+        if settings.ringEnabled and settings.ringThickness > 0.0:
+            return settings.ringThickness, settings.ringMargin
+        else:
+            return 0.0, 0.0
 
     def getCurrentWheelWidgetCoord(self) -> tuple[float, float]:
         settings = STATE.currentSettings()
@@ -361,9 +370,11 @@ class ColorWheel(OpenGLRenderer):
             cy = 1 - cy
 
         settings = STATE.currentSettings()
+        ringThickness, ringMargin = self.getActualRingThicknessAndMargin()
+
         x, y = settings.shape.getPos(
             (cx, cy),
-            (settings.ringThickness + settings.ringMargin) / (self.res / 2),
+            (ringThickness + ringMargin) / (self.res / 2),
         )
 
         rot = self.getActualWheelRotation()
@@ -380,13 +391,15 @@ class ColorWheel(OpenGLRenderer):
     def getCurrentRingWidgetCoord(self) -> tuple[float, float]:
         settings = STATE.currentSettings()
 
+        ringThickness, _ = self.getActualRingThicknessAndMargin()
+
         ringX, ringY = settings.shape.getRingPos(
             (
                 1.0 - STATE.color[STATE.lockedChannel]
                 if settings.ringReversed
                 else STATE.color[STATE.lockedChannel]
             ),
-            settings.ringThickness / (self.res / 2),
+            ringThickness / (self.res / 2),
             math.radians(settings.ringRotation),
         )
         ringX, ringY = (ringX * 0.5 + 0.5) * self.res, (-ringY * 0.5 + 0.5) * self.res
@@ -404,8 +417,8 @@ class ColorWheel(OpenGLRenderer):
             360 * 16,
         )
 
-        settings = STATE.currentSettings()
-        if settings.ringThickness == 0:
+        ringThickness, _ = self.getActualRingThicknessAndMargin()
+        if ringThickness == 0:
             return
 
         ringX, ringY = self.getCurrentRingWidgetCoord()
@@ -427,7 +440,8 @@ class ColorWheel(OpenGLRenderer):
             STATE.colorModel.modifyShader(wheelFragment)
         )
 
-        if settings.ringThickness < 0.0 and settings.ringMargin < 0.0:
+        ringThickness, _ = self.getActualRingThicknessAndMargin()
+        if ringThickness < 0.0:
             begin = fragCode.find("BEGIN RING RENDERING")
             end = fragCode.find("END RING RENDERING")
             fragCode = fragCode[:begin] + fragCode[end:]
@@ -498,8 +512,9 @@ class ColorWheel(OpenGLRenderer):
         else:
             self.program.setUniformValue("outOfGamut", -1.0, -1.0, -1.0)
         self.program.setUniformValue("rotation", self.getActualWheelRotation())
-        self.program.setUniformValue("ringThickness", float(settings.ringThickness))
-        self.program.setUniformValue("ringMargin", float(settings.ringMargin))
+        ringThickness, ringMargin = self.getActualRingThicknessAndMargin()
+        self.program.setUniformValue("ringThickness", float(ringThickness))
+        self.program.setUniformValue("ringMargin", float(ringMargin))
         self.program.setUniformValue(
             "ringRotation", float(math.radians(settings.ringRotation))
         )
