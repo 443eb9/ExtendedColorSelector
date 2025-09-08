@@ -65,7 +65,7 @@ class OptionalColorPicker(QWidget):
 class SettingsDialog(QDialog):
     def __init__(self) -> None:
         super().__init__()
-        self.setFixedSize(SETTINGS_DIALOG_SIZE[0], SETTINGS_DIALOG_SIZE[1])
+        self.setMinimumSize(SETTINGS_DIALOG_SIZE[0], SETTINGS_DIALOG_SIZE[1])
         self.mainLayout = QHBoxLayout(self)
         self.setWindowTitle("Extended Color Selector - Settings")
 
@@ -207,9 +207,13 @@ class SettingsDialog(QDialog):
             pageLayout.addWidget(barEnabled)
             if colorModel.isColorfulable():
                 pageLayout.addWidget(colorfulLockedChannel)
+            else:
+                channelsSpinBoxEnabled.deleteLater()
             pageLayout.addWidget(channelsSpinBoxEnabled)
             if colorModel.isNotSrgbBased():
                 pageLayout.addWidget(clipGamutBox)
+            else:
+                clipGamutBox.deleteLater()
             pageLayout.addLayout(shapeButtonsAndRotLayout)
             pageLayout.addLayout(axesSettingsLayout)
             pageLayout.addWidget(ringEnabled)
@@ -293,7 +297,7 @@ class GlobalSettingsDialog(QDialog):
         settings = STATE.globalSettings
         self.mainLayout = QVBoxLayout(self)
         self.setWindowTitle("Extended Color Selector - Global Settings")
-        self.setFixedSize(
+        self.setMinimumSize(
             GLOBAL_SETTINGS_DIALOG_SIZE[0], GLOBAL_SETTINGS_DIALOG_SIZE[1]
         )
 
