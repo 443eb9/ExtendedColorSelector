@@ -311,7 +311,6 @@ class ColorWheel(OpenGLRenderer):
         if a0 == None:
             return
 
-        settings = STATE.currentSettings()
         x, y = self.getCurrentWheelWidgetCoord()
         self.editStart = QVector2D(x, y)
         self.shiftStart = QVector2D(a0.pos())
@@ -607,8 +606,8 @@ class LockedChannelBar(OpenGLRenderer):
             x = self.editStart + (event.x() - self.editStart)
         else:
             x = self.editStart + (event.x() - self.shiftStart) * f
-        x = max(min(x, self.res), 0)
-        STATE.updateLockedChannelValue(x / self.res)
+        x /= self.res
+        STATE.updateLockedChannelValue(x - math.floor(x))
         self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None):

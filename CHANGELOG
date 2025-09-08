@@ -6,6 +6,7 @@
 - Fixed missing toe functions for `OkLab` and `OkLch` color pickers.
 - Fixed ring still visible when `Enable Ring` is not checked in settings.
 - Fixed content in settings docker sometimes get squashed.
+- Shifting on locked channel bar now warps.
 
 # v0.3.0
 
