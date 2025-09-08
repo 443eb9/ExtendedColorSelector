@@ -305,15 +305,12 @@ class ColorWheel(OpenGLRenderer):
             case ColorWheel.ColorWheelEditing.Wheel:
                 self.handleWheelEdit(cursor)
             case ColorWheel.ColorWheelEditing.Ring:
+                print(cursor)
                 self.handleRingEdit(cursor)
 
     def mousePressEvent(self, a0: QMouseEvent | None):
         if a0 == None:
             return
-
-        x, y = self.getCurrentWheelWidgetCoord()
-        self.editStart = QVector2D(x, y)
-        self.shiftStart = QVector2D(a0.pos())
 
         d = QVector2D(a0.pos()).distanceToPoint(QVector2D(self.res, self.res) * 0.5)
         ringThickness, ringMargin = self.getActualRingThicknessAndMargin()
@@ -323,6 +320,15 @@ class ColorWheel(OpenGLRenderer):
             self.editing = ColorWheel.ColorWheelEditing.Wheel
         else:
             self.editing = ColorWheel.ColorWheelEditing.Ring
+
+        x, y = None, None
+        match self.editing:
+            case ColorWheel.ColorWheelEditing.Wheel:
+                x, y = self.getCurrentWheelWidgetCoord()
+            case ColorWheel.ColorWheelEditing.Ring:
+                x, y = self.getCurrentRingWidgetCoord()
+        self.editStart = QVector2D(x, y)
+        self.shiftStart = QVector2D(a0.pos())
 
         self.handleMouse(a0)
 
