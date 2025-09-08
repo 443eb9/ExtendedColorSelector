@@ -79,7 +79,31 @@ fn compute_axes_limits(transfer: TransferFunc, segments: u32) -> Vec<f32> {
     result.into_flattened()
 }
 
+fn toe_inv(x: f32) -> f32 {
+    const K_1: f32 = 0.206;
+    const K_2: f32 = 0.03;
+    const K_3: f32 = (1.0 + K_1) / (1.0 + K_2);
+    (x * x + K_1 * x) / (K_3 * (x + K_2))
+}
+
+fn map_oklxx(color: [f32; 3]) -> [f32; 3] {
+    [toe_inv(color[0]), color[1], color[2]]
+}
+
 macro_rules! define_transfer_function {
+    ($model: ty, $transfer_fn_name: ident, $min_max_values: expr, $mapper: ident) => {
+        fn $transfer_fn_name(mut color: [f32; 3]) -> [f32; 3] {
+            color.iter_mut().enumerate().for_each(|(i, c)| {
+                let mn = $min_max_values[i][0];
+                let mx = $min_max_values[i][1];
+                *c = mn * (1.0 - *c) + mx * *c
+            });
+            color = $mapper(color);
+            LinearRgba::from(<$model>::new(color[0], color[1], color[2], 1.0))
+                .to_f32_array_no_alpha()
+        }
+    };
+
     ($model: ty, $transfer_fn_name: ident, $min_max_values: expr) => {
         fn $transfer_fn_name(mut color: [f32; 3]) -> [f32; 3] {
             color.iter_mut().enumerate().for_each(|(i, c)| {
@@ -96,14 +120,16 @@ macro_rules! define_transfer_function {
 define_transfer_function!(
     Oklaba,
     oklab_transfer,
-    [[0.0, 1.0], [-1.0, 1.0], [-1.0, 1.0]]
+    [[0.0, 1.0], [-1.0, 1.0], [-1.0, 1.0]],
+    map_oklxx
 );
 define_transfer_function!(Xyza, xyz_transfer, [[0.0, 1.0], [0.0, 1.0], [0.0, 1.0]]);
 define_transfer_function!(Laba, lab_transfer, [[0.0, 1.0], [-1.0, 1.0], [-1.0, 1.0]]);
 define_transfer_function!(
     Oklcha,
     oklch_transfer,
-    [[0.0, 1.0], [0.0, 1.0], [0.0, 360.0]]
+    [[0.0, 1.0], [0.0, 1.0], [0.0, 360.0]],
+    map_oklxx
 );
 
 fn find_plugin_dir() -> Result<PathBuf, Box<dyn Error>> {
