@@ -610,6 +610,7 @@ class LockedChannelBar(OpenGLRenderer):
         f = computeMoveFactor(event)
         if f == 1:
             x = self.editStart + (event.x() - self.editStart)
+            x = max(min(x, self.res), 0)
         else:
             x = self.editStart + (event.x() - self.shiftStart) * f
         x /= self.res
