@@ -28,7 +28,7 @@ void main(void) {
 
     vec3 color = mix(lim_min, lim_max, t);
     color = colorToSrgb(color);
-    if(any(greaterThan(color, vec3(1.0 + 1e-3))) || any(lessThan(color, vec3(-1e-3)))) {
+    if(any(greaterThan(color, vec3(1.0))) || any(lessThan(color, vec3(0.0)))) {
         color = all(greaterThan(outOfGamut, vec3(0.0))) ? outOfGamut : clamp(color, vec3(0.0), vec3(1.0));
     }
 
