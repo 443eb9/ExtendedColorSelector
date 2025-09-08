@@ -507,7 +507,7 @@ class ColorWheel(OpenGLRenderer):
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
         self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
 
-        if globalSettings.outOfGamutColorEnabled:
+        if globalSettings.outOfGamutColorEnabled and STATE.colorModel.isNotSrgbBased():
             self.program.setUniformValue(
                 "outOfGamut",
                 globalSettings.outOfGamutColor[0],
@@ -680,7 +680,7 @@ class LockedChannelBar(OpenGLRenderer):
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
         self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
 
-        if STATE.globalSettings.outOfGamutColorEnabled:
+        if STATE.globalSettings.outOfGamutColorEnabled and STATE.colorModel.isNotSrgbBased():
             self.program.setUniformValue(
                 "outOfGamut",
                 STATE.globalSettings.outOfGamutColor[0],
