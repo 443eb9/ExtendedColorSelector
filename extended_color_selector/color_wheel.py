@@ -608,13 +608,16 @@ class LockedChannelBar(OpenGLRenderer):
             return
 
         f = computeMoveFactor(event)
+        x = None
         if f == 1:
             x = self.editStart + (event.x() - self.editStart)
             x = max(min(x, self.res), 0)
+            x /= self.res
         else:
             x = self.editStart + (event.x() - self.shiftStart) * f
-        x /= self.res
-        STATE.updateLockedChannelValue(x - math.floor(x))
+            x /= self.res
+            x = x - math.floor(x)
+        STATE.updateLockedChannelValue(x)
         self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None):
@@ -680,7 +683,10 @@ class LockedChannelBar(OpenGLRenderer):
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
         self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
 
-        if STATE.globalSettings.outOfGamutColorEnabled and STATE.colorModel.isNotSrgbBased():
+        if (
+            STATE.globalSettings.outOfGamutColorEnabled
+            and STATE.colorModel.isNotSrgbBased()
+        ):
             self.program.setUniformValue(
                 "outOfGamut",
                 STATE.globalSettings.outOfGamutColor[0],
