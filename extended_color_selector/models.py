@@ -377,7 +377,7 @@ class ColorModel(IntEnum):
             ColorModel.Lab,
             ColorModel.Oklch,
         ]
-    
+
     def isColorfulable(self) -> bool:
         return self in [
             ColorModel.Hsv,
@@ -1036,8 +1036,8 @@ def toST(L_cusp: float, C_cusp: float) -> tuple[float, float]:
 
 def okhsvToSrgb(color: tuple[float, float, float]) -> tuple[float, float, float]:
     h = color[0] / 360
-    s = color[1] / 100
-    v = color[2] / 100
+    s = max(color[1], 1e-5) / 100
+    v = max(color[2], 1e-5) / 100
 
     a_ = math.cos(2.0 * math.pi * h)
     b_ = math.sin(2.0 * math.pi * h)
@@ -1191,7 +1191,7 @@ def get_Cs(L: float, a_: float, b_: float) -> tuple[float, float, float]:
 
 
 def okhslToSrgb(hsl: tuple[float, float, float]) -> tuple[float, float, float]:
-    h, s, l = hsl[0] / 360, hsl[1] / 100, hsl[2] / 100
+    h, s, l = hsl[0] / 360, max(hsl[1], 1e-5) / 100, max(hsl[2], 1e-5) / 100
 
     if l == 1.0:
         return 1, 1, 1
