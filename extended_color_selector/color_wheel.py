@@ -223,10 +223,10 @@ class ColorWheel(OpenGLRenderer):
 
         self.res = min(self.width(), self.height())
         self.update()
-    
+
     def hasHeightForWidth(self) -> bool:
         return True
-    
+
     def heightForWidth(self, a0: int) -> int:
         return a0
 
@@ -467,9 +467,11 @@ class ColorWheel(OpenGLRenderer):
         if self.gl == None or self.program == None:
             return
 
+        highDpiScale = self.devicePixelRatioF()
+
         self.program.bind()
 
-        self.program.setUniformValue("res", float(self.res * self.devicePixelRatioF()))
+        self.program.setUniformValue("res", float(self.res * highDpiScale))
         self.program.setUniformValue(
             "constant", float(STATE.color[STATE.lockedChannel])
         )
@@ -504,8 +506,10 @@ class ColorWheel(OpenGLRenderer):
             self.program.setUniformValue("outOfGamut", -1.0, -1.0, -1.0)
         self.program.setUniformValue("rotation", self.getActualWheelRotation())
         ringThickness, ringMargin = self.getActualRingThicknessAndMargin()
-        self.program.setUniformValue("ringThickness", float(ringThickness))
-        self.program.setUniformValue("ringMargin", float(ringMargin))
+        self.program.setUniformValue(
+            "ringThickness", float(ringThickness * highDpiScale)
+        )
+        self.program.setUniformValue("ringMargin", float(ringMargin * highDpiScale))
         self.program.setUniformValue(
             "ringRotation", float(math.radians(settings.ringRotation))
         )
@@ -660,9 +664,10 @@ class LockedChannelBar(OpenGLRenderer):
             return
 
         settings = STATE.currentSettings()
+        highDpiScale = self.devicePixelRatioF()
         self.program.bind()
 
-        self.program.setUniformValue("res", float(self.res * self.devicePixelRatioF()))
+        self.program.setUniformValue("res", float(self.res * highDpiScale))
         self.program.setUniformValue("constantPos", int(STATE.lockedChannel))
         mn, mx = STATE.colorModel.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
