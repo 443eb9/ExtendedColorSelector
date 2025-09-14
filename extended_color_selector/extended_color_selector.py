@@ -29,12 +29,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.setWidget(container)
         self.mainLayout = QVBoxLayout(container)
 
-        colorWheelLayout = QHBoxLayout()
-        self.colorWheel = ColorWheel(self)
-        colorWheelLayout.addWidget(self.colorWheel)
-
-        self.lockedChannelBar = LockedChannelBar(False, self)
-
+        self.colorWheel = ColorWheel()
+        self.lockedChannelBar = LockedChannelBar(False)
         self.colorSpaceSwitcher = ColorModelSwitcher()
         self.lockers = QHBoxLayout()
 
@@ -61,7 +57,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         settingsButtonLayout.addStretch(1)
         settingsButtonLayout.addWidget(globalSettingsButton)
 
-        self.mainLayout.addLayout(colorWheelLayout)
+        self.mainLayout.addWidget(self.colorWheel)
         self.mainLayout.addWidget(self.lockedChannelBar)
         self.mainLayout.addWidget(self.colorSpaceSwitcher)
         self.mainLayout.addLayout(self.lockers)

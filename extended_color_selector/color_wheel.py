@@ -199,9 +199,8 @@ class ColorWheel(OpenGLRenderer):
         Wheel = 1
         Ring = 2
 
-    def __init__(self, indicatorBind: QWidget):
-        super().__init__(None)
-        self.indicatorBind = indicatorBind
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
         self.editing = ColorWheel.ColorWheelEditing.Wheel
         self.renderer = None
 
@@ -223,12 +222,6 @@ class ColorWheel(OpenGLRenderer):
 
         self.res = min(self.width(), self.height())
         self.update()
-
-    def hasHeightForWidth(self) -> bool:
-        return True
-
-    def heightForWidth(self, a0: int) -> int:
-        return a0
 
     def handleWheelEdit(self, cursor: QVector2D):
         if self.editStart == None:
@@ -547,8 +540,8 @@ class ColorWheel(OpenGLRenderer):
 
 
 class LockedChannelBar(OpenGLRenderer):
-    def __init__(self, portable: bool, indicatorBind: QWidget):
-        super().__init__(None)
+    def __init__(self, portable: bool, parent: QWidget | None = None):
+        super().__init__(parent)
 
         self.res = 1
         self.settings = SettingsPerColorModel(ColorModel.Rgb)
@@ -556,7 +549,6 @@ class LockedChannelBar(OpenGLRenderer):
         self.editStart = 0.0
         self.shiftStart = 0.0
         self.portable = portable
-        self.indicatorBind = indicatorBind
         self.updateFromState()
 
         STATE.colorModelChanged.connect(self.updateShaders)
