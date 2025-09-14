@@ -36,7 +36,6 @@ class PortableColorSelector(QDialog):
             self.colorModelSwitcher.hide()
 
     def toggle(self):
-        self.updateFromSettings()
         if self.isVisible():
             self.hide()
             INDICATOR_BLOCKS.shut()
@@ -68,7 +67,6 @@ class PortableColorSelectorHandler(Extension):  # type: ignore
     def __init__(self):
         super().__init__()
         self.selector = PortableColorSelector()
-        STATE.settingsChanged.connect(self.updateFromSettings)
 
     def setup(self):
         pass
