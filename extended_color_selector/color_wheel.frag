@@ -98,6 +98,11 @@ vec4 drawRing(float x, float dist) {
 void main() {
     vec2 coord = gl_FragCoord.xy;
     vec2 uv = coord / res;
+    if(any(greaterThan(uv, vec2(1.0)))) {
+        out_color = vec4(BACKGROUND_COLOR, 1.0);
+        return;
+    }
+
     vec2 p = uv * 2.0 - 1.0;
     float d = distance(coord, vec2(res) * 0.5);
 
