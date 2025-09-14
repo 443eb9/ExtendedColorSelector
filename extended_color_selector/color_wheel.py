@@ -305,7 +305,6 @@ class ColorWheel(OpenGLRenderer):
             case ColorWheel.ColorWheelEditing.Wheel:
                 self.handleWheelEdit(cursor)
             case ColorWheel.ColorWheelEditing.Ring:
-                print(cursor)
                 self.handleRingEdit(cursor)
 
     def mousePressEvent(self, a0: QMouseEvent | None):
