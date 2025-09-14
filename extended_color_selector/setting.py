@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QCloseEvent, QColor, QKeySequence
+from PyQt5.QtGui import QCloseEvent, QColor
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (
     QColorDialog,
     QMessageBox,
     QGroupBox,
-    QLineEdit,
+    QSizePolicy,
 )
 from krita import *  # type: ignore
 
@@ -65,7 +65,6 @@ class OptionalColorPicker(QWidget):
 class SettingsDialog(QDialog):
     def __init__(self) -> None:
         super().__init__()
-        self.setMinimumSize(SETTINGS_DIALOG_SIZE[0], SETTINGS_DIALOG_SIZE[1])
         self.mainLayout = QHBoxLayout(self)
         self.setWindowTitle("Extended Color Selector - Settings")
 
@@ -241,6 +240,7 @@ class SettingsDialog(QDialog):
 
         self.mainLayout.addWidget(pageSwitchers)
         self.mainLayout.addLayout(pages)
+        self.mainLayout.addStretch(1)
 
     def changeSetting(self, colorModel: ColorModel, name: str, value: object):
         setattr(STATE.settings[colorModel], name, value)
@@ -297,9 +297,6 @@ class GlobalSettingsDialog(QDialog):
         settings = STATE.globalSettings
         self.mainLayout = QVBoxLayout(self)
         self.setWindowTitle("Extended Color Selector - Global Settings")
-        self.setMinimumSize(
-            GLOBAL_SETTINGS_DIALOG_SIZE[0], GLOBAL_SETTINGS_DIALOG_SIZE[1]
-        )
 
         outOfGamutColorPicker = OptionalColorPicker(
             self,
