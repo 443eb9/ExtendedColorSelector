@@ -61,7 +61,6 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.mainLayout.addWidget(self.lockedChannelBar)
         self.mainLayout.addWidget(self.colorSpaceSwitcher)
         self.mainLayout.addLayout(self.lockers)
-        self.mainLayout.addStretch(1)
         self.mainLayout.addLayout(settingsButtonLayout)
 
         STATE.settingsChanged.connect(self.updateFromSettings)

@@ -203,6 +203,7 @@ class ColorWheel(OpenGLRenderer):
         super().__init__(parent)
         self.editing = ColorWheel.ColorWheelEditing.Wheel
         self.renderer = None
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         self.res = 1
         self.editStart = QVector2D()
