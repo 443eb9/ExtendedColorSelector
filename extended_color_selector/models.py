@@ -387,18 +387,6 @@ class ColorModel(IntEnum):
         ]
 
 
-def colorModelFromKrita(model: str) -> ColorModel | None:
-    match model:
-        case "RGBA":
-            return ColorModel.Rgb
-        case "LABA":
-            return ColorModel.Lab
-        case "XYZA":
-            return ColorModel.Xyz
-        case _:
-            return None
-
-
 # Reference color is a color represented using `toModel` color model.
 # It's used to eliminate some indeterminable values.
 # For example, when input color is RGB [0, 0, 0], and we need to convert

@@ -13,7 +13,6 @@ from krita import *  # type: ignore
 from .models import (
     ColorModel,
     transferColorModel,
-    colorModelFromKrita,
     SettingsPerColorModel,
     GlobalSettings,
 )
@@ -30,13 +29,25 @@ def getKritaColor() -> tuple[tuple[float, float, float], ColorModel] | None:
     mc = kritaView.foregroundColor()
     if mc == None:
         return
-    colorModel = colorModelFromKrita(mc.colorModel())
-    if colorModel == None:
-        return
 
-    components = mc.componentsOrdered()
+    colorModel, color = None, None
+    c = mc.componentsOrdered()
+    match mc.colorModel():
+        case "RGBA":
+            colorModel, color = ColorModel.Rgb, (c[0], c[1], c[2])
+        case "LABA":
+            colorModel, color = ColorModel.Lab, (c[0], c[1], c[2])
+        case "XYZA":
+            colorModel, color = ColorModel.Xyz, (c[0], c[1], c[2])
+        case "A":
+            colorModel, color = ColorModel.Rgb, (c[0], c[0], c[0])
+        case "GRAYA":
+            colorModel, color = ColorModel.Rgb, (c[0], c[0], c[0])
+        case _:
+            return None
+
     return (
-        colorModel.normalize((components[0], components[1], components[2])),
+        colorModel.normalize(color),
         colorModel,
     )
 

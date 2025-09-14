@@ -13,6 +13,8 @@ Global settings will be reset to default after update!
 - Fixed scale issue on devices with HighDPI scaling.
 - Fixed color wheel overlaps with other widgets.
 - Moved shortcut to toggle the portable color selector from global settings to Krita settings.
+- Support color picking for masks.
+- Fixed color picking not working properly for Krita `LAB` layers.
 
 # v0.3.0
 
