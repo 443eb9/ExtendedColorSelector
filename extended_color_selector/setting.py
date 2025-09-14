@@ -357,21 +357,8 @@ class GlobalSettingsDialog(QDialog):
         pEnableColorModelSwitcher.clicked.connect(
             lambda x: self.changeSetting("pEnableColorModelSwitcher", x)
         )
-        pShortcut = QLineEdit(settings.pShortcut)
 
-        def setShortcut():
-            try:
-                x = pShortcut.text()
-                _ = QKeySequence(x)
-                self.changeSetting("pShortcut", x)
-            except:
-                pShortcut.setText(settings.pShortcut)
-                return
-
-        pShortcut.editingFinished.connect(setShortcut)
         pSettingsLayout2.addWidget(pEnableColorModelSwitcher)
-        pSettingsLayout2.addWidget(QLabel("Shortcut"))
-        pSettingsLayout2.addWidget(pShortcut)
         pSettingsLayouts.addLayout(pSettingsLayout1)
         pSettingsLayouts.addLayout(pSettingsLayout2)
         portableSelectorSettingsGroup.setLayout(pSettingsLayouts)

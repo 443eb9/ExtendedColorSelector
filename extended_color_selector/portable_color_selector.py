@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QEvent, Qt, QPoint
-from PyQt5.QtGui import QKeyEvent, QFocusEvent, QCursor, QKeySequence
-from PyQt5.QtWidgets import QVBoxLayout, QDialog, QShortcut
+from PyQt5.QtGui import QKeyEvent, QCursor, QActionEvent, QKeySequence
+from PyQt5.QtWidgets import QVBoxLayout, QDialog, QAction
 from krita import *  # type: ignore
 
 from .color_wheel import ColorWheel, LockedChannelBar, INDICATOR_BLOCKS
@@ -58,18 +58,10 @@ class PortableColorSelector(QDialog):
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0 == None:
             return
-        keys = ""
-        m = int(a0.modifiers())
-        if (m & Qt.KeyboardModifier.ShiftModifier) != 0:
-            keys += "shift+"
-        if (m & Qt.KeyboardModifier.ControlModifier) != 0:
-            keys += "ctrl+"
-        if (m & Qt.KeyboardModifier.AltModifier) != 0:
-            keys += "alt+"
-        keys += QKeySequence(a0.key()).toString()
-        seq = QKeySequence(keys)
-        if seq == QKeySequence(STATE.globalSettings.pShortcut):
-            self.hide()
+
+        action: QAction = Krita.instance().action("toggle_portable_color_selector")  # type: ignore
+        if action.shortcut() == QKeySequence(a0.key() | int(a0.modifiers())):
+            self.toggle()
 
 
 class PortableColorSelectorHandler(Extension):  # type: ignore
@@ -78,18 +70,11 @@ class PortableColorSelectorHandler(Extension):  # type: ignore
         self.selector = PortableColorSelector()
         STATE.settingsChanged.connect(self.updateFromSettings)
 
-    def updateFromSettings(self):
-        self.shortcut.setKey(STATE.globalSettings.pShortcut)
-
     def setup(self):
         pass
 
     def createActions(self, window: Window):  # type: ignore
-        self.shortcut = QShortcut(
-            QKeySequence(STATE.globalSettings.pShortcut),
-            window.qwindow(),
-        )
-        self.shortcut.activated.connect(self.selector.toggle)
+        window.createAction("toggle_portable_color_selector").triggered.connect(self.selector.toggle)  # type: ignore
 
 
 Krita.instance().addExtension(PortableColorSelectorHandler())  # type: ignore

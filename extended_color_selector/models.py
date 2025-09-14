@@ -1374,7 +1374,6 @@ class GlobalSettings:
         self.dontSyncIfOutOfGamut = getOrDefault(s, "True") == "True"
         self.pWidth = int(getOrDefault(s, "400"))
         self.pBarHeight = int(getOrDefault(s, "20"))
-        self.pShortcut = getOrDefault(s, "Y")
         self.pEnableColorModelSwitcher = getOrDefault(s, "False") == "True"
         self.currentColorModel = ColorModel(int(getOrDefault(s, "0")))
 
@@ -1388,7 +1387,6 @@ class GlobalSettings:
             self.dontSyncIfOutOfGamut,
             self.pWidth,
             self.pBarHeight,
-            self.pShortcut,
             self.pEnableColorModelSwitcher,
             int(self.currentColorModel),
         ]

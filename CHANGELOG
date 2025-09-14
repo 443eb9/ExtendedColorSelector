@@ -1,5 +1,7 @@
 # Unreleased
 
+Global settings will be reset to default after update!
+
 - Added `OkHsv` and `OkHsl` color picker.
 - Fixed incorrect gamut clipping for srgb based color models.
 - Fixed setting pages and color model not matching if reordered.
@@ -10,6 +12,7 @@
 - Fixed shifting on ring not working as expected.
 - Fixed scale issue on devices with HighDPI scaling.
 - Fixed color wheel overlaps with other widgets.
+- Moved shortcut to toggle the portable color selector from global settings to Krita settings.
 
 # v0.3.0
 
