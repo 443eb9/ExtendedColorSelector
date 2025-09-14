@@ -8,6 +8,8 @@
 - Fixed content in settings docker sometimes get squashed.
 - Shifting on locked channel bar now warps.
 - Fixed shifting on ring not working as expected.
+- Fixed scale issue on devices with HighDPI scaling.
+- Fixed color wheel overlaps with other widgets.
 
 # v0.3.0
 

@@ -204,9 +204,6 @@ class ColorWheel(OpenGLRenderer):
         self.indicatorBind = indicatorBind
         self.editing = ColorWheel.ColorWheelEditing.Wheel
         self.renderer = None
-        self.setSizePolicy(
-            QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding
-        )
 
         self.res = 1
         self.editStart = QVector2D()
@@ -220,16 +217,11 @@ class ColorWheel(OpenGLRenderer):
         STATE.lockedChannelIndexChanged.connect(self.update)
 
     def resizeEvent(self, e: QResizeEvent | None):
+        super().resizeEvent(e)
         if e == None:
             return
 
-        size = min(e.size().width(), e.size().height())
-        if e.size().width() != size or e.size().height() != size:
-            self.resize(size, size)
-            return
-
-        self.res = size
-        super().resizeEvent(e)
+        self.res = min(self.width(), self.height())
         self.update()
 
     def hasHeightForWidth(self) -> bool:
@@ -237,11 +229,6 @@ class ColorWheel(OpenGLRenderer):
 
     def heightForWidth(self, a0: int) -> int:
         return a0
-
-    def sizeHint(self) -> QSize:
-        size = super().sizeHint()
-        x = max(size.width(), size.height())
-        return QSize(x, x)
 
     def handleWheelEdit(self, cursor: QVector2D):
         if self.editStart == None:
@@ -482,7 +469,7 @@ class ColorWheel(OpenGLRenderer):
 
         self.program.bind()
 
-        self.program.setUniformValue("res", float(self.res))
+        self.program.setUniformValue("res", float(self.res * self.devicePixelRatioF()))
         self.program.setUniformValue(
             "constant", float(STATE.color[STATE.lockedChannel])
         )
@@ -676,7 +663,7 @@ class LockedChannelBar(OpenGLRenderer):
         settings = STATE.currentSettings()
         self.program.bind()
 
-        self.program.setUniformValue("res", float(self.res))
+        self.program.setUniformValue("res", float(self.res * self.devicePixelRatioF()))
         self.program.setUniformValue("constantPos", int(STATE.lockedChannel))
         mn, mx = STATE.colorModel.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
