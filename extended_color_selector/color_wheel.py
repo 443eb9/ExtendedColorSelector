@@ -223,6 +223,12 @@ class ColorWheel(OpenGLRenderer):
 
         self.res = min(self.width(), self.height())
         self.update()
+    
+    def hasHeightForWidth(self) -> bool:
+        return True
+    
+    def heightForWidth(self, a0: int) -> int:
+        return a0
 
     def handleWheelEdit(self, cursor: QVector2D):
         if self.editStart == None:
