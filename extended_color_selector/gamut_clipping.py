@@ -29,34 +29,34 @@ if len(limits) != expectedLen:
 
 def mapAxesToLimited(
     colorModel: ColorModel,
-    locked: int,
-    lockedValue: float,
-    variableAxes: tuple[float, float],
+    primary: int,
+    primaryValue: float,
+    secondaryAxes: tuple[float, float],
 ) -> tuple[float, float]:
-    (mnx, mxx), (mny, mxy) = getAxesLimitsInterpolated(colorModel, locked, lockedValue)
-    x, y = variableAxes
+    (mnx, mxx), (mny, mxy) = getAxesLimitsInterpolated(colorModel, primary, primaryValue)
+    x, y = secondaryAxes
     return mnx * (1 - x) + mxx * x, mny * (1 - y) + mxy * y
 
 
 def unmapAxesFromLimited(
     colorModel: ColorModel,
-    locked: int,
-    lockedValue: float,
-    mappedVariableAxes: tuple[float, float],
+    primary: int,
+    primaryValue: float,
+    mappedSecondaryAxes: tuple[float, float],
 ) -> tuple[float, float]:
-    (mnx, mxx), (mny, mxy) = getAxesLimitsInterpolated(colorModel, locked, lockedValue)
-    x, y = mappedVariableAxes
+    (mnx, mxx), (mny, mxy) = getAxesLimitsInterpolated(colorModel, primary, primaryValue)
+    x, y = mappedSecondaryAxes
     return (x - mnx) / max(mxx - mnx, 1e-4), (y - mny) / max(mxy - mny, 1e-4)
 
 
 def getAxesLimitsInterpolated(
-    colorModel: ColorModel, locked: int, lockedValue: float
+    colorModel: ColorModel, primary: int, primaryValue: float
 ) -> tuple[tuple[float, float], tuple[float, float]]:
-    a = lockedValue * AXES_LIMITS_SEGMENTS
+    a = primaryValue * AXES_LIMITS_SEGMENTS
     t = a - int(a)
-    (minXA, maxXA), (minYA, maxYA) = getAxesLimits(colorModel, locked, int(a))
+    (minXA, maxXA), (minYA, maxYA) = getAxesLimits(colorModel, primary, int(a))
     (minXB, maxXB), (minYB, maxYB) = getAxesLimits(
-        colorModel, locked, int(math.ceil(a))
+        colorModel, primary, int(math.ceil(a))
     )
     return ((minXA * (1 - t) + minXB * t), (maxXA * (1 - t) + maxXB * t)), (
         (minYA * (1 - t) + minYB * t),
@@ -65,13 +65,13 @@ def getAxesLimitsInterpolated(
 
 
 def getAxesLimits(
-    colorModel: ColorModel, locked: int, lockedValue: int
+    colorModel: ColorModel, primary: int, primaryValue: int
 ) -> tuple[tuple[float, float], tuple[float, float]]:
     if not colorModel.isNotSrgbBased():
         return ((0.0, 1.0), (0.0, 1.0))
 
     colorModelIndex = int(colorModel) - 3
-    base = (colorModelIndex * 3 + locked) * (AXES_LIMITS_SEGMENTS + 1) + lockedValue
+    base = (colorModelIndex * 3 + primary) * (AXES_LIMITS_SEGMENTS + 1) + primaryValue
     base *= 4
     return (
         max(limits[base] - AXES_LIMITS_OFFSET, 0),

@@ -95,11 +95,11 @@ class SettingsDialog(QDialog):
                 lambda x, cm=colorModel: self.changeSetting(cm, "barEnabled", x)
             )
 
-            colorfulLockedChannel = QCheckBox("Colorful Locked Channel")
-            colorfulLockedChannel.setChecked(settings.colorfulLockedChannel)
-            colorfulLockedChannel.clicked.connect(
+            colorfulPrimaryChannel = QCheckBox("Colorful Primary Channel")
+            colorfulPrimaryChannel.setChecked(settings.colorfulPrimaryChannel)
+            colorfulPrimaryChannel.clicked.connect(
                 lambda x, cm=colorModel: self.changeSetting(
-                    cm, "colorfulLockedChannel", x
+                    cm, "colorfulPrimaryChannel", x
                 )
             )
 
@@ -205,7 +205,7 @@ class SettingsDialog(QDialog):
 
             pageLayout.addWidget(barEnabled)
             if colorModel.isColorfulable():
-                pageLayout.addWidget(colorfulLockedChannel)
+                pageLayout.addWidget(colorfulPrimaryChannel)
             else:
                 channelsSpinBoxEnabled.deleteLater()
             pageLayout.addWidget(channelsSpinBoxEnabled)

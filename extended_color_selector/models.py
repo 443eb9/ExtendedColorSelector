@@ -1307,8 +1307,8 @@ class SettingsPerColorModel:
         self.ringRotation = float(getOrDefault(s, "0"))
         self.ringReversed = getOrDefault(s, "False") == "True"
         self.wheelRotateWithRing = getOrDefault(s, "False") == "True"
-        self.lockedChannelIndex = int(getOrDefault(s, "0"))
-        self.colorfulLockedChannel = getOrDefault(s, "False") == "True"
+        self.primaryIndex = int(getOrDefault(s, "0"))
+        self.colorfulPrimaryChannel = getOrDefault(s, "False") == "True"
         self.clipToSrgbGamut = getOrDefault(s, "False") == "True"
 
     def write(self, colorModel: ColorModel):
@@ -1327,8 +1327,8 @@ class SettingsPerColorModel:
             self.ringRotation,
             self.ringReversed,
             self.wheelRotateWithRing,
-            self.lockedChannelIndex,
-            self.colorfulLockedChannel,
+            self.primaryIndex,
+            self.colorfulPrimaryChannel,
             self.clipToSrgbGamut,
         ]
         Krita.instance().writeSetting(DOCKER_NAME, colorModel.displayName(), ",".join([str(x) for x in s]))  # type: ignore

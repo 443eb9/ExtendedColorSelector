@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
 )
 from krita import *  # type: ignore
 
-from .color_wheel import ColorWheel, LockedChannelBar, INDICATOR_BLOCKS
+from .color_wheel import SecondaryChannelsPlane, PrimaryChannelBar, INDICATOR_BLOCKS
 from .models import ColorModel
 from .config import DOCKER_NAME, DOCKER_ID
 from .setting import SettingsDialog, GlobalSettingsDialog
@@ -29,8 +29,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.setWidget(container)
         self.mainLayout = QVBoxLayout(container)
 
-        self.colorWheel = ColorWheel()
-        self.lockedChannelBar = LockedChannelBar(False)
+        self.secondaryChannelsPlane = SecondaryChannelsPlane()
+        self.primaryChannelBar = PrimaryChannelBar(False)
         self.colorSpaceSwitcher = ColorModelSwitcher()
         self.lockers = QHBoxLayout()
 
@@ -57,8 +57,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         settingsButtonLayout.addStretch(1)
         settingsButtonLayout.addWidget(globalSettingsButton)
 
-        self.mainLayout.addWidget(self.colorWheel)
-        self.mainLayout.addWidget(self.lockedChannelBar)
+        self.mainLayout.addWidget(self.secondaryChannelsPlane)
+        self.mainLayout.addWidget(self.primaryChannelBar)
         self.mainLayout.addWidget(self.colorSpaceSwitcher)
         self.mainLayout.addLayout(self.lockers)
         self.mainLayout.addLayout(settingsButtonLayout)
@@ -88,8 +88,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
     def updateColorModel(self):
         self.updateChannelIndicators()
         self.updateChannelSpinBoxes()
-        self.colorWheel.compileShader()
-        self.lockedChannelBar.compileShader()
+        self.secondaryChannelsPlane.compileShader()
+        self.primaryChannelBar.compileShader()
 
     def updateChannelIndicators(self):
         displayMin, displayMax = STATE.colorModel.displayLimits()
@@ -107,8 +107,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         for i, channel in enumerate(STATE.colorModel.channels()):
             button = self.channelButtons[i]
             button.setText(channel)
-            button.clicked.connect(lambda _, ch=i: STATE.updateLockedChannel(ch))
-            button.setChecked(STATE.lockedChannel == i)
+            button.clicked.connect(lambda _, ch=i: STATE.updatePrimaryIndex(ch))
+            button.setChecked(STATE.primaryIndex == i)
 
             valueBox = self.channelSpinBoxes[i]
             valueBox.setRange(displayMin[i], displayMax[i])
@@ -133,12 +133,12 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         INDICATOR_BLOCKS.shut()
 
     def resizeEvent(self, e: QResizeEvent):
-        self.colorWheel.resizeEvent(e)
+        self.secondaryChannelsPlane.resizeEvent(e)
 
     def canvasChanged(self, canvas):
         STATE.syncColor()
-        self.colorWheel.updateShaders()
-        self.lockedChannelBar.updateShaders()
+        self.secondaryChannelsPlane.updateShaders()
+        self.primaryChannelBar.updateShaders()
 
 
 dock_widget_factory = DockWidgetFactory(  # type: ignore

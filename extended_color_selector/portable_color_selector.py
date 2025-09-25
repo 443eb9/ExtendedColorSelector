@@ -3,7 +3,7 @@ from PyQt5.QtGui import QKeyEvent, QCursor, QActionEvent, QKeySequence
 from PyQt5.QtWidgets import QVBoxLayout, QDialog, QAction
 from krita import *  # type: ignore
 
-from .color_wheel import ColorWheel, LockedChannelBar, INDICATOR_BLOCKS
+from .color_wheel import SecondaryChannelsPlane, PrimaryChannelBar, INDICATOR_BLOCKS
 from .internal_state import STATE
 from .color_model_switcher import ColorModelSwitcher
 
@@ -14,12 +14,12 @@ class PortableColorSelector(QDialog):
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint, True)
         self.mainLayout = QVBoxLayout(self)
 
-        self.colorWheel = ColorWheel(self)
-        self.lockedChannelBar = LockedChannelBar(True, self)
+        self.colorWheel = SecondaryChannelsPlane(self)
+        self.primaryChannelBar = PrimaryChannelBar(True, self)
         self.colorModelSwitcher = ColorModelSwitcher()
 
         self.mainLayout.addWidget(self.colorWheel)
-        self.mainLayout.addWidget(self.lockedChannelBar)
+        self.mainLayout.addWidget(self.primaryChannelBar)
         self.mainLayout.addWidget(self.colorModelSwitcher)
 
         self.updateFromSettings()

@@ -1,8 +1,8 @@
 #version 410 core
 
-uniform float constant;
-uniform vec2 variables;
-uniform int constantPos;
+uniform int primaryIndex;
+uniform float primaryValue;
+uniform vec2 secondaryValues;
 uniform vec3 lim_min;
 uniform vec3 lim_max;
 uniform vec3 outOfGamut;
@@ -49,15 +49,15 @@ vec4 drawWheel(vec2 p) {
     }
 
     vec3 t;
-    switch(constantPos) {
+    switch(primaryIndex) {
         case 0:
-            t = vec3(constant, colorCoord.x, colorCoord.y);
+            t = vec3(primaryValue, colorCoord.x, colorCoord.y);
             break;
         case 1:
-            t = vec3(colorCoord.x, constant, colorCoord.y);
+            t = vec3(colorCoord.x, primaryValue, colorCoord.y);
             break;
         case 2:
-            t = vec3(colorCoord.x, colorCoord.y, constant);
+            t = vec3(colorCoord.x, colorCoord.y, primaryValue);
             break;
     }
 
@@ -72,15 +72,15 @@ vec4 drawWheel(vec2 p) {
 
 vec4 drawRing(float x, float dist) {
     vec3 t;
-    switch(constantPos) {
+    switch(primaryIndex) {
         case 0:
-            t = vec3(x, variables.x, variables.y);
+            t = vec3(x, secondaryValues.x, secondaryValues.y);
             break;
         case 1:
-            t = vec3(variables.x, x, variables.y);
+            t = vec3(secondaryValues.x, x, secondaryValues.y);
             break;
         case 2:
-            t = vec3(variables.x, variables.y, x);
+            t = vec3(secondaryValues.x, secondaryValues.y, x);
             break;
     }
 

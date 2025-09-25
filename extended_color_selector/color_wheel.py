@@ -44,8 +44,8 @@ from .gamut_clipping import (
 
 # Use [18:] to strip the version header, and add new one later before compiling
 fullscreenVertex = open(Path(__file__).parent / "fullscreen.vert").read()[18:]
-wheelFragment = open(Path(__file__).parent / "color_wheel.frag").read()[18:]
-barFragment = open(Path(__file__).parent / "locked_channel_bar.frag").read()[18:]
+wheelFragment = open(Path(__file__).parent / "secondary_channels_plane.frag").read()[18:]
+barFragment = open(Path(__file__).parent / "primary_channel_bar.frag").read()[18:]
 
 
 def computeMoveFactor(e: QMouseEvent) -> float:
@@ -194,14 +194,14 @@ class OpenGLRenderer(QOpenGLWidget):
         self.gl.glViewport(0, 0, w, h)
 
 
-class ColorWheel(OpenGLRenderer):
-    class ColorWheelEditing(IntEnum):
-        Wheel = 1
+class SecondaryChannelsPlane(OpenGLRenderer):
+    class PlaneEditing(IntEnum):
+        Plane = 1
         Ring = 2
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
-        self.editing = ColorWheel.ColorWheelEditing.Wheel
+        self.editing = SecondaryChannelsPlane.PlaneEditing.Plane
         self.renderer = None
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
@@ -214,7 +214,7 @@ class ColorWheel(OpenGLRenderer):
         STATE.settingsChanged.connect(self.updateShaders)
         STATE.colorModelChanged.connect(self.updateShaders)
         STATE.colorChanged.connect(self.update)
-        STATE.lockedChannelIndexChanged.connect(self.update)
+        STATE.primaryChannelIndexChanged.connect(self.update)
 
     def resizeEvent(self, e: QResizeEvent | None):
         super().resizeEvent(e)
@@ -230,7 +230,7 @@ class ColorWheel(OpenGLRenderer):
     def heightForWidth(self, a0: int) -> int:
         return a0
 
-    def handleWheelEdit(self, cursor: QVector2D):
+    def handlePlaneEdit(self, cursor: QVector2D):
         if self.editStart == None:
             return
 
@@ -240,7 +240,7 @@ class ColorWheel(OpenGLRenderer):
 
         x, y = x * 2.0 - 1.0, y * 2.0 - 1.0
         y = -y
-        rot = self.getActualWheelRotation()
+        rot = self.getActualPlaneRotation()
         s = math.sin(rot)
         c = math.cos(rot)
         x, y = x * c - y * s, x * s + y * c
@@ -261,12 +261,12 @@ class ColorWheel(OpenGLRenderer):
         if settings.clipToSrgbGamut:
             cx, cy = mapAxesToLimited(
                 STATE.colorModel,
-                STATE.lockedChannel,
-                STATE.lockedChannelValue(),
+                STATE.primaryIndex,
+                STATE.primaryValue(),
                 (cx, cy),
             )
 
-        STATE.updateVariableChannelsValue((cx, cy))
+        STATE.updateSecondaryValues((cx, cy))
         self.update()
 
     def handleRingEdit(self, cursor: QVector2D):
@@ -276,7 +276,7 @@ class ColorWheel(OpenGLRenderer):
         v = settings.shape.getRingValue((x, y), math.radians(settings.ringRotation))
         if settings.ringReversed:
             v = 1 - v
-        STATE.updateLockedChannelValue(v)
+        STATE.updatePrimaryValue(v)
 
     def handleMouse(self, event: QMouseEvent | None):
         if event == None:
@@ -289,9 +289,9 @@ class ColorWheel(OpenGLRenderer):
         else:
             cursor = self.editStart + (QVector2D(event.pos()) - self.shiftStart) * f
         match self.editing:
-            case ColorWheel.ColorWheelEditing.Wheel:
-                self.handleWheelEdit(cursor)
-            case ColorWheel.ColorWheelEditing.Ring:
+            case SecondaryChannelsPlane.PlaneEditing.Plane:
+                self.handlePlaneEdit(cursor)
+            case SecondaryChannelsPlane.PlaneEditing.Ring:
                 self.handleRingEdit(cursor)
 
     def mousePressEvent(self, a0: QMouseEvent | None):
@@ -303,15 +303,15 @@ class ColorWheel(OpenGLRenderer):
         if (
             ringThickness == 0 and ringMargin == 0
         ) or d < self.res * 0.5 - ringThickness - ringMargin:
-            self.editing = ColorWheel.ColorWheelEditing.Wheel
+            self.editing = SecondaryChannelsPlane.PlaneEditing.Plane
         else:
-            self.editing = ColorWheel.ColorWheelEditing.Ring
+            self.editing = SecondaryChannelsPlane.PlaneEditing.Ring
 
         x, y = None, None
         match self.editing:
-            case ColorWheel.ColorWheelEditing.Wheel:
-                x, y = self.getCurrentWheelWidgetCoord()
-            case ColorWheel.ColorWheelEditing.Ring:
+            case SecondaryChannelsPlane.PlaneEditing.Plane:
+                x, y = self.getCurrentPlaneWidgetCoord()
+            case SecondaryChannelsPlane.PlaneEditing.Ring:
                 x, y = self.getCurrentRingWidgetCoord()
         self.editStart = QVector2D(x, y)
         self.shiftStart = QVector2D(a0.pos())
@@ -332,10 +332,10 @@ class ColorWheel(OpenGLRenderer):
         else:
             return 0.0, 0.0
 
-    def getCurrentWheelWidgetCoord(self) -> tuple[float, float]:
+    def getCurrentPlaneWidgetCoord(self) -> tuple[float, float]:
         settings = STATE.currentSettings()
         ix, iy = 0, 0
-        match STATE.lockedChannel:
+        match STATE.primaryIndex:
             case 0:
                 ix, iy = 1, 2
             case 1:
@@ -348,8 +348,8 @@ class ColorWheel(OpenGLRenderer):
         if settings.clipToSrgbGamut:
             cx, cy = unmapAxesFromLimited(
                 STATE.colorModel,
-                STATE.lockedChannel,
-                STATE.lockedChannelValue(),
+                STATE.primaryIndex,
+                STATE.primaryValue(),
                 (cx, cy),
             )
 
@@ -368,7 +368,7 @@ class ColorWheel(OpenGLRenderer):
             (ringThickness + ringMargin) / (self.res / 2),
         )
 
-        rot = self.getActualWheelRotation()
+        rot = self.getActualPlaneRotation()
         s = math.sin(-rot)
         c = math.cos(-rot)
         x, y = x * c - y * s, y * c + x * s
@@ -386,9 +386,9 @@ class ColorWheel(OpenGLRenderer):
 
         ringX, ringY = settings.shape.getRingPos(
             (
-                1.0 - STATE.color[STATE.lockedChannel]
+                1.0 - STATE.color[STATE.primaryIndex]
                 if settings.ringReversed
-                else STATE.color[STATE.lockedChannel]
+                else STATE.color[STATE.primaryIndex]
             ),
             ringThickness / (self.res / 2),
             math.radians(settings.ringRotation),
@@ -399,7 +399,7 @@ class ColorWheel(OpenGLRenderer):
     def paintEvent(self, e: QPaintEvent | None):
         super().paintEvent(e)
 
-        x, y = self.getCurrentWheelWidgetCoord()
+        x, y = self.getCurrentPlaneWidgetCoord()
         painter = QPainter(self)
         painter.setBrush(QBrush(QColor(255, 255, 255, 255)))
         painter.drawArc(
@@ -449,10 +449,10 @@ class ColorWheel(OpenGLRenderer):
 
         self.compileShader()
 
-    def getActualWheelRotation(self) -> float:
+    def getActualPlaneRotation(self) -> float:
         settings = STATE.currentSettings()
         if settings.wheelRotateWithRing:
-            c = STATE.color[STATE.lockedChannel]
+            c = STATE.color[STATE.primaryIndex]
             if settings.ringReversed:
                 c = -c
             return (
@@ -473,9 +473,9 @@ class ColorWheel(OpenGLRenderer):
 
         self.program.setUniformValue("res", float(self.res * highDpiScale))
         self.program.setUniformValue(
-            "constant", float(STATE.color[STATE.lockedChannel])
+            "primaryValue", float(STATE.color[STATE.primaryIndex])
         )
-        self.program.setUniformValue("constantPos", int(STATE.lockedChannel))
+        self.program.setUniformValue("primaryIndex", int(STATE.primaryIndex))
 
         settings = STATE.currentSettings()
         globalSettings = STATE.globalSettings
@@ -504,7 +504,7 @@ class ColorWheel(OpenGLRenderer):
             )
         else:
             self.program.setUniformValue("outOfGamut", -1.0, -1.0, -1.0)
-        self.program.setUniformValue("rotation", self.getActualWheelRotation())
+        self.program.setUniformValue("rotation", self.getActualPlaneRotation())
         ringThickness, ringMargin = self.getActualRingThicknessAndMargin()
         self.program.setUniformValue(
             "ringThickness", float(ringThickness * highDpiScale)
@@ -515,12 +515,12 @@ class ColorWheel(OpenGLRenderer):
         )
 
         maybeColorfuledColor = (
-            STATE.colorModel.makeColorful(STATE.color, STATE.lockedChannel)
-            if settings.colorfulLockedChannel
+            STATE.colorModel.makeColorful(STATE.color, STATE.primaryIndex)
+            if settings.colorfulPrimaryChannel
             else STATE.color
         )
         variables = None
-        match STATE.lockedChannel:
+        match STATE.primaryIndex:
             case 0:
                 variables = maybeColorfuledColor[1], maybeColorfuledColor[2]
             case 1:
@@ -529,11 +529,11 @@ class ColorWheel(OpenGLRenderer):
                 variables = maybeColorfuledColor[0], maybeColorfuledColor[1]
             case _:
                 return
-        self.program.setUniformValue("variables", variables[0], variables[1])
+        self.program.setUniformValue("secondaryValues", variables[0], variables[1])
 
         axesLimits = (
             getAxesLimitsInterpolated(
-                STATE.colorModel, STATE.lockedChannel, STATE.lockedChannelValue()
+                STATE.colorModel, STATE.primaryIndex, STATE.primaryValue()
             )
             if settings.clipToSrgbGamut
             else ((-1.0, -1.0), (-1.0, -1.0))
@@ -550,7 +550,7 @@ class ColorWheel(OpenGLRenderer):
         self.gl.glDrawArrays(self.gl.GL_TRIANGLE_STRIP, 0, 4)
 
 
-class LockedChannelBar(OpenGLRenderer):
+class PrimaryChannelBar(OpenGLRenderer):
     def __init__(self, portable: bool, parent: QWidget | None = None):
         super().__init__(parent)
 
@@ -565,7 +565,7 @@ class LockedChannelBar(OpenGLRenderer):
         STATE.colorModelChanged.connect(self.updateShaders)
         STATE.settingsChanged.connect(self.updateFromState)
         STATE.colorChanged.connect(self.update)
-        STATE.lockedChannelIndexChanged.connect(self.update)
+        STATE.primaryChannelIndexChanged.connect(self.update)
 
     def updateFromState(self):
         globalSettings = STATE.globalSettings
@@ -606,7 +606,7 @@ class LockedChannelBar(OpenGLRenderer):
             x = self.editStart + (event.x() - self.shiftStart) * f
             x /= self.res
             x = x - math.floor(x)
-        STATE.updateLockedChannelValue(x)
+        STATE.updatePrimaryValue(x)
         self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None):
@@ -630,7 +630,7 @@ class LockedChannelBar(OpenGLRenderer):
         self.editStart = a0.pos().x()
 
     def getCurrentWidgetCoord(self) -> float:
-        return STATE.color[STATE.lockedChannel] * self.width()
+        return STATE.color[STATE.primaryIndex] * self.width()
 
     def paintEvent(self, e: QPaintEvent | None):
         super().paintEvent(e)
@@ -668,7 +668,7 @@ class LockedChannelBar(OpenGLRenderer):
         self.program.bind()
 
         self.program.setUniformValue("res", float(self.res * highDpiScale))
-        self.program.setUniformValue("constantPos", int(STATE.lockedChannel))
+        self.program.setUniformValue("primaryIndex", int(STATE.primaryIndex))
         mn, mx = STATE.colorModel.limits()
         self.program.setUniformValue("lim_min", mn[0], mn[1], mn[2])
         self.program.setUniformValue("lim_max", mx[0], mx[1], mx[2])
@@ -687,12 +687,12 @@ class LockedChannelBar(OpenGLRenderer):
             self.program.setUniformValue("outOfGamut", -1.0, -1.0, -1.0)
 
         maybeColorfuledColor = (
-            STATE.colorModel.makeColorful(STATE.color, STATE.lockedChannel)
-            if settings.colorfulLockedChannel
+            STATE.colorModel.makeColorful(STATE.color, STATE.primaryIndex)
+            if settings.colorfulPrimaryChannel
             else STATE.color
         )
         variables = None
-        match STATE.lockedChannel:
+        match STATE.primaryIndex:
             case 0:
                 variables = maybeColorfuledColor[1], maybeColorfuledColor[2]
             case 1:
@@ -701,7 +701,7 @@ class LockedChannelBar(OpenGLRenderer):
                 variables = maybeColorfuledColor[0], maybeColorfuledColor[1]
             case _:
                 return
-        self.program.setUniformValue("variables", variables[0], variables[1])
+        self.program.setUniformValue("secondaryValues", variables[0], variables[1])
 
         self.program.setAttributeArray(
             0, [QVector2D(-1, -1), QVector2D(1, -1), QVector2D(-1, 1), QVector2D(1, 1)]

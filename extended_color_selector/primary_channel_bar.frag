@@ -1,7 +1,7 @@
 #version 410 core
 
-uniform vec2 variables;
-uniform int constantPos;
+uniform int primaryIndex;
+uniform vec2 secondaryValues;
 uniform vec3 lim_min;
 uniform vec3 lim_max;
 uniform vec3 outOfGamut;
@@ -14,15 +14,15 @@ void main(void) {
     float colorCoord = gl_FragCoord.x / res;
 
     vec3 t;
-    switch(constantPos) {
+    switch(primaryIndex) {
         case 0:
-            t = vec3(colorCoord, variables.x, variables.y);
+            t = vec3(colorCoord, secondaryValues.x, secondaryValues.y);
             break;
         case 1:
-            t = vec3(variables.x, colorCoord, variables.y);
+            t = vec3(secondaryValues.x, colorCoord, secondaryValues.y);
             break;
         case 2:
-            t = vec3(variables.x, variables.y, colorCoord);
+            t = vec3(secondaryValues.x, secondaryValues.y, colorCoord);
             break;
     }
 
