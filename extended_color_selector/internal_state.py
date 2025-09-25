@@ -233,7 +233,8 @@ class InternalState(QObject):
             self.color,
         )
 
-        self.updateColor(color)
+        self.color = self.resolveLocked(color)
+        self.colorChanged.emit()
 
 
 STATE = InternalState()

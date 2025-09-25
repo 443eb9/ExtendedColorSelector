@@ -1,13 +1,5 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (
-    QWidget,
-    QHBoxLayout,
-    QRadioButton,
-    QButtonGroup,
-    QPushButton,
-)
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton
 
-from .models import ColorModel
 from .internal_state import STATE
 
 
