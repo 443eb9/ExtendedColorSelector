@@ -109,6 +109,12 @@ class SettingsDialog(QDialog):
                 lambda x, cm=colorModel: self.changeSetting(cm, "displayChannels", x)
             )
 
+            channelLockersEnabled = QCheckBox(f"Show Channel Lockers")
+            channelLockersEnabled.setChecked(settings.showChannelLockers)
+            channelLockersEnabled.clicked.connect(
+                lambda x, cm=colorModel: self.changeSetting(cm, "showChannelLockers", x)
+            )
+
             clipGamutBox = QCheckBox("Clip Gamut To SRGB Range")
             clipGamutBox.setChecked(settings.clipToSrgbGamut)
             clipGamutBox.clicked.connect(
@@ -209,6 +215,7 @@ class SettingsDialog(QDialog):
             else:
                 channelsSpinBoxEnabled.deleteLater()
             pageLayout.addWidget(channelsSpinBoxEnabled)
+            pageLayout.addWidget(channelLockersEnabled)
             if colorModel.isNotSrgbBased():
                 pageLayout.addWidget(clipGamutBox)
             else:

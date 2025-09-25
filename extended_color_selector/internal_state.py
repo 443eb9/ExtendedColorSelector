@@ -66,6 +66,7 @@ class InternalState(QObject):
         self.settings = dict([(cm, SettingsPerColorModel(cm)) for cm in ColorModel])
         self.globalSettings = GlobalSettings()
         self.suppressColorSyncing = False
+        self.lockedChannelBits = 0
 
         if self.settings[self.globalSettings.currentColorModel].enabled:
             self.updateColorModel(self.globalSettings.currentColorModel)
@@ -104,45 +105,64 @@ class InternalState(QObject):
             case _:
                 raise Exception("Unreachable")
 
+    def setChannelLocked(self, channel: int, locked: bool):
+        if locked:
+            self.lockedChannelBits |= 1 << channel
+        else:
+            self.lockedChannelBits &= ~(1 << channel)
+
+    def resolveLocked(
+        self, color: tuple[float, float, float]
+    ) -> tuple[float, float, float]:
+        resolved = [color[0], color[1], color[2]]
+        for i in range(3):
+            if (self.lockedChannelBits >> i) & 1 != 0:
+                resolved[i] = self.color[i]
+        return resolved[0], resolved[1], resolved[2]
+
     def updateColor(self, color: tuple[float, float, float]):
-        self.color = color
+        self.color = self.resolveLocked(color)
+        self.sendColor()
         self.colorChanged.emit()
 
     def updateChannelValue(self, channel: int, value: float):
         match channel:
             case 0:
-                self.color = value, self.color[1], self.color[2]
+                color = value, self.color[1], self.color[2]
             case 1:
-                self.color = self.color[0], value, self.color[2]
+                color = self.color[0], value, self.color[2]
             case 2:
-                self.color = self.color[0], self.color[1], value
+                color = self.color[0], self.color[1], value
+            case _:
+                raise Exception("Unreachable")
 
-        self.sendColor()
-        self.colorChanged.emit()
+        self.updateColor(color)
 
     def updatePrimaryValue(self, value: float):
         match self.primaryIndex:
             case 0:
-                self.color = value, self.color[1], self.color[2]
+                color = value, self.color[1], self.color[2]
             case 1:
-                self.color = self.color[0], value, self.color[2]
+                color = self.color[0], value, self.color[2]
             case 2:
-                self.color = self.color[0], self.color[1], value
+                color = self.color[0], self.color[1], value
+            case _:
+                raise Exception("Unreachable")
 
-        self.sendColor()
-        self.colorChanged.emit()
+        self.updateColor(color)
 
     def updateSecondaryValues(self, variables: tuple[float, float]):
         match self.primaryIndex:
             case 0:
-                self.color = self.color[0], variables[0], variables[1]
+                color = self.color[0], variables[0], variables[1]
             case 1:
-                self.color = variables[0], self.color[1], variables[1]
+                color = variables[0], self.color[1], variables[1]
             case 2:
-                self.color = variables[0], variables[1], self.color[2]
+                color = variables[0], variables[1], self.color[2]
+            case _:
+                raise Exception("Unreachable")
 
-        self.colorChanged.emit()
-        self.sendColor()
+        self.updateColor(color)
 
     def updateColorModel(self, colorModel: ColorModel):
         if colorModel == self.colorModel:

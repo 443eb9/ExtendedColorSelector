@@ -16,6 +16,7 @@ from .config import DOCKER_NAME, DOCKER_ID
 from .setting import SettingsDialog, GlobalSettingsDialog
 from .internal_state import STATE
 from .color_model_switcher import ColorModelSwitcher
+from .channel_lockers import ChannelLockers
 
 
 class ExtendedColorSelector(DockWidget):  # type: ignore
@@ -32,16 +33,17 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.secondaryChannelsPlane = SecondaryChannelsPlane()
         self.primaryChannelBar = PrimaryChannelBar(False)
         self.colorSpaceSwitcher = ColorModelSwitcher()
-        self.lockers = QHBoxLayout()
+        self.primaryChannelSwitchers = QHBoxLayout()
+        self.channelLockers = ChannelLockers()
 
-        self.lockersGroup = QButtonGroup()
-        self.lockersGroup.setExclusive(True)
+        self.primaryChannelSwitchersGroup = QButtonGroup()
+        self.primaryChannelSwitchersGroup.setExclusive(True)
         self.channelSpinBoxes = QDoubleSpinBox(), QDoubleSpinBox(), QDoubleSpinBox()
         self.channelButtons = QRadioButton(), QRadioButton(), QRadioButton()
         for i in range(3):
-            self.lockers.addWidget(self.channelButtons[i])
-            self.lockersGroup.addButton(self.channelButtons[i], i)
-            self.lockers.addWidget(self.channelSpinBoxes[i])
+            self.primaryChannelSwitchers.addWidget(self.channelButtons[i])
+            self.primaryChannelSwitchersGroup.addButton(self.channelButtons[i], i)
+            self.primaryChannelSwitchers.addWidget(self.channelSpinBoxes[i])
         self.updateChannelIndicators()
 
         settingsButtonLayout = QHBoxLayout()
@@ -60,7 +62,8 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         self.mainLayout.addWidget(self.secondaryChannelsPlane)
         self.mainLayout.addWidget(self.primaryChannelBar)
         self.mainLayout.addWidget(self.colorSpaceSwitcher)
-        self.mainLayout.addLayout(self.lockers)
+        self.mainLayout.addLayout(self.primaryChannelSwitchers)
+        self.mainLayout.addWidget(self.channelLockers)
         self.mainLayout.addLayout(settingsButtonLayout)
         self.mainLayout.addStretch(1)
 
@@ -104,7 +107,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
         def finished():
             STATE.suppressColorSyncing = False
 
-        for i, channel in enumerate(STATE.colorModel.channels()):
+        for i, channel in enumerate(STATE.colorModel.channelNames()):
             button = self.channelButtons[i]
             button.setText(channel)
             button.clicked.connect(lambda _, ch=i: STATE.updatePrimaryIndex(ch))
@@ -115,7 +118,7 @@ class ExtendedColorSelector(DockWidget):  # type: ignore
             valueBox.valueChanged.connect(lambda value, ch=i: update(value, ch))
             valueBox.editingFinished.connect(finished)
 
-        self.lockers.update()
+        self.primaryChannelSwitchers.update()
         self.update()
 
     def updateChannelSpinBoxes(self):

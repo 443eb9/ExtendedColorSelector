@@ -1,5 +1,7 @@
 # Unreleased
 
+- Added channel lockers which allows to change color without affecting specific channel(s).
+
 # v0.4.0
 
 Global settings will be reset to default after update!

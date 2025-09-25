@@ -186,7 +186,7 @@ class ColorModel(IntEnum):
             case ColorModel.Okhsl:
                 return "OkHsl"
 
-    def channels(self) -> list[str]:
+    def channelNames(self) -> list[str]:
         match self:
             case ColorModel.Rgb:
                 return ["R", "G", "B"]
@@ -1310,6 +1310,7 @@ class SettingsPerColorModel:
         self.primaryIndex = int(getOrDefault(s, "0"))
         self.colorfulPrimaryChannel = getOrDefault(s, "False") == "True"
         self.clipToSrgbGamut = getOrDefault(s, "False") == "True"
+        self.showChannelLockers = getOrDefault(s, "False") == "True"
 
     def write(self, colorModel: ColorModel):
         s = [
@@ -1330,6 +1331,7 @@ class SettingsPerColorModel:
             self.primaryIndex,
             self.colorfulPrimaryChannel,
             self.clipToSrgbGamut,
+            self.showChannelLockers,
         ]
         Krita.instance().writeSetting(DOCKER_NAME, colorModel.displayName(), ",".join([str(x) for x in s]))  # type: ignore
 
