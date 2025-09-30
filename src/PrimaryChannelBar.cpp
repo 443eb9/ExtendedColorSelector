@@ -79,6 +79,9 @@ void PrimaryChannelBar::paintEvent(QPaintEvent *event)
     QPainter painter(this);
 
     painter.drawImage(0, 0, m_image, 0, 0, -1, height());
+
+    int x = ColorState::instance()->primaryChannelValue() * width();
+    painter.drawRect(x - 1, 0, 2, height());
 }
 
 void PrimaryChannelBar::mousePressEvent(QMouseEvent *event)
@@ -87,7 +90,7 @@ void PrimaryChannelBar::mousePressEvent(QMouseEvent *event)
 
 void PrimaryChannelBar::mouseMoveEvent(QMouseEvent *event)
 {
-    qreal value = qBound(0, event->pos().x() / width(), 1);
+    qreal value = qBound((qreal)0, (qreal)event->pos().x() / width(), (qreal)1);
     ColorState::instance()->setPrimaryChannelValue(value);
 }
 
