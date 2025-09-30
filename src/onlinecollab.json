@@ -1,0 +1,9 @@
+{
+    "Id": "Online Collab",
+    "Type": "Service",
+    "X-KDE-Library": "online_collab",
+    "X-KDE-ServiceTypes": [
+        "Krita/Tool"
+    ],
+    "X-Pigment-PluginVersion": "28"
+}

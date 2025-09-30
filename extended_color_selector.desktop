@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=extended_color_selector
+X-Python-2-Compatible=false
+X-Krita-Manual=manual.html
+Name=Extended Color Selector
+Comment=Extended Color Selector
