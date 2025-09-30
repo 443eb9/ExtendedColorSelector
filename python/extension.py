@@ -51,7 +51,8 @@ class ExtendedColorSelector(Extension):
 
         try:
             lib = ctypes.CDLL(str(lib_file.resolve()))
-            lib.load_online_collab_plugin()
+            print("Calling to load_extended_color_selector_plugin")
+            lib.load_extended_color_selector_plugin()
 
         except OSError as e:
             deps = ""

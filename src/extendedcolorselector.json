@@ -1,7 +1,7 @@
 {
-    "Id": "Online Collab",
+    "Id": "ExtendedColorSelector",
     "Type": "Service",
-    "X-KDE-Library": "online_collab",
+    "X-KDE-Library": "extended_color_selector",
     "X-KDE-ServiceTypes": [
         "Krita/Tool"
     ],
