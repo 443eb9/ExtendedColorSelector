@@ -1,13 +1,26 @@
 #ifndef EXTENDEDCOLORSELECTORDOCK_H
 #define EXTENDEDCOLORSELECTORDOCK_H
 
-#include <QObject>
 #include <QDockWidget>
+#include <QObject>
 
-class ExtendedColorSelectorDock : public QDockWidget
+#include <kis_canvas2.h>
+#include <kis_mainwindow_observer.h>
+
+#include "SecondaryChannelsPlane.h"
+
+class ExtendedColorSelectorDock : public QDockWidget, public KisMainwindowObserver
 {
 public:
     ExtendedColorSelectorDock();
+
+    void setViewManager(KisViewManager *kisview) override;
+    void setCanvas(KoCanvasBase *canvas) override;
+    void unsetCanvas() override;
+
+private:
+    KisCanvas2 *m_canvas;
+    SecondaryChannelsPlane *m_plane;
 };
 
 #endif // EXTENDEDCOLORSELECTORDOCK_H

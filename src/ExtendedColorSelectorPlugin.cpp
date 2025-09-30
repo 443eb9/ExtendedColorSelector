@@ -3,8 +3,8 @@
 #include <klocalizedstring.h>
 #include <kpluginfactory.h>
 
-#include "ExtendedColorSelectorPlugin.h"
 #include "ExtendedColorSelectorDock.h"
+#include "ExtendedColorSelectorPlugin.h"
 
 K_PLUGIN_FACTORY_WITH_JSON(ExtendedColorSelectorPluginFactory,
                            "extendedcolorselector.json",

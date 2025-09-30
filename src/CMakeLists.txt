@@ -1,8 +1,11 @@
 set(
     extendedcolorselector_SOURCES
-    ColorWheel.cpp
-    ExtendedColorSelectorPlugin.cpp
+    ColorState.cpp
+    ExtendedColor.cpp
     ExtendedColorSelectorDock.cpp
+    ExtendedColorSelectorPlugin.cpp
+    ExtendedShape.cpp
+    SecondaryChannelsPlane.cpp
 )
 
 kis_add_library(extendedcolorselector MODULE ${extendedcolorselector_SOURCES})
