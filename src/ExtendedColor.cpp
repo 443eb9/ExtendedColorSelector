@@ -1,5 +1,10 @@
 #include "ExtendedColor.h"
 
+ColorModel RgbConverter::model() const
+{
+    return ColorModel::Rgb;
+}
+
 QVector3D RgbConverter::toXyz(const QVector3D &color)
 {
     float r = color.x();

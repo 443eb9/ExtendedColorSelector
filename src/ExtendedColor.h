@@ -17,11 +17,13 @@ class ColorConverter : public KisShared
 public:
     virtual QVector3D toXyz(const QVector3D &color) = 0;
     virtual QVector3D fromXyz(const QVector3D &color) = 0;
+    virtual ColorModel model() const = 0;
 };
 
 class RgbConverter : public ColorConverter
 {
 public:
+    ColorModel model() const override;
     QVector3D toXyz(const QVector3D &color) override;
     QVector3D fromXyz(const QVector3D &color) override;
 };

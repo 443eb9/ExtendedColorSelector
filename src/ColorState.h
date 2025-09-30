@@ -23,12 +23,21 @@ class ColorState : public QObject, public KisShared
     Q_OBJECT
 
 public:
+    ColorState();
+
     qreal primaryChannelValue() const;
+    void setPrimaryChannelValue(qreal value);
     QVector2D secondaryChannelValues() const;
+    void setSecondaryChannelValues(const QVector2D &values);
     quint32 primaryChannelIndex() const;
+    void setPrimaryChannelIndex(quint32 index);
 
     QVector3D color() const;
+    void setColor(const QVector3D &color);
     const KoColorSpace *colorSpace() const;
+    void setColorSpace(const KoColorSpace *colorSpace);
+
+    void setColorModel(ColorModel model);
     ColorConverterSP converter() const;
 
     void sendToKrita();
@@ -37,12 +46,16 @@ public:
 
     static ColorStateSP instance();
 
+Q_SIGNALS:
+    void sigColorChanged(const QVector3D &color);
+
 private:
     QVector3D m_color;
     quint32 m_primaryChannelIndex;
     ColorModel m_model;
     ColorConverterSP m_converter;
     const KoColorSpace *m_currentColorSpace;
+    KisCanvasResourceProvider *m_resourceProvider;
 };
 
 #endif // COLORSTATE_H

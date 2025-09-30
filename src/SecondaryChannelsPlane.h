@@ -18,9 +18,18 @@ public:
 
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+
     void setCanvas(KisCanvas2 *canvas);
 
 private:
+    enum SecondaryChannelsEditMode {
+        Plane,
+    };
+
+    SecondaryChannelsEditMode m_editMode;
     ColorStateSP m_colorState;
     QColor m_imageColor;
     QScopedPointer<Shape> m_shape;

@@ -1,11 +1,11 @@
 #include "ExtendedShape.h"
 
-QPointF SquareShape::widgetToShapeCoordinate(const QPointF &point)
+QPointF SquareShape::widgetToShapeCoord(const QPointF &point)
 {
     return point;
 }
 
-QPointF SquareShape::shapeToWidgetCoordinate(const QPointF &point)
+QPointF SquareShape::shapeToWidgetCoord(const QPointF &point)
 {
     return point;
 }
