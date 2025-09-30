@@ -14,6 +14,8 @@ ExtendedColorSelectorDock::ExtendedColorSelectorDock()
 
     m_plane = new SecondaryChannelsPlane(this);
     mainLayout->addWidget(m_plane);
+    m_bar = new PrimaryChannelBar(this);
+    mainLayout->addWidget(m_bar);
 
     auto mainWidget = new QWidget(this);
     mainWidget->setLayout(mainLayout);
@@ -30,6 +32,7 @@ void ExtendedColorSelectorDock::setCanvas(KoCanvasBase *canvas)
     if (m_canvas) {
         ColorState::instance()->setCanvas(m_canvas);
         m_plane->setCanvas(m_canvas);
+        m_bar->setCanvas(m_canvas);
     }
 }
 

@@ -5,6 +5,7 @@ set(
     ExtendedColorSelectorDock.cpp
     ExtendedColorSelectorPlugin.cpp
     ExtendedShape.cpp
+    PrimaryChannelBar.cpp
     SecondaryChannelsPlane.cpp
 )
 
