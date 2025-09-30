@@ -1,6 +1,7 @@
 set(
     extendedcolorselector_SOURCES
-    ExtendedColorSelector.cpp
+    ColorWheel.cpp
+    ExtendedColorSelectorPlugin.cpp
     ExtendedColorSelectorDock.cpp
 )
 
