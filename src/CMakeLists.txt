@@ -3,6 +3,7 @@ set(
     EXChannelPlane.cpp
     EXChannelSlider.cpp
     EXColorModel.cpp
+    EXColorModelSwitchers.cpp
     EXColorSelectorDock.cpp
     EXColorSelectorPlugin.cpp
     EXColorState.cpp

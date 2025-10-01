@@ -32,6 +32,8 @@ void EXColorState::setColorModel(ColorModelId model)
         Q_ASSERT(false);
         break;
     }
+
+    Q_EMIT sigColorModelChanged(model);
 }
 
 ColorModelSP EXColorState::colorModel() const
@@ -80,6 +82,7 @@ void EXColorState::setCanvas(KisCanvas2 *canvas)
 
         syncFromKrita();
         Q_EMIT sigPrimaryChannelIndexChanged(m_primaryChannelIndex);
+        Q_EMIT sigColorModelChanged(m_colorModel->id());
     }
 }
 

@@ -33,7 +33,7 @@ public:
 
     ColorModelId id() const override
     {
-        return Rgb;
+        return ColorModelId::Rgb;
     }
 
     QString displayName() const override
@@ -49,6 +49,20 @@ public:
     std::array<QPair<qreal, qreal>, 3> channelRanges() const override
     {
         return {QPair(0, 1), QPair(0, 1), QPair(0, 1)};
+    }
+};
+
+class ColorModelFactory
+{
+public:
+    static ColorModel *toModel(ColorModelId id)
+    {
+        switch (id) {
+        case ColorModelId::Rgb:
+            return new RGBModel();
+        default:
+            return nullptr;
+        }
     }
 };
 

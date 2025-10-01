@@ -4,8 +4,8 @@
 #include <kis_canvas_resource_provider.h>
 #include <kis_display_color_converter.h>
 
-#include "EXColorState.h"
 #include "EXColorSelectorDock.h"
+#include "EXColorState.h"
 
 EXColorSelectorDock::EXColorSelectorDock()
     : QDockWidget("Extended Color Selector")
@@ -15,6 +15,8 @@ EXColorSelectorDock::EXColorSelectorDock()
 
     m_plane = new EXChannelPlane(this);
     mainLayout->addWidget(m_plane);
+    m_colorModelSwitchers = new EXColorModelSwitchers(this);
+    mainLayout->addWidget(m_colorModelSwitchers);
     m_channelValues = new EXChannelSliders(this);
     mainLayout->addWidget(m_channelValues);
 
