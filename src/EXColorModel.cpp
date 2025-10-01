@@ -163,14 +163,14 @@ QVector3D LABModel::fromXyz(const QVector3D &color) const
     float a = 5.00 * (fx - fy);
     float b = 2.00 * (fy - fz);
 
-    return QVector3D(l, a * 0.5 + 0.5, b * 0.5 + 0.5);
+    return QVector3D(l / 1.5, (a + 1.5) / 3, (b + 1.5) / 3);
 }
 
 QVector3D LABModel::toXyz(const QVector3D &color) const
 {
-    float l = 100. * color[0];
-    float a = 100. * (color[1] * 2 - 1);
-    float b = 100. * (color[2] * 2 - 1);
+    float l = 100. * color[0] * 1.5;
+    float a = 100. * (color[1] * 3 - 1.5);
+    float b = 100. * (color[2] * 3 - 1.5);
 
     float fy = (l + 16.0) / 116.0;
     float fx = a / 500.0 + fy;
@@ -199,7 +199,7 @@ QVector3D LCHModel::fromXyz(const QVector3D &color) const
     }
     float chroma = qBound(0.0f, c, 1.5f);
 
-    return QVector3D(lab[0], c, h / 360);
+    return QVector3D(lab[0], c / 1.5, h / 360);
 }
 
 QVector3D LCHModel::toXyz(const QVector3D &color) const
