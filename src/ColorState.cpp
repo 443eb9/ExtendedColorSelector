@@ -17,6 +17,7 @@ ColorState::ColorState()
     , m_currentColorSpace(nullptr)
     , m_resourceProvider(nullptr)
     , m_koColorConverter(nullptr)
+    , m_blockSync(false)
 {
     // TODO load from settings
 }
@@ -45,11 +46,18 @@ void ColorState::sendToKrita()
     QVector<float> channels(4, 1);
     channels[0] = currentRgb.x(), channels[1] = currentRgb.y(), channels[2] = currentRgb.z();
 
+    m_blockSync = true;
     m_resourceProvider->setFGColor(m_koColorConverter->displayChannelsToKoColor(channels));
+    m_blockSync = false;
 }
 
 void ColorState::syncFromKrita()
 {
+    if (m_blockSync) {
+        return;
+    }
+
+    qDebug() << "Sync";
     KoColor color = m_resourceProvider->fgColor();
     auto channels = m_koColorConverter->koColorToDisplayChannels(color);
     for (int i = 0; i < 3; i++) {

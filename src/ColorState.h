@@ -57,6 +57,7 @@ private:
     const KoColorSpace *m_currentColorSpace;
     KisCanvasResourceProvider *m_resourceProvider;
     ExtendedColorConverterSP m_koColorConverter;
+    bool m_blockSync;
 };
 
 #endif // COLORSTATE_H
