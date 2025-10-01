@@ -6,7 +6,8 @@
 const ColorModelId ColorModelFactory::AllModels[] = {ColorModelId::Rgb,
                                                      ColorModelId::Hsv,
                                                      ColorModelId::Hsl,
-                                                     ColorModelId::Oklab};
+                                                     ColorModelId::Oklab,
+                                                     ColorModelId::Oklch};
 
 QVector3D RGBModel::toXyz(const QVector3D &color) const
 {
@@ -169,4 +170,27 @@ QVector3D OKLABModel::toXyz(const QVector3D &color) const
     float z = -0.0763812845 * l_ - 0.4214819784 * m_ + 1.5861632204 * s_;
 
     return QVector3D(x, y, z);
+}
+
+QVector3D OKLCHModel::fromXyz(const QVector3D &color) const
+{
+    auto oklab = OKLABModel().fromXyz(color);
+    float a = oklab[1] * 2 - 1, b = oklab[2] * 2 - 1;
+
+    float chroma = hypotf(a, b);
+    float hue = qRadiansToDegrees(atan2f(b, a));
+
+    hue = hue < 0.0 ? hue + 360.0 : hue;
+
+    return QVector3D(oklab[0], chroma, hue / 360);
+}
+
+QVector3D OKLCHModel::toXyz(const QVector3D &color) const
+{
+    float sin, cos;
+    sincosf(qDegreesToRadians(color[2] * 360), &sin, &cos);
+    float a = color[1] * cos;
+    float b = color[1] * sin;
+
+    return OKLABModel().toXyz(QVector3D(color[0], a * 0.5 + 0.5, b * 0.5 + 0.5));
 }

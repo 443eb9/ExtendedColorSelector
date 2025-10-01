@@ -17,6 +17,7 @@ enum ColorModelId {
     Hsv = 1,
     Hsl = 2,
     Oklab = 3,
+    Oklch = 4,
 };
 
 class ColorModel : public KisShared
@@ -138,6 +139,33 @@ public:
     }
 };
 
+class OKLCHModel : public ColorModel
+{
+public:
+    QVector3D toXyz(const QVector3D &color) const override;
+    QVector3D fromXyz(const QVector3D &color) const override;
+
+    ColorModelId id() const override
+    {
+        return ColorModelId::Oklch;
+    }
+
+    QString displayName() const override
+    {
+        return "OkLCH";
+    }
+
+    std::array<QString, 3> channelNames() const override
+    {
+        return {"L", "C", "H"};
+    }
+
+    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    {
+        return {QPair(0, 100), QPair(0, 100), QPair(0, 360)};
+    }
+};
+
 class ColorModelFactory
 {
 public:
@@ -152,6 +180,8 @@ public:
             return new HSLModel();
         case ColorModelId::Oklab:
             return new OKLABModel();
+        case ColorModelId::Oklch:
+            return new OKLCHModel();
         default:
             return nullptr;
         }
@@ -168,7 +198,7 @@ public:
         }
     }
 
-    static const ColorModelId AllModels[4];
+    static const ColorModelId AllModels[5];
 };
 
 #endif
