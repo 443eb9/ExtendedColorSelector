@@ -8,9 +8,9 @@
 #include <kis_canvas_resource_provider.h>
 #include <kis_display_color_converter.h>
 
-#include "SecondaryChannelsPlane.h"
+#include "ExtendedChannelPlane.h"
 
-SecondaryChannelsPlane::SecondaryChannelsPlane(QWidget *parent)
+ExtendedChannelPlane::ExtendedChannelPlane(QWidget *parent)
     : QWidget(parent)
     , m_dri(nullptr)
     , m_shape(new SquareShape())
@@ -25,19 +25,19 @@ SecondaryChannelsPlane::SecondaryChannelsPlane(QWidget *parent)
     });
 }
 
-void SecondaryChannelsPlane::setCanvas(KisCanvas2 *canvas)
+void ExtendedChannelPlane::setCanvas(KisCanvas2 *canvas)
 {
     if (canvas) {
         m_dri = canvas->displayColorConverter()->displayRendererInterface();
     }
 }
 
-void SecondaryChannelsPlane::resizeEvent(QResizeEvent *event)
+void ExtendedChannelPlane::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
 }
 
-void SecondaryChannelsPlane::updateImage()
+void ExtendedChannelPlane::updateImage()
 {
     if (m_dri == nullptr) {
         qDebug() << "No DRI available";
@@ -87,12 +87,12 @@ void SecondaryChannelsPlane::updateImage()
     m_image = image;
 }
 
-void SecondaryChannelsPlane::mousePressEvent(QMouseEvent *event)
+void ExtendedChannelPlane::mousePressEvent(QMouseEvent *event)
 {
     m_editMode = Plane;
 }
 
-void SecondaryChannelsPlane::mouseMoveEvent(QMouseEvent *event)
+void ExtendedChannelPlane::mouseMoveEvent(QMouseEvent *event)
 {
     int size = qMin(width(), height());
     QPointF widgetCoord = QPointF(event->pos()) / size;
@@ -102,12 +102,12 @@ void SecondaryChannelsPlane::mouseMoveEvent(QMouseEvent *event)
     m_colorState->setSecondaryChannelValues(QVector2D(shapePos.x(), 1 - shapePos.y()));
 }
 
-void SecondaryChannelsPlane::mouseReleaseEvent(QMouseEvent *event)
+void ExtendedChannelPlane::mouseReleaseEvent(QMouseEvent *event)
 {
     m_colorState->sendToKrita();
 }
 
-void SecondaryChannelsPlane::paintEvent(QPaintEvent *event)
+void ExtendedChannelPlane::paintEvent(QPaintEvent *event)
 {
     QWidget::paintEvent(event);
     QPainter painter(this);

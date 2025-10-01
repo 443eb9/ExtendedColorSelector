@@ -8,7 +8,7 @@
 #include <kis_mainwindow_observer.h>
 
 #include "ExtendedChannelValues.h"
-#include "SecondaryChannelsPlane.h"
+#include "ExtendedChannelPlane.h"
 
 class ExtendedColorSelectorDock : public QDockWidget, public KisMainwindowObserver
 {
@@ -21,7 +21,7 @@ public:
 
 private:
     KisCanvas2 *m_canvas;
-    SecondaryChannelsPlane *m_plane;
+    ExtendedChannelPlane *m_plane;
     ExtendedChannelValues *m_channelValues;
 };
 

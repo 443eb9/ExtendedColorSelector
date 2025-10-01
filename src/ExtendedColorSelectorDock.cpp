@@ -12,7 +12,7 @@ ExtendedColorSelectorDock::ExtendedColorSelectorDock()
     m_canvas = nullptr;
     auto mainLayout = new QVBoxLayout();
 
-    m_plane = new SecondaryChannelsPlane(this);
+    m_plane = new ExtendedChannelPlane(this);
     mainLayout->addWidget(m_plane);
     m_channelValues = new ExtendedChannelValues(this);
     mainLayout->addWidget(m_channelValues);

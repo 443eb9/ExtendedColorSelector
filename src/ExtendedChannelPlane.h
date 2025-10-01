@@ -9,12 +9,12 @@
 #include "ColorState.h"
 #include "ExtendedShape.h"
 
-class SecondaryChannelsPlane : public QWidget
+class ExtendedChannelPlane : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit SecondaryChannelsPlane(QWidget *parent);
+    explicit ExtendedChannelPlane(QWidget *parent);
 
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
@@ -25,11 +25,11 @@ public:
     void setCanvas(KisCanvas2 *canvas);
 
 private:
-    enum SecondaryChannelsEditMode {
+    enum EditMode {
         Plane,
     };
 
-    SecondaryChannelsEditMode m_editMode;
+    EditMode m_editMode;
     ColorStateSP m_colorState;
     QColor m_imageColor;
     QScopedPointer<Shape> m_shape;
