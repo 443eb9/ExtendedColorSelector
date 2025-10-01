@@ -47,4 +47,11 @@ void sanitizeOutOfGamutColor(QVector3D &color, const QVector3D &outOfGamutColor)
         color = outOfGamutColor;
     }
 }
+
+void saturateColor(QVector3D &color)
+{
+    color[0] = qBound(0.0f, color[0], 1.0f);
+    color[1] = qBound(0.0f, color[1], 1.0f);
+    color[2] = qBound(0.0f, color[2], 1.0f);
+}
 } // namespace ExtendedUtils

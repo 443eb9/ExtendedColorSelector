@@ -17,6 +17,7 @@ QImage generateGradient(int width,
                         std::function<void(float, float, QVector<float> &)> pixelGet);
 
 void sanitizeOutOfGamutColor(QVector3D &color, const QVector3D &outOfGamutColor);
+void saturateColor(QVector3D &color);
 } // namespace ExtendedUtils
 
 #endif // EXTENDEDUTILS_H

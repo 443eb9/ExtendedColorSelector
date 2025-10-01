@@ -1,4 +1,5 @@
 #include "EXColorState.h"
+#include "EXUtils.h"
 
 static EXColorState *s_instance = nullptr;
 
@@ -30,6 +31,7 @@ void EXColorState::setColorModel(ColorModelId model)
 
     auto newModel = ColorModelFactory::fromId(model);
     m_color = newModel->fromXyz(m_colorModel->toXyz(m_color));
+    ExtendedUtils::saturateColor(m_color);
     m_colorModel = newModel;
     Q_EMIT sigColorModelChanged(model);
     Q_EMIT sigColorChanged(m_color);
