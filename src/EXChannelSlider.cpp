@@ -20,15 +20,8 @@ EXChannelSliders::EXChannelSliders(QWidget *parent)
     auto group = new QButtonGroup(this);
     group->setExclusive(true);
     for (int i = 0; i < 3; ++i) {
-        m_channelWidgets[i] = new ChannelValueWidget(i, this);
-        group->addButton(m_channelWidgets[i]->m_radioButton);
+        m_channelWidgets[i] = new ChannelValueWidget(i, group, this);
         layout->addWidget(m_channelWidgets[i]);
-
-        connect(m_channelWidgets[i]->m_radioButton, &QRadioButton::toggled, this, [this, i](bool checked) {
-            if (checked) {
-                EXColorState::instance()->setPrimaryChannelIndex(i);
-            }
-        });
     }
     setLayout(layout);
 }
@@ -41,7 +34,7 @@ void EXChannelSliders::setCanvas(KisCanvas2 *canvas)
     }
 }
 
-ChannelValueWidget::ChannelValueWidget(int channelIndex, QWidget *parent)
+ChannelValueWidget::ChannelValueWidget(int channelIndex, QButtonGroup *group, QWidget *parent)
     : QWidget(parent)
     , m_channelIndex(channelIndex)
 {
@@ -51,6 +44,7 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QWidget *parent)
     auto channelNames = colorState->colorModel()->channelNames();
 
     m_radioButton = new QRadioButton(channelNames[m_channelIndex], this);
+    group->addButton(m_radioButton);
     m_spinBox = new QDoubleSpinBox(this);
     m_bar = new ChannelValueBar(channelIndex, this);
 
@@ -77,6 +71,10 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QWidget *parent)
         if (checked) {
             colorState->setPrimaryChannelIndex(m_channelIndex);
         }
+    });
+
+    connect(colorState, &EXColorState::sigColorModelChanged, [this, colorState]() {
+        m_radioButton->setText(colorState->colorModel()->channelNames()[m_channelIndex]);
     });
 }
 

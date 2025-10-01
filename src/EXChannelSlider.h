@@ -1,8 +1,10 @@
 #ifndef ExtendedChannelSlider_H
 #define ExtendedChannelSlider_H
 
+#include <QButtonGroup>
 #include <QDoubleSpinBox>
 #include <QRadioButton>
+#include <QVector>
 #include <QWidget>
 
 #include <KoColorDisplayRendererInterface.h>
@@ -34,14 +36,15 @@ private:
 class ChannelValueWidget : public QWidget
 {
 public:
-    ChannelValueWidget(int channelIndex, QWidget *parent = nullptr);
+    ChannelValueWidget(int channelIndex, QButtonGroup *group, QWidget *parent = nullptr);
 
+    void setCanvas(KisCanvas2 *canvas);
+
+private:
     int m_channelIndex;
     QRadioButton *m_radioButton;
     QDoubleSpinBox *m_spinBox;
     ChannelValueBar *m_bar;
-
-    void setCanvas(KisCanvas2 *canvas);
 };
 
 class EXChannelSliders : public QWidget
@@ -51,9 +54,10 @@ class EXChannelSliders : public QWidget
 public:
     EXChannelSliders(QWidget *parent);
 
-    ChannelValueWidget *m_channelWidgets[3];
-
     void setCanvas(KisCanvas2 *canvas);
+
+private:
+    ChannelValueWidget *m_channelWidgets[3];
 };
 
 #endif // ExtendedChannelSlider_H
