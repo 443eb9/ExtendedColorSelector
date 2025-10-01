@@ -3,14 +3,14 @@
 
 #include <QPointF>
 
-class Shape
+class EXChannelPlaneShape
 {
 public:
     virtual QPointF widgetToShapeCoord(const QPointF &point) = 0;
     virtual QPointF shapeToWidgetCoord(const QPointF &point) = 0;
 };
 
-class SquareShape : public Shape
+class EXSquareChannelPlaneShape : public EXChannelPlaneShape
 {
 public:
     QPointF widgetToShapeCoord(const QPointF &point) override;

@@ -44,12 +44,12 @@ public:
     void setCanvas(KisCanvas2 *canvas);
 };
 
-class ExtendedChannelSlider : public QWidget
+class EXChannelSliders : public QWidget
 {
     Q_OBJECT
 
 public:
-    ExtendedChannelSlider(QWidget *parent);
+    EXChannelSliders(QWidget *parent);
 
     ChannelValueWidget *m_channelWidgets[3];
 

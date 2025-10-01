@@ -17,12 +17,12 @@
 #include "EXColorModel.h"
 #include "EXKoColorConverter.h"
 
-class ColorState : public QObject, public KisShared
+class EXColorState : public QObject, public KisShared
 {
     Q_OBJECT
 
 public:
-    ColorState();
+    EXColorState();
 
     qreal primaryChannelValue() const;
     void setPrimaryChannelValue(qreal value);
@@ -44,7 +44,7 @@ public:
     void syncFromKrita();
     void setCanvas(KisCanvas2 *canvas);
 
-    static ColorState *instance();
+    static EXColorState *instance();
 
 Q_SIGNALS:
     void sigColorChanged(const QVector3D &color);
@@ -56,7 +56,7 @@ private:
     ColorModelSP m_colorModel;
     const KoColorSpace *m_currentColorSpace;
     KisCanvasResourceProvider *m_resourceProvider;
-    ExtendedColorConverterSP m_koColorConverter;
+    EXColorConverterSP m_koColorConverter;
     bool m_blockSync;
 };
 

@@ -4,10 +4,10 @@
 #include <QObject>
 #include <QVariantList>
 
-class ExtendedColorSelectorPlugin : public QObject
+class EXColorSelectorPlugin : public QObject
 {
 public:
-    ExtendedColorSelectorPlugin(QObject *parent, const QVariantList &);
+    EXColorSelectorPlugin(QObject *parent, const QVariantList &);
 };
 
 #endif // EXTENDEDCOLORSELECTOR_H

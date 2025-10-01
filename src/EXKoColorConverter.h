@@ -8,10 +8,10 @@
 #include <kis_shared.h>
 #include <kis_shared_ptr.h>
 
-class ExtendedColorConverter : public KisShared
+class EXColorConverter : public KisShared
 {
 public:
-    ExtendedColorConverter(const KoColorSpace *colorSpace);
+    EXColorConverter(const KoColorSpace *colorSpace);
     int *displayToMemoryPositionMapper();
     KoColor displayChannelsToKoColor(const QVector<float> &channels);
     QVector<float> koColorToDisplayChannels(const KoColor &color);
@@ -21,6 +21,6 @@ private:
     const KoColorSpace *m_colorSpace;
 };
 
-typedef KisSharedPtr<ExtendedColorConverter> ExtendedColorConverterSP;
+typedef KisSharedPtr<EXColorConverter> EXColorConverterSP;
 
 #endif

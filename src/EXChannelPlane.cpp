@@ -13,39 +13,39 @@
 #include "EXKoColorConverter.h"
 #include "EXUtils.h"
 
-ExtendedChannelPlane::ExtendedChannelPlane(QWidget *parent)
+EXChannelPlane::EXChannelPlane(QWidget *parent)
     : QWidget(parent)
     , m_dri(nullptr)
-    , m_shape(new SquareShape())
+    , m_shape(new EXSquareChannelPlaneShape())
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);
 
-    connect(ColorState::instance(), &ColorState::sigColorChanged, [this]() {
+    connect(EXColorState::instance(), &EXColorState::sigColorChanged, [this]() {
         updateImage();
         update();
     });
 
-    connect(ColorState::instance(), &ColorState::sigPrimaryChannelIndexChanged, [this]() {
+    connect(EXColorState::instance(), &EXColorState::sigPrimaryChannelIndexChanged, [this]() {
         updateImage();
         update();
     });
 }
 
-void ExtendedChannelPlane::setCanvas(KisCanvas2 *canvas)
+void EXChannelPlane::setCanvas(KisCanvas2 *canvas)
 {
     if (canvas) {
         m_dri = canvas->displayColorConverter()->displayRendererInterface();
     }
 }
 
-void ExtendedChannelPlane::resizeEvent(QResizeEvent *event)
+void EXChannelPlane::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     updateImage();
 }
 
-void ExtendedChannelPlane::updateImage()
+void EXChannelPlane::updateImage()
 {
     if (m_dri == nullptr) {
         m_image = QImage();
@@ -53,8 +53,8 @@ void ExtendedChannelPlane::updateImage()
     }
 
     int size = qMin(width(), height());
-    auto colorState = ColorState::instance();
-    auto converter = ExtendedColorConverter(colorState->colorSpace());
+    auto colorState = EXColorState::instance();
+    auto converter = EXColorConverter(colorState->colorSpace());
     auto mapper = converter.displayToMemoryPositionMapper();
 
     auto pixelGet = [this, colorState, mapper](float x, float y, QVector<float> &channels) {
@@ -80,34 +80,34 @@ void ExtendedChannelPlane::updateImage()
     m_image = ExtendedUtils::generateGradient(size, size, colorState->colorSpace(), m_dri, pixelGet);
 }
 
-void ExtendedChannelPlane::mousePressEvent(QMouseEvent *event)
+void EXChannelPlane::mousePressEvent(QMouseEvent *event)
 {
     m_editMode = Plane;
 }
 
-void ExtendedChannelPlane::mouseMoveEvent(QMouseEvent *event)
+void EXChannelPlane::mouseMoveEvent(QMouseEvent *event)
 {
     int size = qMin(width(), height());
     QPointF widgetCoord = QPointF(event->pos()) / size;
     widgetCoord.setX(qBound(0.0, widgetCoord.x(), 1.0));
     widgetCoord.setY(qBound(0.0, widgetCoord.y(), 1.0));
     QPointF shapePos = m_shape->widgetToShapeCoord(widgetCoord);
-    ColorState::instance()->setSecondaryChannelValues(QVector2D(shapePos.x(), 1 - shapePos.y()));
+    EXColorState::instance()->setSecondaryChannelValues(QVector2D(shapePos.x(), 1 - shapePos.y()));
 }
 
-void ExtendedChannelPlane::mouseReleaseEvent(QMouseEvent *event)
+void EXChannelPlane::mouseReleaseEvent(QMouseEvent *event)
 {
-    ColorState::instance()->sendToKrita();
+    EXColorState::instance()->sendToKrita();
 }
 
-void ExtendedChannelPlane::paintEvent(QPaintEvent *event)
+void EXChannelPlane::paintEvent(QPaintEvent *event)
 {
     QWidget::paintEvent(event);
     QPainter painter(this);
 
     painter.drawImage(0, 0, m_image);
 
-    QVector2D planeValues = ColorState::instance()->secondaryChannelValues();
+    QVector2D planeValues = EXColorState::instance()->secondaryChannelValues();
     int size = qMin(width(), height());
     QPointF cursorPos = m_shape->shapeToWidgetCoord(QPointF(planeValues.x(), 1 - planeValues.y()));
     painter.drawArc(QRectF(cursorPos.x() * size - 4, cursorPos.y() * size - 4, 8, 8), 0, 360 * 16);

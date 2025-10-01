@@ -1,16 +1,16 @@
 #include "EXColorState.h"
 
-static ColorState *s_instance = nullptr;
+static EXColorState *s_instance = nullptr;
 
-ColorState *ColorState::instance()
+EXColorState *EXColorState::instance()
 {
     if (!s_instance) {
-        s_instance = new ColorState();
+        s_instance = new EXColorState();
     }
     return s_instance;
 }
 
-ColorState::ColorState()
+EXColorState::EXColorState()
     : m_color(1, 1, 1)
     , m_primaryChannelIndex(0)
     , m_colorModel(new RGBModel())
@@ -22,7 +22,7 @@ ColorState::ColorState()
     // TODO load from settings
 }
 
-void ColorState::setColorModel(ColorModelId model)
+void EXColorState::setColorModel(ColorModelId model)
 {
     switch (model) {
     case ColorModelId::Rgb:
@@ -34,12 +34,12 @@ void ColorState::setColorModel(ColorModelId model)
     }
 }
 
-ColorModelSP ColorState::colorModel() const
+ColorModelSP EXColorState::colorModel() const
 {
     return m_colorModel;
 }
 
-void ColorState::sendToKrita()
+void EXColorState::sendToKrita()
 {
     RGBModel rgbConverter;
     QVector3D currentRgb = rgbConverter.fromXyz(m_colorModel->toXyz(m_color));
@@ -51,7 +51,7 @@ void ColorState::sendToKrita()
     m_blockSync = false;
 }
 
-void ColorState::syncFromKrita()
+void EXColorState::syncFromKrita()
 {
     if (m_blockSync) {
         return;
@@ -65,14 +65,14 @@ void ColorState::syncFromKrita()
     Q_EMIT sigColorChanged(m_color);
 }
 
-void ColorState::setCanvas(KisCanvas2 *canvas)
+void EXColorState::setCanvas(KisCanvas2 *canvas)
 {
     if (canvas) {
         m_currentColorSpace = canvas->image()->colorSpace();
-        m_koColorConverter = new ExtendedColorConverter(m_currentColorSpace);
+        m_koColorConverter = new EXColorConverter(m_currentColorSpace);
         m_resourceProvider = canvas->imageView()->resourceProvider();
 
-        connect(m_resourceProvider, &KisCanvasResourceProvider::sigFGColorChanged, this, &ColorState::syncFromKrita);
+        connect(m_resourceProvider, &KisCanvasResourceProvider::sigFGColorChanged, this, &EXColorState::syncFromKrita);
         connect(canvas->image(), &KisImage::sigColorSpaceChanged, this, [this, canvas]() {
             m_currentColorSpace = canvas->image()->colorSpace();
             syncFromKrita();
@@ -83,30 +83,30 @@ void ColorState::setCanvas(KisCanvas2 *canvas)
     }
 }
 
-qreal ColorState::primaryChannelValue() const
+qreal EXColorState::primaryChannelValue() const
 {
     return m_color[m_primaryChannelIndex];
 }
 
-void ColorState::setPrimaryChannelValue(qreal value)
+void EXColorState::setPrimaryChannelValue(qreal value)
 {
     m_color[m_primaryChannelIndex] = value;
     Q_EMIT sigColorChanged(m_color);
 }
 
-quint32 ColorState::primaryChannelIndex() const
+quint32 EXColorState::primaryChannelIndex() const
 {
     return m_primaryChannelIndex;
 }
 
-void ColorState::setPrimaryChannelIndex(quint32 index)
+void EXColorState::setPrimaryChannelIndex(quint32 index)
 {
     Q_ASSERT(index < 3);
     m_primaryChannelIndex = index;
     Q_EMIT sigPrimaryChannelIndexChanged(index);
 }
 
-QVector2D ColorState::secondaryChannelValues() const
+QVector2D EXColorState::secondaryChannelValues() const
 {
     switch (m_primaryChannelIndex) {
     case 0:
@@ -120,7 +120,7 @@ QVector2D ColorState::secondaryChannelValues() const
     }
 }
 
-void ColorState::setSecondaryChannelValues(const QVector2D &values)
+void EXColorState::setSecondaryChannelValues(const QVector2D &values)
 {
     switch (m_primaryChannelIndex) {
     case 0:
@@ -139,30 +139,30 @@ void ColorState::setSecondaryChannelValues(const QVector2D &values)
     Q_EMIT sigColorChanged(m_color);
 }
 
-void ColorState::setChannel(quint32 index, qreal value)
+void EXColorState::setChannel(quint32 index, qreal value)
 {
     Q_ASSERT(index < 3);
     m_color[index] = value;
     Q_EMIT sigColorChanged(m_color);
 }
 
-QVector3D ColorState::color() const
+QVector3D EXColorState::color() const
 {
     return m_color;
 }
 
-void ColorState::setColor(const QVector3D &color)
+void EXColorState::setColor(const QVector3D &color)
 {
     m_color = color;
     Q_EMIT sigColorChanged(m_color);
 }
 
-const KoColorSpace *ColorState::colorSpace() const
+const KoColorSpace *EXColorState::colorSpace() const
 {
     return m_currentColorSpace;
 }
 
-void ColorState::setColorSpace(const KoColorSpace *colorSpace)
+void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
 {
     m_currentColorSpace = colorSpace;
 }

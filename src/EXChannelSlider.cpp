@@ -11,7 +11,7 @@
 #include "EXKoColorConverter.h"
 #include "EXUtils.h"
 
-ExtendedChannelSlider::ExtendedChannelSlider(QWidget *parent)
+EXChannelSliders::EXChannelSliders(QWidget *parent)
     : QWidget(parent)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -26,14 +26,14 @@ ExtendedChannelSlider::ExtendedChannelSlider(QWidget *parent)
 
         connect(m_channelWidgets[i]->m_radioButton, &QRadioButton::toggled, this, [this, i](bool checked) {
             if (checked) {
-                ColorState::instance()->setPrimaryChannelIndex(i);
+                EXColorState::instance()->setPrimaryChannelIndex(i);
             }
         });
     }
     setLayout(layout);
 }
 
-void ExtendedChannelSlider::setCanvas(KisCanvas2 *canvas)
+void EXChannelSliders::setCanvas(KisCanvas2 *canvas)
 {
     for (int i = 0; i < 3; ++i) {
         m_channelWidgets[i]->setCanvas(canvas);
@@ -45,7 +45,7 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QWidget *parent)
     : QWidget(parent)
     , m_channelIndex(channelIndex)
 {
-    auto colorState = ColorState::instance();
+    auto colorState = EXColorState::instance();
     auto layout = new QHBoxLayout(this);
     auto channelNames = colorState->colorModel()->channelNames();
 
@@ -62,11 +62,11 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QWidget *parent)
         colorState->setChannel(m_channelIndex, value);
     });
 
-    connect(colorState, &ColorState::sigPrimaryChannelIndexChanged, [this, colorState]() {
+    connect(colorState, &EXColorState::sigPrimaryChannelIndexChanged, [this, colorState]() {
         m_radioButton->setChecked(colorState->primaryChannelIndex() == m_channelIndex);
     });
 
-    connect(colorState, &ColorState::sigColorChanged, [this, colorState]() {
+    connect(colorState, &EXColorState::sigColorChanged, [this, colorState]() {
         m_spinBox->blockSignals(true);
         m_spinBox->setValue(colorState->color()[m_channelIndex]);
         m_spinBox->blockSignals(false);
@@ -91,7 +91,7 @@ ChannelValueBar::ChannelValueBar(int channelIndex, QWidget *parent)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    connect(ColorState::instance(), &ColorState::sigColorChanged, [this]() {
+    connect(EXColorState::instance(), &EXColorState::sigColorChanged, [this]() {
         updateImage();
         update();
     });
@@ -111,8 +111,8 @@ void ChannelValueBar::updateImage()
         return;
     }
 
-    auto colorState = ColorState::instance();
-    auto converter = ExtendedColorConverter(colorState->colorSpace());
+    auto colorState = EXColorState::instance();
+    auto converter = EXColorConverter(colorState->colorSpace());
     auto mapper = converter.displayToMemoryPositionMapper();
 
     auto pixelGet = [this, colorState, mapper](float x, float y, QVector<float> &channels) {
@@ -137,7 +137,7 @@ void ChannelValueBar::paintEvent(QPaintEvent *event)
 
     painter.drawImage(QRect(0, 0, width(), height()), m_image);
 
-    int x = ColorState::instance()->color()[m_channelIndex] * width();
+    int x = EXColorState::instance()->color()[m_channelIndex] * width();
     painter.drawRect(x - 1, 0, 2, height());
 }
 
@@ -148,10 +148,10 @@ void ChannelValueBar::mousePressEvent(QMouseEvent *event)
 void ChannelValueBar::mouseMoveEvent(QMouseEvent *event)
 {
     qreal value = qBound((qreal)0, (qreal)event->pos().x() / width(), (qreal)1);
-    ColorState::instance()->setChannel(m_channelIndex, value);
+    EXColorState::instance()->setChannel(m_channelIndex, value);
 }
 
 void ChannelValueBar::mouseReleaseEvent(QMouseEvent *event)
 {
-    ColorState::instance()->sendToKrita();
+    EXColorState::instance()->sendToKrita();
 }

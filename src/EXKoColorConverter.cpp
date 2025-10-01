@@ -1,6 +1,6 @@
 #include "EXKoColorConverter.h"
 
-ExtendedColorConverter::ExtendedColorConverter(const KoColorSpace *colorSpace)
+EXColorConverter::EXColorConverter(const KoColorSpace *colorSpace)
     : m_colorSpace(colorSpace)
 {
     Q_ASSERT(colorSpace->channelCount() < 8);
@@ -13,12 +13,12 @@ ExtendedColorConverter::ExtendedColorConverter(const KoColorSpace *colorSpace)
     }
 }
 
-int *ExtendedColorConverter::displayToMemoryPositionMapper()
+int *EXColorConverter::displayToMemoryPositionMapper()
 {
     return m_displayToMemoryPosition;
 }
 
-KoColor ExtendedColorConverter::displayChannelsToKoColor(const QVector<float> &channels)
+KoColor EXColorConverter::displayChannelsToKoColor(const QVector<float> &channels)
 {
     QVector<float> rearranged(channels.size());
     for (int i = 0; i < (int)m_colorSpace->channelCount(); i++) {
@@ -29,7 +29,7 @@ KoColor ExtendedColorConverter::displayChannelsToKoColor(const QVector<float> &c
     return koColor;
 }
 
-QVector<float> ExtendedColorConverter::koColorToDisplayChannels(const KoColor &color)
+QVector<float> EXColorConverter::koColorToDisplayChannels(const KoColor &color)
 {
     QVector<float> memory(m_colorSpace->channelCount());
     m_colorSpace->normalisedChannelsValue(color.data(), memory);

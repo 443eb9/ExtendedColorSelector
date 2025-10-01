@@ -6,14 +6,14 @@
 #include "EXColorSelectorDock.h"
 #include "EXColorSelectorPlugin.h"
 
-K_PLUGIN_FACTORY_WITH_JSON(ExtendedColorSelectorPluginFactory,
+K_PLUGIN_FACTORY_WITH_JSON(EXColorSelectorPluginFactory,
                            "extendedcolorselector.json",
-                           registerPlugin<ExtendedColorSelectorPlugin>();)
+                           registerPlugin<EXColorSelectorPlugin>();)
 
-class ExtendedColorSelectorFactory : public KoDockFactoryBase
+class EXColorSelectorFactory : public KoDockFactoryBase
 {
 public:
-    ExtendedColorSelectorFactory()
+    EXColorSelectorFactory()
     {
     }
 
@@ -24,7 +24,7 @@ public:
 
     QDockWidget *createDockWidget() override
     {
-        ExtendedColorSelectorDock *dockWidget = new ExtendedColorSelectorDock();
+        EXColorSelectorDock *dockWidget = new EXColorSelectorDock();
         dockWidget->setObjectName(id());
 
         return dockWidget;
@@ -36,16 +36,16 @@ public:
     }
 };
 
-ExtendedColorSelectorPlugin::ExtendedColorSelectorPlugin(QObject *parent, const QVariantList &)
+EXColorSelectorPlugin::EXColorSelectorPlugin(QObject *parent, const QVariantList &)
 {
-    KoDockRegistry::instance()->add(new ExtendedColorSelectorFactory());
+    KoDockRegistry::instance()->add(new EXColorSelectorFactory());
 }
 
 extern "C" {
 Q_DECL_EXPORT void load_extended_color_selector_plugin()
 {
     qDebug() << "Start loading extended color selector plugin...";
-    ExtendedColorSelectorPlugin plugin(nullptr, {});
+    EXColorSelectorPlugin plugin(nullptr, {});
 }
 }
 

@@ -10,10 +10,10 @@
 #include "EXChannelSlider.h"
 #include "EXChannelPlane.h"
 
-class ExtendedColorSelectorDock : public QDockWidget, public KisMainwindowObserver
+class EXColorSelectorDock : public QDockWidget, public KisMainwindowObserver
 {
 public:
-    ExtendedColorSelectorDock();
+    EXColorSelectorDock();
 
     void setViewManager(KisViewManager *kisview) override;
     void setCanvas(KoCanvasBase *canvas) override;
@@ -21,8 +21,8 @@ public:
 
 private:
     KisCanvas2 *m_canvas;
-    ExtendedChannelPlane *m_plane;
-    ExtendedChannelSlider *m_channelValues;
+    EXChannelPlane *m_plane;
+    EXChannelSliders *m_channelValues;
 };
 
 #endif // EXTENDEDCOLORSELECTORDOCK_H

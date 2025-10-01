@@ -8,12 +8,12 @@
 
 #include "EXShape.h"
 
-class ExtendedChannelPlane : public QWidget
+class EXChannelPlane : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit ExtendedChannelPlane(QWidget *parent);
+    explicit EXChannelPlane(QWidget *parent);
 
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
@@ -30,7 +30,7 @@ private:
 
     EditMode m_editMode;
     QColor m_imageColor;
-    QScopedPointer<Shape> m_shape;
+    QScopedPointer<EXChannelPlaneShape> m_shape;
     QImage m_image;
     KoColorDisplayRendererInterface *m_dri;
 

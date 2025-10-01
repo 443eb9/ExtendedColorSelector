@@ -1,11 +1,11 @@
 #include "EXShape.h"
 
-QPointF SquareShape::widgetToShapeCoord(const QPointF &point)
+QPointF EXSquareChannelPlaneShape::widgetToShapeCoord(const QPointF &point)
 {
     return point;
 }
 
-QPointF SquareShape::shapeToWidgetCoord(const QPointF &point)
+QPointF EXSquareChannelPlaneShape::shapeToWidgetCoord(const QPointF &point)
 {
     return point;
 }
