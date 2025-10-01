@@ -2,12 +2,15 @@
 #include <qmath.h>
 
 #include "EXColorModel.h"
+#include "ok_color.h"
 
 const ColorModelId ColorModelFactory::AllModels[] = {ColorModelId::Rgb,
                                                      ColorModelId::Hsv,
                                                      ColorModelId::Hsl,
                                                      ColorModelId::Oklab,
-                                                     ColorModelId::Oklch};
+                                                     ColorModelId::Oklch,
+                                                     ColorModelId::Okhsv,
+                                                     ColorModelId::Okhsl};
 
 QVector3D RGBModel::toXyz(const QVector3D &color) const
 {
@@ -193,4 +196,32 @@ QVector3D OKLCHModel::toXyz(const QVector3D &color) const
     float b = color[1] * sin;
 
     return OKLABModel().toXyz(QVector3D(color[0], a * 0.5 + 0.5, b * 0.5 + 0.5));
+}
+
+QVector3D OKHSVModel::fromXyz(const QVector3D &color) const
+{
+    auto rgb = RGBModel().fromXyz(color);
+    auto okhsv = ok_color::srgb_to_okhsv(ok_color::RGB{rgb[0], rgb[1], rgb[2]});
+    return QVector3D(okhsv.h, okhsv.s, okhsv.v);
+}
+
+QVector3D OKHSVModel::toXyz(const QVector3D &color) const
+{
+    auto rgb = ok_color::okhsv_to_srgb(ok_color::HSV{color[0], color[1], color[2]});
+    auto xyz = RGBModel().toXyz(QVector3D(rgb.r, rgb.g, rgb.b));
+    return QVector3D(xyz[0], xyz[1], xyz[2]);
+}
+
+QVector3D OKHSLModel::fromXyz(const QVector3D &color) const
+{
+    auto rgb = RGBModel().fromXyz(color);
+    auto okhsl = ok_color::srgb_to_okhsl(ok_color::RGB{rgb[0], rgb[1], rgb[2]});
+    return QVector3D(okhsl.h, okhsl.s, okhsl.l);
+}
+
+QVector3D OKHSLModel::toXyz(const QVector3D &color) const
+{
+    auto rgb = ok_color::okhsl_to_srgb(ok_color::HSL{color[0], color[1], color[2]});
+    auto xyz = RGBModel().toXyz(QVector3D(rgb.r, rgb.g, rgb.b));
+    return QVector3D(xyz[0], xyz[1], xyz[2]);
 }

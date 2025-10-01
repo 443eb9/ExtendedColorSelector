@@ -123,7 +123,9 @@ void ChannelValueBar::updateImage()
         QVector3D color = colorState->color();
         color[m_channelIndex] = x;
         color = colorState->kritaColorModel()->fromXyz(colorState->colorModel()->toXyz(color));
-        ExtendedUtils::sanitizeOutOfGamutColor(color, QVector3D(0.5, 0.5, 0.5));
+        if (!colorState->colorModel()->isSrgbBased()) {
+            ExtendedUtils::sanitizeOutOfGamutColor(color, QVector3D(0.5, 0.5, 0.5));
+        }
         channels[mapper[0]] = color.x(), channels[mapper[1]] = color.y(), channels[mapper[2]] = color.z();
         channels[mapper[3]] = 1;
     };

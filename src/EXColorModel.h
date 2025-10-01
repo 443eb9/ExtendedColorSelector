@@ -18,6 +18,8 @@ enum ColorModelId {
     Hsl = 2,
     Oklab = 3,
     Oklch = 4,
+    Okhsv = 5,
+    Okhsl = 6,
 };
 
 class ColorModel : public KisShared
@@ -29,6 +31,7 @@ public:
     virtual QString displayName() const = 0;
     virtual std::array<QString, 3> channelNames() const = 0;
     virtual std::array<QPair<qreal, qreal>, 3> channelRanges() const;
+    virtual bool isSrgbBased() const;
 };
 
 class RGBModel : public ColorModel
@@ -55,6 +58,11 @@ public:
     std::array<QPair<qreal, qreal>, 3> channelRanges() const override
     {
         return {QPair(0, 100), QPair(0, 100), QPair(0, 100)};
+    }
+
+    bool isSrgbBased() const override
+    {
+        return true;
     }
 };
 
@@ -83,6 +91,11 @@ public:
     {
         return {QPair(0, 360), QPair(0, 100), QPair(0, 100)};
     }
+
+    bool isSrgbBased() const override
+    {
+        return true;
+    }
 };
 
 class HSLModel : public ColorModel
@@ -109,6 +122,11 @@ public:
     std::array<QPair<qreal, qreal>, 3> channelRanges() const override
     {
         return {QPair(0, 360), QPair(0, 100), QPair(0, 100)};
+    }
+
+    bool isSrgbBased() const override
+    {
+        return true;
     }
 };
 
@@ -137,6 +155,11 @@ public:
     {
         return {QPair(0, 100), QPair(-100, 100), QPair(100, 100)};
     }
+
+    bool isSrgbBased() const override
+    {
+        return false;
+    }
 };
 
 class OKLCHModel : public ColorModel
@@ -164,6 +187,75 @@ public:
     {
         return {QPair(0, 100), QPair(0, 100), QPair(0, 360)};
     }
+
+    bool isSrgbBased() const override
+    {
+        return false;
+    }
+};
+
+class OKHSVModel : public ColorModel
+{
+public:
+    QVector3D toXyz(const QVector3D &color) const override;
+    QVector3D fromXyz(const QVector3D &color) const override;
+
+    ColorModelId id() const override
+    {
+        return ColorModelId::Okhsv;
+    }
+
+    QString displayName() const override
+    {
+        return "OkHSV";
+    }
+
+    std::array<QString, 3> channelNames() const override
+    {
+        return {"H", "S", "V"};
+    }
+
+    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    {
+        return {QPair(0, 360), QPair(0, 100), QPair(0, 100)};
+    }
+
+    bool isSrgbBased() const override
+    {
+        return true;
+    }
+};
+
+class OKHSLModel : public ColorModel
+{
+public:
+    QVector3D toXyz(const QVector3D &color) const override;
+    QVector3D fromXyz(const QVector3D &color) const override;
+
+    ColorModelId id() const override
+    {
+        return ColorModelId::Okhsl;
+    }
+
+    QString displayName() const override
+    {
+        return "OkHSL";
+    }
+
+    std::array<QString, 3> channelNames() const override
+    {
+        return {"H", "S", "L"};
+    }
+
+    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    {
+        return {QPair(0, 360), QPair(0, 100), QPair(0, 100)};
+    }
+
+    bool isSrgbBased() const override
+    {
+        return true;
+    }
 };
 
 class ColorModelFactory
@@ -182,6 +274,10 @@ public:
             return new OKLABModel();
         case ColorModelId::Oklch:
             return new OKLCHModel();
+        case ColorModelId::Okhsv:
+            return new OKHSVModel();
+        case ColorModelId::Okhsl:
+            return new OKHSLModel();
         default:
             return nullptr;
         }
@@ -198,7 +294,7 @@ public:
         }
     }
 
-    static const ColorModelId AllModels[5];
+    static const ColorModelId AllModels[7];
 };
 
 #endif
