@@ -67,11 +67,13 @@ void ColorState::setCanvas(KisCanvas2 *canvas)
     if (canvas) {
         m_currentColorSpace = canvas->image()->colorSpace();
         m_resourceProvider = canvas->imageView()->resourceProvider();
-        connect(m_resourceProvider,
-                &KisCanvasResourceProvider::sigFGColorChanged,
-                this,
-                &ColorState::syncFromKrita,
-                Qt::UniqueConnection);
+
+        connect(m_resourceProvider, &KisCanvasResourceProvider::sigFGColorChanged, this, &ColorState::syncFromKrita);
+        connect(canvas->image(), &KisImage::sigColorSpaceChanged, this, [this, canvas]() {
+            m_currentColorSpace = canvas->image()->colorSpace();
+            syncFromKrita();
+        });
+
         syncFromKrita();
         Q_EMIT sigPrimaryChannelIndexChanged(m_primaryChannelIndex);
     }
