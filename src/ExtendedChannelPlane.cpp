@@ -10,6 +10,8 @@
 
 #include "ColorState.h"
 #include "ExtendedChannelPlane.h"
+#include "ExtendedKoColorConverter.h"
+#include "ExtendedUtils.h"
 
 ExtendedChannelPlane::ExtendedChannelPlane(QWidget *parent)
     : QWidget(parent)
@@ -52,48 +54,30 @@ void ExtendedChannelPlane::updateImage()
 
     int size = qMin(width(), height());
     auto colorState = ColorState::instance();
+    auto converter = ExtendedColorConverter(colorState->colorSpace());
+    auto mapper = converter.displayToMemoryPositionMapper();
 
-    const qreal deviceDivider = 1.0 / devicePixelRatioF();
-    const int deviceSize = qCeil(size * deviceDivider);
-    const qsizetype pixelSize = colorState->colorSpace()->pixelSize();
-    quint32 imageSize = deviceSize * deviceSize * pixelSize;
-    QScopedArrayPointer<quint8> raw(new quint8[imageSize]{});
-    quint8 *dataPtr = raw.data();
-    RGBModel rgbConverter;
+    auto pixelGet = [this, colorState, mapper](float x, float y, QVector<float> &channels) {
+        QPointF widgetCoord = QPointF(x, 1 - y);
+        QPointF shapeCoord = m_shape->widgetToShapeCoord(widgetCoord);
+        float primary = colorState->primaryChannelValue();
+        float channel1 = shapeCoord.x();
+        float channel2 = shapeCoord.y();
 
-    QVector<float> channels(4, 1);
-    KoColor color(colorState->colorSpace());
-    for (int y = 0; y < deviceSize; y++) {
-        for (int x = 0; x < deviceSize; x++) {
-            // Inverted y.
-            QPointF widgetCoord = QPointF((qreal)x / (size - 1), 1 - (qreal)y / (size - 1));
-            QPointF shapeCoord = m_shape->widgetToShapeCoord(widgetCoord);
-            float primary = colorState->primaryChannelValue();
-            float channel1 = shapeCoord.x();
-            float channel2 = shapeCoord.y();
-
-            switch (colorState->primaryChannelIndex()) {
-            case 0:
-                channels[0] = primary, channels[1] = channel1, channels[2] = channel2;
-                break;
-            case 1:
-                channels[0] = channel1, channels[1] = primary, channels[2] = channel2;
-                break;
-            case 2:
-                channels[0] = channel1, channels[1] = channel2, channels[2] = primary;
-                break;
-            }
-
-            color.colorSpace()->fromNormalisedChannelsValue(color.data(), channels);
-            memcpy(dataPtr, color.data(), pixelSize);
-            dataPtr += pixelSize;
+        switch (colorState->primaryChannelIndex()) {
+        case 0:
+            channels[mapper[0]] = primary, channels[mapper[1]] = channel1, channels[mapper[2]] = channel2;
+            break;
+        case 1:
+            channels[mapper[0]] = channel1, channels[mapper[1]] = primary, channels[mapper[2]] = channel2;
+            break;
+        case 2:
+            channels[mapper[0]] = channel1, channels[mapper[1]] = channel2, channels[mapper[2]] = primary;
+            break;
         }
-    }
-
-    QImage image = m_dri->toQImage(colorState->colorSpace(), raw.data(), QSize(deviceSize, deviceSize), false);
-    image.setDevicePixelRatio(devicePixelRatioF());
-
-    m_image = image;
+        channels[mapper[3]] = 1;
+    };
+    m_image = ExtendedUtils::generateGradient(size, size, colorState->colorSpace(), m_dri, pixelGet);
 }
 
 void ExtendedChannelPlane::mousePressEvent(QMouseEvent *event)

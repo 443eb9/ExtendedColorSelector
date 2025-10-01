@@ -16,6 +16,7 @@ ColorState::ColorState()
     , m_colorModel(new RGBModel())
     , m_currentColorSpace(nullptr)
     , m_resourceProvider(nullptr)
+    , m_koColorConverter(nullptr)
 {
     // TODO load from settings
 }
@@ -40,32 +41,27 @@ ColorModelSP ColorState::colorModel() const
 void ColorState::sendToKrita()
 {
     RGBModel rgbConverter;
-    QVector3D color = rgbConverter.fromXyz(m_colorModel->toXyz(m_color));
-    // TODO other color spaces
-    m_resourceProvider->setFGColor(KoColor(QColor::fromRgbF(color.x(), color.y(), color.z()), m_currentColorSpace));
+    QVector3D currentRgb = rgbConverter.fromXyz(m_colorModel->toXyz(m_color));
+    QVector<float> channels(4, 1);
+    channels[0] = currentRgb.x(), channels[1] = currentRgb.y(), channels[2] = currentRgb.z();
+
+    m_resourceProvider->setFGColor(m_koColorConverter->displayChannelsToKoColor(channels));
 }
 
 void ColorState::syncFromKrita()
 {
     KoColor color = m_resourceProvider->fgColor();
-    QVector<float> valuesUnsorted(color.colorSpace()->channelCount());
-    color.colorSpace()->normalisedChannelsValue(color.data(), valuesUnsorted);
-    const QList<KoChannelInfo *> channelInfo = color.colorSpace()->channels();
-    QVector<float> values(channelInfo.size());
-    for (int i = 0; i < values.size(); i++) {
-        int location = KoChannelInfo::displayPositionToChannelIndex(i, channelInfo);
-        values[location] = valuesUnsorted[i];
+    auto channels = m_koColorConverter->koColorToDisplayChannels(color);
+    for (int i = 0; i < 3; i++) {
+        m_color[i] = channels[i];
     }
-
-    // TODO handle other color spaces
-    m_color = QVector3D(values[0], values[1], values[2]);
-    setColor(m_color);
 }
 
 void ColorState::setCanvas(KisCanvas2 *canvas)
 {
     if (canvas) {
         m_currentColorSpace = canvas->image()->colorSpace();
+        m_koColorConverter = new ExtendedColorConverter(m_currentColorSpace);
         m_resourceProvider = canvas->imageView()->resourceProvider();
 
         connect(m_resourceProvider, &KisCanvasResourceProvider::sigFGColorChanged, this, &ColorState::syncFromKrita);

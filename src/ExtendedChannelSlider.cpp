@@ -8,6 +8,8 @@
 
 #include "ColorState.h"
 #include "ExtendedChannelSlider.h"
+#include "ExtendedKoColorConverter.h"
+#include "ExtendedUtils.h"
 
 ExtendedChannelSlider::ExtendedChannelSlider(QWidget *parent)
     : QWidget(parent)
@@ -110,34 +112,16 @@ void ChannelValueBar::updateImage()
     }
 
     auto colorState = ColorState::instance();
+    auto converter = ExtendedColorConverter(colorState->colorSpace());
+    auto mapper = converter.displayToMemoryPositionMapper();
 
-    const qreal deviceDivider = 1.0 / devicePixelRatioF();
-    const int deviceSize = qCeil(width() * deviceDivider);
-    const qsizetype pixelSize = colorState->colorSpace()->pixelSize();
-    quint32 imageSize = deviceSize * deviceSize * pixelSize;
-    QScopedArrayPointer<quint8> raw(new quint8[imageSize]{});
-    quint8 *dataPtr = raw.data();
-    RGBModel rgbConverter;
-
-    QVector<float> channels(4, 1);
-    KoColor koColor(colorState->colorSpace());
-    for (int y = 0; y < deviceSize; y++) {
-        for (int x = 0; x < deviceSize; x++) {
-            qreal value = (qreal)x / (width() - 1);
-            QVector3D color = colorState->color();
-            color[m_channelIndex] = value;
-            channels[0] = color.x(), channels[1] = color.y(), channels[2] = color.z();
-
-            koColor.colorSpace()->fromNormalisedChannelsValue(koColor.data(), channels);
-            memcpy(dataPtr, koColor.data(), pixelSize);
-            dataPtr += pixelSize;
-        }
-    }
-
-    QImage image = m_dri->toQImage(colorState->colorSpace(), raw.data(), QSize(deviceSize, deviceSize), false);
-    image.setDevicePixelRatio(devicePixelRatioF());
-
-    m_image = image;
+    auto pixelGet = [this, colorState, mapper](float x, float y, QVector<float> &channels) {
+        QVector3D color = colorState->color();
+        color[m_channelIndex] = x;
+        channels[mapper[0]] = color.x(), channels[mapper[1]] = color.y(), channels[mapper[2]] = color.z();
+        channels[mapper[3]] = 1;
+    };
+    m_image = ExtendedUtils::generateGradient(width(), 1, colorState->colorSpace(), m_dri, pixelGet);
 }
 
 void ChannelValueBar::resizeEvent(QResizeEvent *event)
@@ -164,7 +148,7 @@ void ChannelValueBar::mousePressEvent(QMouseEvent *event)
 void ChannelValueBar::mouseMoveEvent(QMouseEvent *event)
 {
     qreal value = qBound((qreal)0, (qreal)event->pos().x() / width(), (qreal)1);
-    ColorState::instance()->setPrimaryChannelValue(value);
+    ColorState::instance()->setChannel(m_channelIndex, value);
 }
 
 void ChannelValueBar::mouseReleaseEvent(QMouseEvent *event)

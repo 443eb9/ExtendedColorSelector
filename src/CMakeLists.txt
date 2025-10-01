@@ -6,7 +6,9 @@ set(
     ExtendedColorModel.cpp
     ExtendedColorSelectorDock.cpp
     ExtendedColorSelectorPlugin.cpp
+    ExtendedKoColorConverter.cpp
     ExtendedShape.cpp
+    ExtendedUtils.cpp
 )
 
 kis_add_library(extendedcolorselector MODULE ${extendedcolorselector_SOURCES})

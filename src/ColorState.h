@@ -15,6 +15,7 @@
 #include <kis_shared_ptr.h>
 
 #include "ExtendedColorModel.h"
+#include "ExtendedKoColorConverter.h"
 
 class ColorState : public QObject, public KisShared
 {
@@ -55,6 +56,7 @@ private:
     ColorModelSP m_colorModel;
     const KoColorSpace *m_currentColorSpace;
     KisCanvasResourceProvider *m_resourceProvider;
+    ExtendedColorConverterSP m_koColorConverter;
 };
 
 #endif // COLORSTATE_H
