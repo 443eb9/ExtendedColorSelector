@@ -3,9 +3,9 @@
 
 #include "EXColorModel.h"
 
-const ColorModelId ColorModelFactory::AllModels[] = {ColorModelId::Rgb, ColorModelId::Hsv};
+const ColorModelId ColorModelFactory::AllModels[] = {ColorModelId::Rgb, ColorModelId::Hsv, ColorModelId::Hsl};
 
-QVector3D rgbToXyz(const QVector3D &color)
+QVector3D RGBModel::toXyz(const QVector3D &color) const
 {
     float r = color[0], g = color[1], b = color[2];
 
@@ -16,7 +16,7 @@ QVector3D rgbToXyz(const QVector3D &color)
     return QVector3D(x, y, z);
 }
 
-QVector3D xyzToRgb(const QVector3D &color)
+QVector3D RGBModel::fromXyz(const QVector3D &color) const
 {
     float x = color[0], y = color[1], z = color[2];
 
@@ -25,16 +25,6 @@ QVector3D xyzToRgb(const QVector3D &color)
     float b = x * 0.0556434 + y * -0.2040259 + z * 1.0572252;
 
     return QVector3D(r, g, b);
-}
-
-QVector3D RGBModel::toXyz(const QVector3D &color) const
-{
-    return rgbToXyz(color);
-}
-
-QVector3D RGBModel::fromXyz(const QVector3D &color) const
-{
-    return xyzToRgb(color);
 }
 
 QVector3D rgbToHwb(const QVector3D &color)
@@ -108,7 +98,7 @@ QVector3D hwbToRgb(const QVector3D &color)
 
 QVector3D HSVModel::fromXyz(const QVector3D &color) const
 {
-    QVector3D hwb = rgbToHwb(xyzToRgb(color));
+    QVector3D hwb = rgbToHwb(RGBModel().fromXyz(color));
     float value = 1. - hwb[1];
     float saturation = value != 0. ? 1. - (hwb[1] / value) : 0.;
     return QVector3D(hwb[0], saturation, value);
@@ -116,5 +106,23 @@ QVector3D HSVModel::fromXyz(const QVector3D &color) const
 
 QVector3D HSVModel::toXyz(const QVector3D &color) const
 {
-    return rgbToXyz(hwbToRgb(QVector3D(color[0], (1. - color[1]) * color[2], 1. - color[2])));
+    return RGBModel().toXyz(hwbToRgb(QVector3D(color[0], (1. - color[1]) * color[2], 1. - color[2])));
+}
+
+QVector3D HSLModel::fromXyz(const QVector3D &color) const
+{
+    auto hsv = HSVModel().fromXyz(color);
+    float lightness = hsv[2] * (1. - hsv[1] / 2.);
+    float saturation =
+        (lightness == 0.0f || lightness == 1.0f) ? 0.0f : ((color[2] - lightness) / qMin(lightness, 1.0f - lightness));
+
+    return QVector3D(hsv[0], saturation, lightness);
+}
+
+QVector3D HSLModel::toXyz(const QVector3D &color) const
+{
+    float value = color[2] + color[1] * qMin(color[2], 1.0f - color[2]);
+    float saturation = value == 0. ? 0. : 2. * (1. - (color[2] / value));
+
+    return HSVModel().toXyz(QVector3D(color[0], saturation, value));
 }

@@ -15,6 +15,7 @@ typedef KisSharedPtr<class ColorModel> ColorModelSP;
 enum ColorModelId {
     Rgb = 0,
     Hsv = 1,
+    Hsl = 2,
 };
 
 class ColorModel : public KisShared
@@ -82,6 +83,33 @@ public:
     }
 };
 
+class HSLModel : public ColorModel
+{
+public:
+    QVector3D toXyz(const QVector3D &color) const override;
+    QVector3D fromXyz(const QVector3D &color) const override;
+
+    ColorModelId id() const override
+    {
+        return ColorModelId::Hsv;
+    }
+
+    QString displayName() const override
+    {
+        return "HSL";
+    }
+
+    std::array<QString, 3> channelNames() const override
+    {
+        return {"H", "S", "L"};
+    }
+
+    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    {
+        return {QPair(0, 1), QPair(0, 1), QPair(0, 1)};
+    }
+};
+
 class ColorModelFactory
 {
 public:
@@ -92,6 +120,8 @@ public:
             return new RGBModel();
         case ColorModelId::Hsv:
             return new HSVModel();
+        case ColorModelId::Hsl:
+            return new HSLModel();
         default:
             return nullptr;
         }
@@ -108,7 +138,7 @@ public:
         }
     }
 
-    static const ColorModelId AllModels[2];
+    static const ColorModelId AllModels[3];
 };
 
 #endif
