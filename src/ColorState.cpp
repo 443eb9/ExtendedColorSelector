@@ -57,12 +57,12 @@ void ColorState::syncFromKrita()
         return;
     }
 
-    qDebug() << "Sync";
     KoColor color = m_resourceProvider->fgColor();
     auto channels = m_koColorConverter->koColorToDisplayChannels(color);
     for (int i = 0; i < 3; i++) {
         m_color[i] = channels[i];
     }
+    Q_EMIT sigColorChanged(m_color);
 }
 
 void ColorState::setCanvas(KisCanvas2 *canvas)
@@ -91,7 +91,7 @@ qreal ColorState::primaryChannelValue() const
 void ColorState::setPrimaryChannelValue(qreal value)
 {
     m_color[m_primaryChannelIndex] = value;
-    setColor(m_color);
+    Q_EMIT sigColorChanged(m_color);
 }
 
 quint32 ColorState::primaryChannelIndex() const
@@ -136,14 +136,14 @@ void ColorState::setSecondaryChannelValues(const QVector2D &values)
         m_color[1] = values.y();
         break;
     }
-    setColor(m_color);
+    Q_EMIT sigColorChanged(m_color);
 }
 
 void ColorState::setChannel(quint32 index, qreal value)
 {
     Q_ASSERT(index < 3);
     m_color[index] = value;
-    setColor(m_color);
+    Q_EMIT sigColorChanged(m_color);
 }
 
 QVector3D ColorState::color() const
