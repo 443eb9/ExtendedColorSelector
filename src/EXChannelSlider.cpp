@@ -6,10 +6,10 @@
 
 #include <kis_display_color_converter.h>
 
-#include "ColorState.h"
-#include "ExtendedChannelSlider.h"
-#include "ExtendedKoColorConverter.h"
-#include "ExtendedUtils.h"
+#include "EXColorState.h"
+#include "EXChannelSlider.h"
+#include "EXKoColorConverter.h"
+#include "EXUtils.h"
 
 ExtendedChannelSlider::ExtendedChannelSlider(QWidget *parent)
     : QWidget(parent)

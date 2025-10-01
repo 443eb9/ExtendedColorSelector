@@ -6,7 +6,7 @@
 #include <KoColorDisplayRendererInterface.h>
 #include <kis_canvas2.h>
 
-#include "ExtendedShape.h"
+#include "EXShape.h"
 
 class ExtendedChannelPlane : public QWidget
 {

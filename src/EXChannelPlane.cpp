@@ -8,10 +8,10 @@
 #include <kis_canvas_resource_provider.h>
 #include <kis_display_color_converter.h>
 
-#include "ColorState.h"
-#include "ExtendedChannelPlane.h"
-#include "ExtendedKoColorConverter.h"
-#include "ExtendedUtils.h"
+#include "EXColorState.h"
+#include "EXChannelPlane.h"
+#include "EXKoColorConverter.h"
+#include "EXUtils.h"
 
 ExtendedChannelPlane::ExtendedChannelPlane(QWidget *parent)
     : QWidget(parent)

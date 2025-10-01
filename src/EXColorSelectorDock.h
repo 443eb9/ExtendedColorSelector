@@ -7,8 +7,8 @@
 #include <kis_canvas2.h>
 #include <kis_mainwindow_observer.h>
 
-#include "ExtendedChannelSlider.h"
-#include "ExtendedChannelPlane.h"
+#include "EXChannelSlider.h"
+#include "EXChannelPlane.h"
 
 class ExtendedColorSelectorDock : public QDockWidget, public KisMainwindowObserver
 {

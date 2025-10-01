@@ -1,4 +1,4 @@
-#include "ExtendedKoColorConverter.h"
+#include "EXKoColorConverter.h"
 
 ExtendedColorConverter::ExtendedColorConverter(const KoColorSpace *colorSpace)
     : m_colorSpace(colorSpace)

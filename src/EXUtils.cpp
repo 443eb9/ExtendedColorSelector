@@ -1,7 +1,7 @@
 #include <qmath.h>
 
-#include "ExtendedColorModel.h"
-#include "ExtendedUtils.h"
+#include "EXColorModel.h"
+#include "EXUtils.h"
 
 namespace ExtendedUtils
 {

@@ -1,4 +1,4 @@
-#include "ExtendedColorModel.h"
+#include "EXColorModel.h"
 
 QVector3D RGBModel::toXyz(const QVector3D &color)
 {

@@ -14,8 +14,8 @@
 #include <kis_shared.h>
 #include <kis_shared_ptr.h>
 
-#include "ExtendedColorModel.h"
-#include "ExtendedKoColorConverter.h"
+#include "EXColorModel.h"
+#include "EXKoColorConverter.h"
 
 class ColorState : public QObject, public KisShared
 {

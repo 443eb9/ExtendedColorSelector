@@ -1,4 +1,4 @@
-#include "ExtendedShape.h"
+#include "EXShape.h"
 
 QPointF SquareShape::widgetToShapeCoord(const QPointF &point)
 {
