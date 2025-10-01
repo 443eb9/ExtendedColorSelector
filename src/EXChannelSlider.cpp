@@ -54,7 +54,9 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QButtonGroup *group, QW
     setLayout(layout);
 
     connect(m_spinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this, colorState](double value) {
-        colorState->setChannel(m_channelIndex, value);
+        auto [chmn, chmx] = colorState->colorModel()->channelRanges();
+        colorState->setChannel(m_channelIndex,
+                               (value - chmn[m_channelIndex]) / (chmx[m_channelIndex] - chmn[m_channelIndex]));
     });
 
     connect(colorState, &EXColorState::sigPrimaryChannelIndexChanged, [this, colorState]() {
@@ -62,8 +64,11 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QButtonGroup *group, QW
     });
 
     connect(colorState, &EXColorState::sigColorChanged, [this, colorState]() {
+        auto [chmn, chmx] = colorState->colorModel()->channelRanges();
+        m_spinBox->setRange(chmn[m_channelIndex], chmx[m_channelIndex]);
         m_spinBox->blockSignals(true);
-        m_spinBox->setValue(colorState->color()[m_channelIndex]);
+        m_spinBox->setValue(colorState->color()[m_channelIndex] * (chmx[m_channelIndex] - chmn[m_channelIndex])
+                            + chmn[m_channelIndex]);
         m_spinBox->blockSignals(false);
     });
 

@@ -33,8 +33,20 @@ public:
     virtual ColorModelId id() const = 0;
     virtual QString displayName() const = 0;
     virtual std::array<QString, 3> channelNames() const = 0;
-    virtual std::array<QPair<qreal, qreal>, 3> channelRanges() const;
+    virtual std::array<QVector3D, 2> channelRanges() const;
     virtual bool isSrgbBased() const;
+
+    virtual QVector3D unnormalize(const QVector3D &normalized)
+    {
+        auto [mn, mx] = channelRanges();
+        return normalized * (mx - mn) + mn;
+    }
+
+    virtual QVector3D normalize(const QVector3D &normalized)
+    {
+        auto [mn, mx] = channelRanges();
+        return (normalized + mn) / (mx - mn);
+    }
 };
 
 class RGBModel : public ColorModel
@@ -58,9 +70,9 @@ public:
         return {"R", "G", "B"};
     }
 
-    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    std::array<QVector3D, 2> channelRanges() const override
     {
-        return {QPair(0, 100), QPair(0, 100), QPair(0, 100)};
+        return {QVector3D(0, 0, 0), QVector3D(100, 100, 100)};
     }
 
     bool isSrgbBased() const override
@@ -90,9 +102,9 @@ public:
         return {"H", "S", "V"};
     }
 
-    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    std::array<QVector3D, 2> channelRanges() const override
     {
-        return {QPair(0, 360), QPair(0, 100), QPair(0, 100)};
+        return {QVector3D(0, 0, 0), QVector3D(360, 100, 100)};
     }
 
     bool isSrgbBased() const override
@@ -122,9 +134,9 @@ public:
         return {"H", "S", "L"};
     }
 
-    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    std::array<QVector3D, 2> channelRanges() const override
     {
-        return {QPair(0, 360), QPair(0, 100), QPair(0, 100)};
+        return {QVector3D(0, 0, 0), QVector3D(360, 100, 100)};
     }
 
     bool isSrgbBased() const override
@@ -154,9 +166,9 @@ public:
         return {"X", "Y", "Z"};
     }
 
-    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    std::array<QVector3D, 2> channelRanges() const override
     {
-        return {QPair(0, 100), QPair(0, 100), QPair(0, 100)};
+        return {QVector3D(0, 0, 0), QVector3D(100, 100, 100)};
     }
 
     bool isSrgbBased() const override
@@ -186,9 +198,9 @@ public:
         return {"L", "A", "B"};
     }
 
-    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    std::array<QVector3D, 2> channelRanges() const override
     {
-        return {QPair(0, 100), QPair(-100, 100), QPair(-100, 100)};
+        return {QVector3D(0, -100, -100), QVector3D(100, 100, 100)};
     }
 
     bool isSrgbBased() const override
@@ -218,9 +230,9 @@ public:
         return {"L", "C", "H"};
     }
 
-    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    std::array<QVector3D, 2> channelRanges() const override
     {
-        return {QPair(0, 100), QPair(0, 100), QPair(0, 360)};
+        return {QVector3D(0, 0, 0), QVector3D(100, 100, 360)};
     }
 
     bool isSrgbBased() const override
@@ -250,9 +262,9 @@ public:
         return {"L", "A", "B"};
     }
 
-    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    std::array<QVector3D, 2> channelRanges() const override
     {
-        return {QPair(0, 100), QPair(-100, 100), QPair(100, 100)};
+        return {QVector3D(0, -100, -100), QVector3D(100, 100, 100)};
     }
 
     bool isSrgbBased() const override
@@ -282,9 +294,9 @@ public:
         return {"L", "C", "H"};
     }
 
-    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    std::array<QVector3D, 2> channelRanges() const override
     {
-        return {QPair(0, 100), QPair(0, 100), QPair(0, 360)};
+        return {QVector3D(0, 0, 0), QVector3D(100, 100, 360)};
     }
 
     bool isSrgbBased() const override
@@ -314,9 +326,9 @@ public:
         return {"H", "S", "V"};
     }
 
-    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    std::array<QVector3D, 2> channelRanges() const override
     {
-        return {QPair(0, 360), QPair(0, 100), QPair(0, 100)};
+        return {QVector3D(0, 0, 0), QVector3D(360, 100, 100)};
     }
 
     bool isSrgbBased() const override
@@ -346,9 +358,9 @@ public:
         return {"H", "S", "L"};
     }
 
-    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    std::array<QVector3D, 2> channelRanges() const override
     {
-        return {QPair(0, 360), QPair(0, 100), QPair(0, 100)};
+        return {QVector3D(0, 0, 0), QVector3D(360, 100, 100)};
     }
 
     bool isSrgbBased() const override
