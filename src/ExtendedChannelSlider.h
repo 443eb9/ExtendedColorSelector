@@ -1,5 +1,5 @@
-#ifndef EXTENDEDCHANNELVALUES_H
-#define EXTENDEDCHANNELVALUES_H
+#ifndef ExtendedChannelSlider_H
+#define ExtendedChannelSlider_H
 
 #include <QDoubleSpinBox>
 #include <QRadioButton>
@@ -44,16 +44,16 @@ public:
     void setCanvas(KisCanvas2 *canvas);
 };
 
-class ExtendedChannelValues : public QWidget
+class ExtendedChannelSlider : public QWidget
 {
     Q_OBJECT
 
 public:
-    ExtendedChannelValues(QWidget *parent);
+    ExtendedChannelSlider(QWidget *parent);
 
     ChannelValueWidget *m_channelWidgets[3];
 
     void setCanvas(KisCanvas2 *canvas);
 };
 
-#endif // EXTENDEDCHANNELVALUES_H
+#endif // ExtendedChannelSlider_H

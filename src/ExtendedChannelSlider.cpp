@@ -7,9 +7,9 @@
 #include <kis_display_color_converter.h>
 
 #include "ColorState.h"
-#include "ExtendedChannelValues.h"
+#include "ExtendedChannelSlider.h"
 
-ExtendedChannelValues::ExtendedChannelValues(QWidget *parent)
+ExtendedChannelSlider::ExtendedChannelSlider(QWidget *parent)
     : QWidget(parent)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -31,7 +31,7 @@ ExtendedChannelValues::ExtendedChannelValues(QWidget *parent)
     setLayout(layout);
 }
 
-void ExtendedChannelValues::setCanvas(KisCanvas2 *canvas)
+void ExtendedChannelSlider::setCanvas(KisCanvas2 *canvas)
 {
     for (int i = 0; i < 3; ++i) {
         m_channelWidgets[i]->setCanvas(canvas);

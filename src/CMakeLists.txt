@@ -2,7 +2,7 @@ set(
     extendedcolorselector_SOURCES
     ColorState.cpp
     ExtendedChannelPlane.cpp
-    ExtendedChannelValues.cpp
+    ExtendedChannelSlider.cpp
     ExtendedColorModel.cpp
     ExtendedColorSelectorDock.cpp
     ExtendedColorSelectorPlugin.cpp

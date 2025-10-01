@@ -15,7 +15,7 @@ ExtendedColorSelectorDock::ExtendedColorSelectorDock()
 
     m_plane = new ExtendedChannelPlane(this);
     mainLayout->addWidget(m_plane);
-    m_channelValues = new ExtendedChannelValues(this);
+    m_channelValues = new ExtendedChannelSlider(this);
     mainLayout->addWidget(m_channelValues);
 
     auto mainWidget = new QWidget(this);
