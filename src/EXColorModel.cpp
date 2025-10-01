@@ -7,10 +7,17 @@
 const ColorModelId ColorModelFactory::AllModels[] = {ColorModelId::Rgb,
                                                      ColorModelId::Hsv,
                                                      ColorModelId::Hsl,
+                                                     ColorModelId::Xyz,
+                                                     ColorModelId::Lab,
+                                                     ColorModelId::Lch,
                                                      ColorModelId::Oklab,
                                                      ColorModelId::Oklch,
                                                      ColorModelId::Okhsv,
                                                      ColorModelId::Okhsl};
+
+const float D65_WHITE_XYZ[3]{0.95047, 1.0, 1.08883};
+const float CIE_EPSILON = 216.0 / 24389.0;
+const float CIE_KAPPA = 24389.0 / 27.0;
 
 QVector3D RGBModel::toXyz(const QVector3D &color) const
 {
@@ -134,6 +141,77 @@ QVector3D HSLModel::toXyz(const QVector3D &color) const
     return HSVModel().toXyz(QVector3D(color[0], saturation, value));
 }
 
+QVector3D XYZModel::fromXyz(const QVector3D &color) const
+{
+    return color;
+}
+
+QVector3D XYZModel::toXyz(const QVector3D &color) const
+{
+    return color;
+}
+
+QVector3D LABModel::fromXyz(const QVector3D &color) const
+{
+    float xr = color[0] / D65_WHITE_XYZ[0];
+    float yr = color[1] / D65_WHITE_XYZ[1];
+    float zr = color[2] / D65_WHITE_XYZ[2];
+    float fx = xr > CIE_EPSILON ? cbrtf(xr) : ((CIE_KAPPA * xr + 16.0) / 116.0);
+    float fy = yr > CIE_EPSILON ? cbrtf(yr) : ((CIE_KAPPA * yr + 16.0) / 116.0);
+    float fz = zr > CIE_EPSILON ? cbrtf(zr) : (CIE_KAPPA * zr + 16.0) / 116.0;
+    float l = 1.16 * fy - 0.16;
+    float a = 5.00 * (fx - fy);
+    float b = 2.00 * (fy - fz);
+
+    return QVector3D(l, a * 0.5 + 0.5, b * 0.5 + 0.5);
+}
+
+QVector3D LABModel::toXyz(const QVector3D &color) const
+{
+    float l = 100. * color[0];
+    float a = 100. * (color[1] * 2 - 1);
+    float b = 100. * (color[2] * 2 - 1);
+
+    float fy = (l + 16.0) / 116.0;
+    float fx = a / 500.0 + fy;
+    float fz = fy - b / 200.0;
+    float fx3 = powf(fx, 3.0);
+    float xr = fx3 > CIE_EPSILON ? fx3 : ((116.0 * fx - 16.0) / CIE_KAPPA);
+    float yr = (l > CIE_EPSILON * CIE_KAPPA) ? powf((l + 16.0) / 116.0, 3.0) : (l / CIE_KAPPA);
+    float fz3 = powf(fz, 3.0);
+    float zr = fz3 > CIE_EPSILON ? fz3 : ((116.0 * fz - 16.0) / CIE_KAPPA);
+
+    float x = xr * D65_WHITE_XYZ[0];
+    float y = yr * D65_WHITE_XYZ[1];
+    float z = zr * D65_WHITE_XYZ[2];
+
+    return QVector3D(x, y, z);
+}
+
+QVector3D LCHModel::fromXyz(const QVector3D &color) const
+{
+    auto lab = LABModel().fromXyz(color);
+    float a = lab[1] * 2 - 1, b = lab[2] * 2 - 1;
+    float c = hypotf(a, b);
+    float h = qRadiansToDegrees(atan2f(b, a));
+    if (h < 0.0) {
+        h += 360.0;
+    }
+    float chroma = qBound(0.0f, c, 1.5f);
+
+    return QVector3D(lab[0], c, h / 360);
+}
+
+QVector3D LCHModel::toXyz(const QVector3D &color) const
+{
+    float sin, cos;
+    sincosf(qDegreesToRadians(color[2] * 360), &sin, &cos);
+    float a = color[1] * cos;
+    float b = color[1] * sin;
+
+    return LABModel().toXyz(QVector3D(color[0], a * 0.5 + 0.5, b * 0.5 + 0.5));
+}
+
 // https:#bottosson.github.io/posts/oklab/#converting-from-xyz-to-oklab
 QVector3D OKLABModel::fromXyz(const QVector3D &color) const
 {
@@ -182,8 +260,9 @@ QVector3D OKLCHModel::fromXyz(const QVector3D &color) const
 
     float chroma = hypotf(a, b);
     float hue = qRadiansToDegrees(atan2f(b, a));
-
-    hue = hue < 0.0 ? hue + 360.0 : hue;
+    if (hue < 0) {
+        hue += 360;
+    }
 
     return QVector3D(oklab[0], chroma, hue / 360);
 }

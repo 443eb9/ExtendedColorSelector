@@ -16,10 +16,13 @@ enum ColorModelId {
     Rgb = 0,
     Hsv = 1,
     Hsl = 2,
-    Oklab = 3,
-    Oklch = 4,
-    Okhsv = 5,
-    Okhsl = 6,
+    Xyz = 3,
+    Lab = 4,
+    Lch = 5,
+    Oklab = 6,
+    Oklch = 7,
+    Okhsv = 8,
+    Okhsl = 9,
 };
 
 class ColorModel : public KisShared
@@ -127,6 +130,102 @@ public:
     bool isSrgbBased() const override
     {
         return true;
+    }
+};
+
+class XYZModel : public ColorModel
+{
+public:
+    QVector3D toXyz(const QVector3D &color) const override;
+    QVector3D fromXyz(const QVector3D &color) const override;
+
+    ColorModelId id() const override
+    {
+        return ColorModelId::Xyz;
+    }
+
+    QString displayName() const override
+    {
+        return "XYZ";
+    }
+
+    std::array<QString, 3> channelNames() const override
+    {
+        return {"X", "Y", "Z"};
+    }
+
+    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    {
+        return {QPair(0, 100), QPair(0, 100), QPair(0, 100)};
+    }
+
+    bool isSrgbBased() const override
+    {
+        return false;
+    }
+};
+
+class LABModel : public ColorModel
+{
+public:
+    QVector3D toXyz(const QVector3D &color) const override;
+    QVector3D fromXyz(const QVector3D &color) const override;
+
+    ColorModelId id() const override
+    {
+        return ColorModelId::Lab;
+    }
+
+    QString displayName() const override
+    {
+        return "LAB";
+    }
+
+    std::array<QString, 3> channelNames() const override
+    {
+        return {"L", "A", "B"};
+    }
+
+    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    {
+        return {QPair(0, 100), QPair(-100, 100), QPair(-100, 100)};
+    }
+
+    bool isSrgbBased() const override
+    {
+        return false;
+    }
+};
+
+class LCHModel : public ColorModel
+{
+public:
+    QVector3D toXyz(const QVector3D &color) const override;
+    QVector3D fromXyz(const QVector3D &color) const override;
+
+    ColorModelId id() const override
+    {
+        return ColorModelId::Lch;
+    }
+
+    QString displayName() const override
+    {
+        return "LCH";
+    }
+
+    std::array<QString, 3> channelNames() const override
+    {
+        return {"L", "C", "H"};
+    }
+
+    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    {
+        return {QPair(0, 100), QPair(0, 100), QPair(0, 360)};
+    }
+
+    bool isSrgbBased() const override
+    {
+        return false;
     }
 };
 
@@ -270,6 +369,12 @@ public:
             return new HSVModel();
         case ColorModelId::Hsl:
             return new HSLModel();
+        case ColorModelId::Xyz:
+            return new XYZModel();
+        case ColorModelId::Lab:
+            return new LABModel();
+        case ColorModelId::Lch:
+            return new LCHModel();
         case ColorModelId::Oklab:
             return new OKLABModel();
         case ColorModelId::Oklch:
@@ -294,7 +399,7 @@ public:
         }
     }
 
-    static const ColorModelId AllModels[7];
+    static const ColorModelId AllModels[10];
 };
 
 #endif
