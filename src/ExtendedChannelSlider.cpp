@@ -135,7 +135,7 @@ void ChannelValueBar::paintEvent(QPaintEvent *event)
     QWidget::paintEvent(event);
     QPainter painter(this);
 
-    painter.drawImage(0, 0, m_image, 0, 0, -1, height());
+    painter.drawImage(QRect(0, 0, width(), height()), m_image);
 
     int x = ColorState::instance()->color()[m_channelIndex] * width();
     painter.drawRect(x - 1, 0, 2, height());
