@@ -16,6 +16,7 @@ enum ColorModelId {
     Rgb = 0,
     Hsv = 1,
     Hsl = 2,
+    Oklab = 3,
 };
 
 class ColorModel : public KisShared
@@ -52,7 +53,7 @@ public:
 
     std::array<QPair<qreal, qreal>, 3> channelRanges() const override
     {
-        return {QPair(0, 1), QPair(0, 1), QPair(0, 1)};
+        return {QPair(0, 100), QPair(0, 100), QPair(0, 100)};
     }
 };
 
@@ -79,7 +80,7 @@ public:
 
     std::array<QPair<qreal, qreal>, 3> channelRanges() const override
     {
-        return {QPair(0, 1), QPair(0, 1), QPair(0, 1)};
+        return {QPair(0, 360), QPair(0, 100), QPair(0, 100)};
     }
 };
 
@@ -91,7 +92,7 @@ public:
 
     ColorModelId id() const override
     {
-        return ColorModelId::Hsv;
+        return ColorModelId::Hsl;
     }
 
     QString displayName() const override
@@ -106,7 +107,34 @@ public:
 
     std::array<QPair<qreal, qreal>, 3> channelRanges() const override
     {
-        return {QPair(0, 1), QPair(0, 1), QPair(0, 1)};
+        return {QPair(0, 360), QPair(0, 100), QPair(0, 100)};
+    }
+};
+
+class OKLABModel : public ColorModel
+{
+public:
+    QVector3D toXyz(const QVector3D &color) const override;
+    QVector3D fromXyz(const QVector3D &color) const override;
+
+    ColorModelId id() const override
+    {
+        return ColorModelId::Oklab;
+    }
+
+    QString displayName() const override
+    {
+        return "OkLAB";
+    }
+
+    std::array<QString, 3> channelNames() const override
+    {
+        return {"L", "A", "B"};
+    }
+
+    std::array<QPair<qreal, qreal>, 3> channelRanges() const override
+    {
+        return {QPair(0, 100), QPair(-100, 100), QPair(100, 100)};
     }
 };
 
@@ -122,6 +150,8 @@ public:
             return new HSVModel();
         case ColorModelId::Hsl:
             return new HSLModel();
+        case ColorModelId::Oklab:
+            return new OKLABModel();
         default:
             return nullptr;
         }
@@ -138,7 +168,7 @@ public:
         }
     }
 
-    static const ColorModelId AllModels[3];
+    static const ColorModelId AllModels[4];
 };
 
 #endif

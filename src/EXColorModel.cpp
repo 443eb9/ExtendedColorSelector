@@ -3,7 +3,10 @@
 
 #include "EXColorModel.h"
 
-const ColorModelId ColorModelFactory::AllModels[] = {ColorModelId::Rgb, ColorModelId::Hsv, ColorModelId::Hsl};
+const ColorModelId ColorModelFactory::AllModels[] = {ColorModelId::Rgb,
+                                                     ColorModelId::Hsv,
+                                                     ColorModelId::Hsl,
+                                                     ColorModelId::Oklab};
 
 QVector3D RGBModel::toXyz(const QVector3D &color) const
 {
@@ -125,4 +128,45 @@ QVector3D HSLModel::toXyz(const QVector3D &color) const
     float saturation = value == 0. ? 0. : 2. * (1. - (color[2] / value));
 
     return HSVModel().toXyz(QVector3D(color[0], saturation, value));
+}
+
+// https:#bottosson.github.io/posts/oklab/#converting-from-xyz-to-oklab
+QVector3D OKLABModel::fromXyz(const QVector3D &color) const
+{
+    float x = color[0], y = color[1], z = color[2];
+
+    float l_ = 0.8189330101 * x + 0.3618667424 * y - 0.1288597137 * z;
+    float m_ = 0.0329845436 * x + 0.9293118715 * y + 0.0361456387 * z;
+    float s_ = 0.0482003018 * x + 0.2643662691 * y + 0.6338517070 * z;
+
+    l_ = cbrtf(l_);
+    m_ = cbrtf(m_);
+    s_ = cbrtf(s_);
+
+    float l = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
+    float a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_;
+    float b = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_;
+
+    return QVector3D(l, a * 0.5 + 0.5, b * 0.5 + 0.5);
+}
+
+// https:#bottosson.github.io/posts/oklab/#converting-from-xyz-to-oklab
+// Inverse matrices are computed from the matrix in the post
+QVector3D OKLABModel::toXyz(const QVector3D &color) const
+{
+    float l = color[0], a = color[1] * 2 - 1, b = color[2] * 2 - 1;
+
+    float l_ = 0.9999999984 * l + 0.3963377921 * a + 0.2158037580 * b;
+    float m_ = 1.0000000088 * l - 0.10556134232 * a - 0.0638541747 * b;
+    float s_ = 1.0000000546 * l - 0.08948418209 * a - 1.2914855378 * b;
+
+    l_ = powf(l_, 3);
+    m_ = powf(m_, 3);
+    s_ = powf(s_, 3);
+
+    float x = +1.2270138511 * l_ - 0.5577999806 * m_ + 0.2812561489 * s_;
+    float y = -0.0405801784 * l_ + 1.1122568696 * m_ - 0.0716766786 * s_;
+    float z = -0.0763812845 * l_ - 0.4214819784 * m_ + 1.5861632204 * s_;
+
+    return QVector3D(x, y, z);
 }
