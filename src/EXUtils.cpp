@@ -38,4 +38,13 @@ QImage generateGradient(int width,
 
     return image;
 }
+
+void sanitizeOutOfGamutColor(QVector3D &color, const QVector3D &outOfGamutColor)
+{
+    const float EPSILON = 1e-5;
+    if (color[0] < -EPSILON || color[0] > 1 + EPSILON || color[1] < -EPSILON || color[1] > 1 + EPSILON
+        || color[2] < -EPSILON || color[2] > 1 + EPSILON) {
+        color = outOfGamutColor;
+    }
+}
 } // namespace ExtendedUtils
