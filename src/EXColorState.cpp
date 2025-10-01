@@ -24,8 +24,15 @@ EXColorState::EXColorState()
 
 void EXColorState::setColorModel(ColorModelId model)
 {
-    m_colorModel = ColorModelFactory::fromId(model);
+    if (m_colorModel->id() == model) {
+        return;
+    }
+
+    auto newModel = ColorModelFactory::fromId(model);
+    m_color = newModel->fromXyz(m_colorModel->toXyz(m_color));
+    m_colorModel = newModel;
     Q_EMIT sigColorModelChanged(model);
+    Q_EMIT sigColorChanged(m_color);
 }
 
 const ColorModelSP EXColorState::colorModel() const
