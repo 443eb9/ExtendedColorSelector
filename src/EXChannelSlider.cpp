@@ -47,6 +47,7 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QWidget *parent)
 {
     auto colorState = EXColorState::instance();
     auto layout = new QHBoxLayout(this);
+    layout->setContentsMargins(0, 2, 0, 2);
     auto channelNames = colorState->colorModel()->channelNames();
 
     m_radioButton = new QRadioButton(channelNames[m_channelIndex], this);
