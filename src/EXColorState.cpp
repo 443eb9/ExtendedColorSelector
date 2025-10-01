@@ -24,19 +24,11 @@ EXColorState::EXColorState()
 
 void EXColorState::setColorModel(ColorModelId model)
 {
-    switch (model) {
-    case ColorModelId::Rgb:
-        m_colorModel = ColorModelSP(new RGBModel());
-        break;
-    default:
-        Q_ASSERT(false);
-        break;
-    }
-
+    m_colorModel = ColorModelFactory::fromId(model);
     Q_EMIT sigColorModelChanged(model);
 }
 
-ColorModelSP EXColorState::colorModel() const
+const ColorModelSP EXColorState::colorModel() const
 {
     return m_colorModel;
 }
@@ -70,8 +62,7 @@ void EXColorState::syncFromKrita()
 void EXColorState::setCanvas(KisCanvas2 *canvas)
 {
     if (canvas) {
-        m_currentColorSpace = canvas->image()->colorSpace();
-        m_koColorConverter = new EXColorConverter(m_currentColorSpace);
+        setColorSpace(canvas->image()->colorSpace());
         m_resourceProvider = canvas->imageView()->resourceProvider();
 
         connect(m_resourceProvider, &KisCanvasResourceProvider::sigFGColorChanged, this, &EXColorState::syncFromKrita);
@@ -165,7 +156,14 @@ const KoColorSpace *EXColorState::colorSpace() const
     return m_currentColorSpace;
 }
 
+const ColorModelSP EXColorState::kritaColorModel() const
+{
+    return m_kritaColorModel;
+}
+
 void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
 {
     m_currentColorSpace = colorSpace;
+    m_koColorConverter = new EXColorConverter(colorSpace);
+    m_kritaColorModel = ColorModelFactory::fromKoColorSpace(colorSpace);
 }

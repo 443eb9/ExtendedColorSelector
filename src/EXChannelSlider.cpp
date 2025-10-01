@@ -6,8 +6,8 @@
 
 #include <kis_display_color_converter.h>
 
-#include "EXColorState.h"
 #include "EXChannelSlider.h"
+#include "EXColorState.h"
 #include "EXKoColorConverter.h"
 #include "EXUtils.h"
 
@@ -95,6 +95,11 @@ ChannelValueBar::ChannelValueBar(int channelIndex, QWidget *parent)
         updateImage();
         update();
     });
+
+    connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, [this]() {
+        updateImage();
+        update();
+    });
 }
 
 void ChannelValueBar::setCanvas(KisCanvas2 *canvas)
@@ -118,6 +123,7 @@ void ChannelValueBar::updateImage()
     auto pixelGet = [this, colorState, mapper](float x, float y, QVector<float> &channels) {
         QVector3D color = colorState->color();
         color[m_channelIndex] = x;
+        color = colorState->kritaColorModel()->fromXyz(colorState->colorModel()->toXyz(color));
         channels[mapper[0]] = color.x(), channels[mapper[1]] = color.y(), channels[mapper[2]] = color.z();
         channels[mapper[3]] = 1;
     };

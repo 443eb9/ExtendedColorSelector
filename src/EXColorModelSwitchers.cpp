@@ -12,10 +12,9 @@ EXColorModelSwitchers::EXColorModelSwitchers(QWidget *parent)
     auto layout = new QHBoxLayout();
     auto group = new QButtonGroup();
     group->setExclusive(true);
-    const ColorModelId colorModelIds[] = {ColorModelId::Rgb};
 
-    for (auto id : colorModelIds) {
-        auto model = ColorModelFactory::toModel(id);
+    for (auto id : ColorModelFactory::AllModels) {
+        auto model = ColorModelFactory::fromId(id);
         auto button = new QRadioButton(model->displayName());
         layout->addWidget(button);
 

@@ -8,8 +8,8 @@
 #include <kis_canvas_resource_provider.h>
 #include <kis_display_color_converter.h>
 
-#include "EXColorState.h"
 #include "EXChannelPlane.h"
+#include "EXColorState.h"
 #include "EXKoColorConverter.h"
 #include "EXUtils.h"
 
@@ -27,6 +27,11 @@ EXChannelPlane::EXChannelPlane(QWidget *parent)
     });
 
     connect(EXColorState::instance(), &EXColorState::sigPrimaryChannelIndexChanged, [this]() {
+        updateImage();
+        update();
+    });
+
+    connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, [this]() {
         updateImage();
         update();
     });
@@ -64,17 +69,21 @@ void EXChannelPlane::updateImage()
         float channel1 = shapeCoord.x();
         float channel2 = shapeCoord.y();
 
+        QVector3D color;
         switch (colorState->primaryChannelIndex()) {
         case 0:
-            channels[mapper[0]] = primary, channels[mapper[1]] = channel1, channels[mapper[2]] = channel2;
+            color[0] = primary, color[1] = channel1, color[2] = channel2;
             break;
         case 1:
-            channels[mapper[0]] = channel1, channels[mapper[1]] = primary, channels[mapper[2]] = channel2;
+            color[0] = channel1, color[1] = primary, color[2] = channel2;
             break;
         case 2:
-            channels[mapper[0]] = channel1, channels[mapper[1]] = channel2, channels[mapper[2]] = primary;
+            color[0] = channel1, color[1] = channel2, color[2] = primary;
             break;
         }
+
+        color = colorState->kritaColorModel()->fromXyz(colorState->colorModel()->toXyz(color));
+        channels[mapper[0]] = color[0], channels[mapper[1]] = color[1], channels[mapper[2]] = color[2];
         channels[mapper[3]] = 1;
     };
     m_image = ExtendedUtils::generateGradient(size, size, colorState->colorSpace(), m_dri, pixelGet);
