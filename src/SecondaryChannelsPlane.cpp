@@ -29,8 +29,6 @@ void SecondaryChannelsPlane::setCanvas(KisCanvas2 *canvas)
 {
     if (canvas) {
         m_dri = canvas->displayColorConverter()->displayRendererInterface();
-        updateImage();
-        update();
     }
 }
 
@@ -41,6 +39,12 @@ void SecondaryChannelsPlane::resizeEvent(QResizeEvent *event)
 
 void SecondaryChannelsPlane::updateImage()
 {
+    if (m_dri == nullptr) {
+        qDebug() << "No DRI available";
+        m_image = QImage();
+        return;
+    }
+
     int size = qMin(width(), height());
 
     const qreal deviceDivider = 1.0 / devicePixelRatioF();
@@ -49,7 +53,7 @@ void SecondaryChannelsPlane::updateImage()
     quint32 imageSize = deviceSize * deviceSize * pixelSize;
     QScopedArrayPointer<quint8> raw(new quint8[imageSize]{});
     quint8 *dataPtr = raw.data();
-    RgbConverter rgbConverter;
+    RGBModel rgbConverter;
 
     for (int y = 0; y < deviceSize; y++) {
         for (int x = 0; x < deviceSize; x++) {
@@ -107,9 +111,6 @@ void SecondaryChannelsPlane::paintEvent(QPaintEvent *event)
 {
     QWidget::paintEvent(event);
     QPainter painter(this);
-    if (m_image.isNull() || m_image.size() != size()) {
-        updateImage();
-    }
 
     painter.drawImage(0, 0, m_image);
 

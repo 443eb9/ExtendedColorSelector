@@ -13,20 +13,18 @@ ColorStateSP ColorState::instance()
 ColorState::ColorState()
     : m_color(1, 1, 1)
     , m_primaryChannelIndex(0)
-    , m_model(ColorModel::Rgb)
-    , m_converter(new RgbConverter())
+    , m_colorModel(new RGBModel())
     , m_currentColorSpace(nullptr)
     , m_resourceProvider(nullptr)
 {
     // TODO load from settings
 }
 
-void ColorState::setColorModel(ColorModel model)
+void ColorState::setColorModel(ColorModelId model)
 {
-    m_model = model;
     switch (model) {
-    case ColorModel::Rgb:
-        m_converter = ColorConverterSP(new RgbConverter());
+    case ColorModelId::Rgb:
+        m_colorModel = ColorModelSP(new RGBModel());
         break;
     default:
         Q_ASSERT(false);
@@ -34,15 +32,15 @@ void ColorState::setColorModel(ColorModel model)
     }
 }
 
-ColorConverterSP ColorState::converter() const
+ColorModelSP ColorState::colorModel() const
 {
-    return m_converter;
+    return m_colorModel;
 }
 
 void ColorState::sendToKrita()
 {
-    RgbConverter rgbConverter;
-    QVector3D color = rgbConverter.fromXyz(m_converter->toXyz(m_color));
+    RGBModel rgbConverter;
+    QVector3D color = rgbConverter.fromXyz(m_colorModel->toXyz(m_color));
     // TODO other color spaces
     m_resourceProvider->setFGColor(KoColor(QColor::fromRgbF(color.x(), color.y(), color.z()), m_currentColorSpace));
 }
@@ -74,6 +72,8 @@ void ColorState::setCanvas(KisCanvas2 *canvas)
                 this,
                 &ColorState::syncFromKrita,
                 Qt::UniqueConnection);
+        syncFromKrita();
+        Q_EMIT sigPrimaryChannelIndexChanged(m_primaryChannelIndex);
     }
 }
 
@@ -96,7 +96,9 @@ quint32 ColorState::primaryChannelIndex() const
 void ColorState::setPrimaryChannelIndex(quint32 index)
 {
     Q_ASSERT(index < 3);
+    qDebug() << "Set primary channel index to" << index << "from" << m_primaryChannelIndex;
     m_primaryChannelIndex = index;
+    Q_EMIT sigPrimaryChannelIndexChanged(index);
 }
 
 QVector2D ColorState::secondaryChannelValues() const
@@ -136,7 +138,14 @@ void ColorState::setSecondaryChannelValues(const QVector2D &values)
     setColor(m_color);
 }
 
-QVector3D ColorState::color() const
+void ColorState::setChannel(quint32 index, qreal value)
+{
+    Q_ASSERT(index < 3);
+    m_color[index] = value;
+    setColor(m_color);
+}
+
+const QVector3D ColorState::color() const
 {
     return m_color;
 }

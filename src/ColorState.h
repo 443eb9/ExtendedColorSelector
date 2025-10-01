@@ -14,7 +14,7 @@
 #include <kis_shared.h>
 #include <kis_shared_ptr.h>
 
-#include "ExtendedColor.h"
+#include "ExtendedColorModel.h"
 
 typedef KisSharedPtr<class ColorState> ColorStateSP;
 
@@ -31,14 +31,15 @@ public:
     void setSecondaryChannelValues(const QVector2D &values);
     quint32 primaryChannelIndex() const;
     void setPrimaryChannelIndex(quint32 index);
+    void setChannel(quint32 index, qreal value);
 
-    QVector3D color() const;
+    const QVector3D color() const;
     void setColor(const QVector3D &color);
     const KoColorSpace *colorSpace() const;
     void setColorSpace(const KoColorSpace *colorSpace);
 
-    void setColorModel(ColorModel model);
-    ColorConverterSP converter() const;
+    void setColorModel(ColorModelId model);
+    ColorModelSP colorModel() const;
 
     void sendToKrita();
     void syncFromKrita();
@@ -48,12 +49,12 @@ public:
 
 Q_SIGNALS:
     void sigColorChanged(const QVector3D &color);
+    void sigPrimaryChannelIndexChanged(quint32 index);
 
 private:
     QVector3D m_color;
     quint32 m_primaryChannelIndex;
-    ColorModel m_model;
-    ColorConverterSP m_converter;
+    ColorModelSP m_colorModel;
     const KoColorSpace *m_currentColorSpace;
     KisCanvasResourceProvider *m_resourceProvider;
 };

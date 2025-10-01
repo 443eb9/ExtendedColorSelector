@@ -1,11 +1,6 @@
-#include "ExtendedColor.h"
+#include "ExtendedColorModel.h"
 
-ColorModel RgbConverter::model() const
-{
-    return ColorModel::Rgb;
-}
-
-QVector3D RgbConverter::toXyz(const QVector3D &color)
+QVector3D RGBModel::toXyz(const QVector3D &color)
 {
     float r = color.x();
     float g = color.y();
@@ -18,7 +13,7 @@ QVector3D RgbConverter::toXyz(const QVector3D &color)
     return QVector3D(x, y, z);
 }
 
-QVector3D RgbConverter::fromXyz(const QVector3D &color)
+QVector3D RGBModel::fromXyz(const QVector3D &color)
 {
     float x = color.x();
     float y = color.y();

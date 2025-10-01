@@ -1,11 +1,11 @@
 set(
     extendedcolorselector_SOURCES
     ColorState.cpp
-    ExtendedColor.cpp
+    ExtendedChannelValues.cpp
+    ExtendedColorModel.cpp
     ExtendedColorSelectorDock.cpp
     ExtendedColorSelectorPlugin.cpp
     ExtendedShape.cpp
-    PrimaryChannelBar.cpp
     SecondaryChannelsPlane.cpp
 )
 
