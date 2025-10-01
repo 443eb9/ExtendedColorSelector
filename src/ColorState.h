@@ -16,8 +16,6 @@
 
 #include "ExtendedColorModel.h"
 
-typedef KisSharedPtr<class ColorState> ColorStateSP;
-
 class ColorState : public QObject, public KisShared
 {
     Q_OBJECT
@@ -45,7 +43,7 @@ public:
     void syncFromKrita();
     void setCanvas(KisCanvas2 *canvas);
 
-    static ColorStateSP instance();
+    static ColorState *instance();
 
 Q_SIGNALS:
     void sigColorChanged(const QVector3D &color);

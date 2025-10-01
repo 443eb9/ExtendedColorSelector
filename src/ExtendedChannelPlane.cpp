@@ -8,18 +8,23 @@
 #include <kis_canvas_resource_provider.h>
 #include <kis_display_color_converter.h>
 
+#include "ColorState.h"
 #include "ExtendedChannelPlane.h"
 
 ExtendedChannelPlane::ExtendedChannelPlane(QWidget *parent)
     : QWidget(parent)
     , m_dri(nullptr)
     , m_shape(new SquareShape())
-    , m_colorState(ColorState::instance())
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);
 
-    connect(m_colorState.data(), &ColorState::sigColorChanged, this, [this]() {
+    connect(ColorState::instance(), &ColorState::sigColorChanged, [this]() {
+        updateImage();
+        update();
+    });
+
+    connect(ColorState::instance(), &ColorState::sigPrimaryChannelIndexChanged, [this]() {
         updateImage();
         update();
     });
@@ -35,6 +40,7 @@ void ExtendedChannelPlane::setCanvas(KisCanvas2 *canvas)
 void ExtendedChannelPlane::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
+    updateImage();
 }
 
 void ExtendedChannelPlane::updateImage()
@@ -46,10 +52,11 @@ void ExtendedChannelPlane::updateImage()
     }
 
     int size = qMin(width(), height());
+    auto colorState = ColorState::instance();
 
     const qreal deviceDivider = 1.0 / devicePixelRatioF();
     const int deviceSize = qCeil(size * deviceDivider);
-    const qsizetype pixelSize = m_colorState->colorSpace()->pixelSize();
+    const qsizetype pixelSize = colorState->colorSpace()->pixelSize();
     quint32 imageSize = deviceSize * deviceSize * pixelSize;
     QScopedArrayPointer<quint8> raw(new quint8[imageSize]{});
     quint8 *dataPtr = raw.data();
@@ -61,9 +68,9 @@ void ExtendedChannelPlane::updateImage()
             QPointF widgetCoord = QPointF((qreal)x / (size - 1), 1 - (qreal)y / (size - 1));
             QPointF shapeCoord = m_shape->widgetToShapeCoord(widgetCoord);
             QVector3D color;
-            qreal primary = m_colorState->primaryChannelValue();
+            qreal primary = colorState->primaryChannelValue();
 
-            switch (m_colorState->primaryChannelIndex()) {
+            switch (colorState->primaryChannelIndex()) {
             case 0:
                 color = QVector3D(primary, shapeCoord.x(), shapeCoord.y());
                 break;
@@ -75,13 +82,13 @@ void ExtendedChannelPlane::updateImage()
                 break;
             }
 
-            KoColor koColor(QColor::fromRgbF(color.x(), color.y(), color.z()), m_colorState->colorSpace());
+            KoColor koColor(QColor::fromRgbF(color.x(), color.y(), color.z()), colorState->colorSpace());
             memcpy(dataPtr, koColor.data(), pixelSize);
             dataPtr += pixelSize;
         }
     }
 
-    QImage image = m_dri->toQImage(m_colorState->colorSpace(), raw.data(), QSize(deviceSize, deviceSize), false);
+    QImage image = m_dri->toQImage(colorState->colorSpace(), raw.data(), QSize(deviceSize, deviceSize), false);
     image.setDevicePixelRatio(devicePixelRatioF());
 
     m_image = image;
@@ -99,12 +106,12 @@ void ExtendedChannelPlane::mouseMoveEvent(QMouseEvent *event)
     widgetCoord.setX(qBound(0.0, widgetCoord.x(), 1.0));
     widgetCoord.setY(qBound(0.0, widgetCoord.y(), 1.0));
     QPointF shapePos = m_shape->widgetToShapeCoord(widgetCoord);
-    m_colorState->setSecondaryChannelValues(QVector2D(shapePos.x(), 1 - shapePos.y()));
+    ColorState::instance()->setSecondaryChannelValues(QVector2D(shapePos.x(), 1 - shapePos.y()));
 }
 
 void ExtendedChannelPlane::mouseReleaseEvent(QMouseEvent *event)
 {
-    m_colorState->sendToKrita();
+    ColorState::instance()->sendToKrita();
 }
 
 void ExtendedChannelPlane::paintEvent(QPaintEvent *event)
@@ -114,7 +121,7 @@ void ExtendedChannelPlane::paintEvent(QPaintEvent *event)
 
     painter.drawImage(0, 0, m_image);
 
-    QVector2D planeValues = m_colorState->secondaryChannelValues();
+    QVector2D planeValues = ColorState::instance()->secondaryChannelValues();
     int size = qMin(width(), height());
     QPointF cursorPos = m_shape->shapeToWidgetCoord(QPointF(planeValues.x(), 1 - planeValues.y()));
     painter.drawArc(QRectF(cursorPos.x() * size - 4, cursorPos.y() * size - 4, 8, 8), 0, 360 * 16);

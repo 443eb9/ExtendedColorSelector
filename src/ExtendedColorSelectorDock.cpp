@@ -4,6 +4,7 @@
 #include <kis_canvas_resource_provider.h>
 #include <kis_display_color_converter.h>
 
+#include "ColorState.h"
 #include "ExtendedColorSelectorDock.h"
 
 ExtendedColorSelectorDock::ExtendedColorSelectorDock()

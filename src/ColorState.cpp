@@ -1,11 +1,11 @@
 #include "ColorState.h"
 
-static ColorStateSP s_instance = nullptr;
+static ColorState *s_instance = nullptr;
 
-ColorStateSP ColorState::instance()
+ColorState *ColorState::instance()
 {
     if (!s_instance) {
-        s_instance = ColorStateSP(new ColorState());
+        s_instance = new ColorState();
     }
     return s_instance;
 }
@@ -96,15 +96,12 @@ quint32 ColorState::primaryChannelIndex() const
 void ColorState::setPrimaryChannelIndex(quint32 index)
 {
     Q_ASSERT(index < 3);
-    qDebug() << "Set primary channel index to" << index << "from" << m_primaryChannelIndex;
     m_primaryChannelIndex = index;
     Q_EMIT sigPrimaryChannelIndexChanged(index);
 }
 
 QVector2D ColorState::secondaryChannelValues() const
 {
-    Q_ASSERT(m_primaryChannelIndex < 3);
-
     switch (m_primaryChannelIndex) {
     case 0:
         return QVector2D(m_color[1], m_color[2]);
@@ -119,8 +116,6 @@ QVector2D ColorState::secondaryChannelValues() const
 
 void ColorState::setSecondaryChannelValues(const QVector2D &values)
 {
-    Q_ASSERT(m_primaryChannelIndex < 3);
-
     switch (m_primaryChannelIndex) {
     case 0:
         m_color[1] = values.x();

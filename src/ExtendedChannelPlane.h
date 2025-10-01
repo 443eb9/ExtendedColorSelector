@@ -6,7 +6,6 @@
 #include <KoColorDisplayRendererInterface.h>
 #include <kis_canvas2.h>
 
-#include "ColorState.h"
 #include "ExtendedShape.h"
 
 class ExtendedChannelPlane : public QWidget
@@ -30,7 +29,6 @@ private:
     };
 
     EditMode m_editMode;
-    ColorStateSP m_colorState;
     QColor m_imageColor;
     QScopedPointer<Shape> m_shape;
     QImage m_image;

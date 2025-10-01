@@ -56,21 +56,21 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QWidget *parent)
     layout->addWidget(m_radioButton);
     setLayout(layout);
 
-    connect(m_spinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this, &colorState](double value) {
+    connect(m_spinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this, colorState](double value) {
         colorState->setChannel(m_channelIndex, value);
     });
 
-    connect(colorState.data(), &ColorState::sigPrimaryChannelIndexChanged, [this, colorState]() {
+    connect(colorState, &ColorState::sigPrimaryChannelIndexChanged, [this, colorState]() {
         m_radioButton->setChecked(colorState->primaryChannelIndex() == m_channelIndex);
     });
 
-    connect(colorState.data(), &ColorState::sigColorChanged, [this, colorState]() {
+    connect(colorState, &ColorState::sigColorChanged, [this, colorState]() {
         m_spinBox->blockSignals(true);
         m_spinBox->setValue(colorState->color()[m_channelIndex]);
         m_spinBox->blockSignals(false);
     });
 
-    connect(m_radioButton, &QRadioButton::clicked, this, [this, &colorState](bool checked) {
+    connect(m_radioButton, &QRadioButton::clicked, this, [this, colorState](bool checked) {
         if (checked) {
             colorState->setPrimaryChannelIndex(m_channelIndex);
         }
@@ -89,7 +89,7 @@ ChannelValueBar::ChannelValueBar(int channelIndex, QWidget *parent)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    connect(ColorState::instance().data(), &ColorState::sigColorChanged, this, [this]() {
+    connect(ColorState::instance(), &ColorState::sigColorChanged, [this]() {
         updateImage();
         update();
     });
@@ -110,7 +110,7 @@ void ChannelValueBar::updateImage()
         return;
     }
 
-    ColorStateSP colorState = ColorState::instance();
+    auto colorState = ColorState::instance();
 
     const qreal deviceDivider = 1.0 / devicePixelRatioF();
     const int deviceSize = qCeil(width() * deviceDivider);
@@ -136,6 +136,12 @@ void ChannelValueBar::updateImage()
     image.setDevicePixelRatio(devicePixelRatioF());
 
     m_image = image;
+}
+
+void ChannelValueBar::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    updateImage();
 }
 
 void ChannelValueBar::paintEvent(QPaintEvent *event)
