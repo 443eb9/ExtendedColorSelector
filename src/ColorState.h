@@ -31,7 +31,7 @@ public:
     void setPrimaryChannelIndex(quint32 index);
     void setChannel(quint32 index, qreal value);
 
-    const QVector3D color() const;
+    QVector3D color() const;
     void setColor(const QVector3D &color);
     const KoColorSpace *colorSpace() const;
     void setColorSpace(const KoColorSpace *colorSpace);

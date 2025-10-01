@@ -142,7 +142,7 @@ void ColorState::setChannel(quint32 index, qreal value)
     setColor(m_color);
 }
 
-const QVector3D ColorState::color() const
+QVector3D ColorState::color() const
 {
     return m_color;
 }

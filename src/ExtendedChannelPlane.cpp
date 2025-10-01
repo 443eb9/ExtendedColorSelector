@@ -46,7 +46,6 @@ void ExtendedChannelPlane::resizeEvent(QResizeEvent *event)
 void ExtendedChannelPlane::updateImage()
 {
     if (m_dri == nullptr) {
-        qDebug() << "No DRI available";
         m_image = QImage();
         return;
     }
@@ -62,28 +61,31 @@ void ExtendedChannelPlane::updateImage()
     quint8 *dataPtr = raw.data();
     RGBModel rgbConverter;
 
+    QVector<float> channels(4, 1);
+    KoColor color(colorState->colorSpace());
     for (int y = 0; y < deviceSize; y++) {
         for (int x = 0; x < deviceSize; x++) {
             // Inverted y.
             QPointF widgetCoord = QPointF((qreal)x / (size - 1), 1 - (qreal)y / (size - 1));
             QPointF shapeCoord = m_shape->widgetToShapeCoord(widgetCoord);
-            QVector3D color;
-            qreal primary = colorState->primaryChannelValue();
+            float primary = colorState->primaryChannelValue();
+            float channel1 = shapeCoord.x();
+            float channel2 = shapeCoord.y();
 
             switch (colorState->primaryChannelIndex()) {
             case 0:
-                color = QVector3D(primary, shapeCoord.x(), shapeCoord.y());
+                channels[0] = primary, channels[1] = channel1, channels[2] = channel2;
                 break;
             case 1:
-                color = QVector3D(shapeCoord.x(), primary, shapeCoord.y());
+                channels[0] = channel1, channels[1] = primary, channels[2] = channel2;
                 break;
             case 2:
-                color = QVector3D(shapeCoord.x(), shapeCoord.y(), primary);
+                channels[0] = channel1, channels[1] = channel2, channels[2] = primary;
                 break;
             }
 
-            KoColor koColor(QColor::fromRgbF(color.x(), color.y(), color.z()), colorState->colorSpace());
-            memcpy(dataPtr, koColor.data(), pixelSize);
+            color.colorSpace()->fromNormalisedChannelsValue(color.data(), channels);
+            memcpy(dataPtr, color.data(), pixelSize);
             dataPtr += pixelSize;
         }
     }

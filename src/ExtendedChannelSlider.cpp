@@ -105,7 +105,6 @@ void ChannelValueBar::setCanvas(KisCanvas2 *canvas)
 void ChannelValueBar::updateImage()
 {
     if (m_dri == nullptr) {
-        qDebug() << "No DRI available";
         m_image = QImage();
         return;
     }
@@ -120,13 +119,16 @@ void ChannelValueBar::updateImage()
     quint8 *dataPtr = raw.data();
     RGBModel rgbConverter;
 
+    QVector<float> channels(4, 1);
+    KoColor koColor(colorState->colorSpace());
     for (int y = 0; y < deviceSize; y++) {
         for (int x = 0; x < deviceSize; x++) {
             qreal value = (qreal)x / (width() - 1);
             QVector3D color = colorState->color();
             color[m_channelIndex] = value;
+            channels[0] = color.x(), channels[1] = color.y(), channels[2] = color.z();
 
-            KoColor koColor(QColor::fromRgbF(color.x(), color.y(), color.z()), colorState->colorSpace());
+            koColor.colorSpace()->fromNormalisedChannelsValue(koColor.data(), channels);
             memcpy(dataPtr, koColor.data(), pixelSize);
             dataPtr += pixelSize;
         }
