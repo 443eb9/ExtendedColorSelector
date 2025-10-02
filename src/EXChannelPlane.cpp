@@ -62,6 +62,22 @@ void EXChannelPlane::resizeEvent(QResizeEvent *event)
     m_ring.thickness = 20 / size * 2;
 }
 
+void EXChannelPlane::paintEvent(QPaintEvent *event)
+{
+    QWidget::paintEvent(event);
+    QPainter painter(this);
+
+    painter.drawImage(0, 0, m_image);
+
+    QVector2D planeValues = EXColorState::instance()->secondaryChannelValues();
+    int size = qMin(width(), height());
+    QPointF widgetCoord = m_shape->shapeToWidgetCoord(QPointF(planeValues.x(), planeValues.y()), m_ring);
+    painter.drawArc(QRectF(widgetCoord.x() * size - 4, (1 - widgetCoord.y()) * size - 4, 8, 8), 0, 360 * 16);
+
+    QPointF ringWidgetCoord = currentRingWidgetCoordPx();
+    painter.drawArc(QRectF(ringWidgetCoord.x() - 4, ringWidgetCoord.y() - 4, 8, 8), 0, 360 * 16);
+}
+
 void EXChannelPlane::updateImage()
 {
     if (m_dri == nullptr) {
@@ -125,11 +141,19 @@ void EXChannelPlane::updateImage()
 void EXChannelPlane::mousePressEvent(QMouseEvent *event)
 {
     EXEditable::mousePressEvent(event);
-    m_editMode = Plane;
-    QVector2D values = EXColorState::instance()->secondaryChannelValues();
-    m_editStart = m_shape->shapeToWidgetCoord(QPointF(values.x(), values.y()), m_ring);
-    m_editStart.setY(1 - m_editStart.y());
-    m_editStart *= qMin(width(), height());
+    QPointF widgetCoord = QPointF(event->pos()) / qMin(width(), height()) * 2 - QPointF(1, 1);
+    float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
+
+    if (dist < 1 && dist > m_ring.boundaryDiameter()) {
+        m_editMode = Ring;
+        m_editStart = currentRingWidgetCoordPx();
+    } else {
+        m_editMode = Plane;
+        QVector2D values = EXColorState::instance()->secondaryChannelValues();
+        m_editStart = m_shape->shapeToWidgetCoord(QPointF(values.x(), values.y()), m_ring);
+        m_editStart.setY(1 - m_editStart.y());
+        m_editStart *= qMin(width(), height());
+    }
 }
 
 void EXChannelPlane::edit(QMouseEvent *event)
@@ -138,13 +162,24 @@ void EXChannelPlane::edit(QMouseEvent *event)
     QPointF widgetCoord = QPointF(event->pos()) / size;
     widgetCoord = widgetCoord * 2 - QPointF(1, 1);
     widgetCoord.setY(-widgetCoord.y());
-    QPointF shapeCoord;
-    m_shape->widgetToShapeCoord(widgetCoord, shapeCoord, m_ring);
 
-    shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
-    shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
+    switch (m_editMode) {
+    case Ring: {
+        float ringValue = m_ring.getRingValue(widgetCoord);
+        EXColorState::instance()->setPrimaryChannelValue(ringValue);
+        break;
+    }
+    case Plane: {
+        QPointF shapeCoord;
+        m_shape->widgetToShapeCoord(widgetCoord, shapeCoord, m_ring);
 
-    EXColorState::instance()->setSecondaryChannelValues(QVector2D(shapeCoord));
+        shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
+        shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
+
+        EXColorState::instance()->setSecondaryChannelValues(QVector2D(shapeCoord));
+        break;
+    }
+    }
 }
 
 void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
@@ -153,13 +188,23 @@ void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
     QPointF widgetCoord = (m_editStart + QPointF(delta.x(), delta.y())) / size;
     widgetCoord = widgetCoord * 2 - QPointF(1, 1);
     widgetCoord.setY(-widgetCoord.y());
-    QPointF shapeCoord;
-    m_shape->widgetToShapeCoord(widgetCoord, shapeCoord, m_ring);
 
-    shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
-    shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
+    switch (m_editMode) {
+    case Ring: {
+        float ringValue = m_ring.getRingValue(widgetCoord);
+        EXColorState::instance()->setPrimaryChannelValue(ringValue);
+        break;
+    }
+    case Plane: {
+        QPointF shapeCoord;
+        m_shape->widgetToShapeCoord(widgetCoord, shapeCoord, m_ring);
 
-    EXColorState::instance()->setSecondaryChannelValues(QVector2D(shapeCoord));
+        shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
+        shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
+
+        EXColorState::instance()->setSecondaryChannelValues(QVector2D(shapeCoord));
+    }
+    }
 }
 
 void EXChannelPlane::mouseReleaseEvent(QMouseEvent *event)
@@ -167,15 +212,10 @@ void EXChannelPlane::mouseReleaseEvent(QMouseEvent *event)
     EXColorState::instance()->sendToKrita();
 }
 
-void EXChannelPlane::paintEvent(QPaintEvent *event)
+QPointF EXChannelPlane::currentRingWidgetCoordPx()
 {
-    QWidget::paintEvent(event);
-    QPainter painter(this);
-
-    painter.drawImage(0, 0, m_image);
-
-    QVector2D planeValues = EXColorState::instance()->secondaryChannelValues();
+    QPointF widgetCoord = m_ring.getWidgetCoord(EXColorState::instance()->primaryChannelValue());
+    widgetCoord.setY(1 - widgetCoord.y());
     int size = qMin(width(), height());
-    QPointF widgetCoord = m_shape->shapeToWidgetCoord(QPointF(planeValues.x(), planeValues.y()), m_ring);
-    painter.drawArc(QRectF(widgetCoord.x() * size - 4, (1 - widgetCoord.y()) * size - 4, 8, 8), 0, 360 * 16);
+    return widgetCoord * size;
 }

@@ -20,6 +20,13 @@ float EXPrimaryChannelRing::getRingValue(QPointF widgetCoordCentered) const
     return x - floorf(x);
 }
 
+QPointF EXPrimaryChannelRing::getWidgetCoord(float value) const
+{
+    value = (value + 0.5) * 2 * M_PI - rotationOffset;
+    float r = 1 - thickness;
+    return QPointF(cos(value) * r, sin(value) * r) * 0.5 + QPointF(0.5, 0.5);
+}
+
 bool EXSquareChannelPlaneShape::widgetToShapeCoord(const QPointF &widgetCoordCentered,
                                                    QPointF &shapeCoord,
                                                    const EXPrimaryChannelRing &ring)

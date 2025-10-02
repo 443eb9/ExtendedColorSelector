@@ -9,6 +9,7 @@ public:
     float boundaryDiameter() const;
     float marginedBoundaryDiameter() const;
     float getRingValue(QPointF widgetCoordCentered) const;
+    QPointF getWidgetCoord(float value) const;
 
     float margin;
     float thickness;

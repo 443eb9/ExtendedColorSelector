@@ -24,11 +24,14 @@ public:
     void edit(QMouseEvent *event) override;
     void shift(QMouseEvent *event, QVector2D delta) override;
 
+    QPointF currentRingWidgetCoordPx();
+
     void setCanvas(KisCanvas2 *canvas);
 
 private:
     enum EditMode {
         Plane,
+        Ring,
     };
 
     EditMode m_editMode;
