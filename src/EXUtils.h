@@ -18,6 +18,7 @@ QImage generateGradient(int width,
 
 void sanitizeOutOfGamutColor(QVector3D &color, const QVector3D &outOfGamutColor);
 void saturateColor(QVector3D &color);
+float getRingValue(QPointF widgetCoordCentered, float rotationOffset);
 } // namespace ExtendedUtils
 
 #endif // EXTENDEDUTILS_H
