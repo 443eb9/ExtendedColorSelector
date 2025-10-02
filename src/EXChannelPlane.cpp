@@ -14,10 +14,10 @@
 #include "EXUtils.h"
 
 EXChannelPlane::EXChannelPlane(QWidget *parent)
-    : QWidget(parent)
+    : EXEditable(parent)
     , m_dri(nullptr)
-    // , m_shape(new EXSquareChannelPlaneShape())
-    , m_shape(new EXTriangleChannelPlaneShape())
+    , m_shape(new EXSquareChannelPlaneShape())
+// , m_shape(new EXTriangleChannelPlaneShape())
 // , m_shape(new EXCircleChannelPlaneShape())
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -124,13 +124,33 @@ void EXChannelPlane::updateImage()
 
 void EXChannelPlane::mousePressEvent(QMouseEvent *event)
 {
+    EXEditable::mousePressEvent(event);
     m_editMode = Plane;
+    QVector2D values = EXColorState::instance()->secondaryChannelValues();
+    m_editStart = m_shape->shapeToWidgetCoord(QPointF(values.x(), values.y()), m_ring);
+    m_editStart.setY(1 - m_editStart.y());
+    m_editStart *= qMin(width(), height());
 }
 
-void EXChannelPlane::mouseMoveEvent(QMouseEvent *event)
+void EXChannelPlane::edit(QMouseEvent *event)
 {
     int size = qMin(width(), height());
     QPointF widgetCoord = QPointF(event->pos()) / size;
+    widgetCoord = widgetCoord * 2 - QPointF(1, 1);
+    widgetCoord.setY(-widgetCoord.y());
+    QPointF shapeCoord;
+    m_shape->widgetToShapeCoord(widgetCoord, shapeCoord, m_ring);
+
+    shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
+    shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
+
+    EXColorState::instance()->setSecondaryChannelValues(QVector2D(shapeCoord));
+}
+
+void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
+{
+    int size = qMin(width(), height());
+    QPointF widgetCoord = (m_editStart + QPointF(delta.x(), delta.y())) / size;
     widgetCoord = widgetCoord * 2 - QPointF(1, 1);
     widgetCoord.setY(-widgetCoord.y());
     QPointF shapeCoord;

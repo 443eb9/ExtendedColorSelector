@@ -89,7 +89,7 @@ void ChannelValueWidget::setCanvas(KisCanvas2 *canvas)
 }
 
 ChannelValueBar::ChannelValueBar(int channelIndex, QWidget *parent)
-    : QWidget(parent)
+    : EXEditable(parent)
     , m_channelIndex(channelIndex)
     , m_dri(nullptr)
 {
@@ -156,15 +156,29 @@ void ChannelValueBar::paintEvent(QPaintEvent *event)
 
 void ChannelValueBar::mousePressEvent(QMouseEvent *event)
 {
-}
-
-void ChannelValueBar::mouseMoveEvent(QMouseEvent *event)
-{
-    qreal value = qBound((qreal)0, (qreal)event->pos().x() / width(), (qreal)1);
-    EXColorState::instance()->setChannel(m_channelIndex, value);
+    EXEditable::mousePressEvent(event);
+    m_editStart = currentWidgetCoord();
 }
 
 void ChannelValueBar::mouseReleaseEvent(QMouseEvent *event)
 {
     EXColorState::instance()->sendToKrita();
+}
+
+void ChannelValueBar::edit(QMouseEvent *event)
+{
+    qreal value = qBound((qreal)0, (qreal)event->pos().x() / width(), (qreal)1);
+    EXColorState::instance()->setChannel(m_channelIndex, value);
+}
+
+void ChannelValueBar::shift(QMouseEvent *event, QVector2D delta)
+{
+    qreal value = (m_editStart + delta.x()) / width();
+    value = value - qFloor(value);
+    EXColorState::instance()->setChannel(m_channelIndex, value);
+}
+
+float ChannelValueBar::currentWidgetCoord()
+{
+    return (float)(EXColorState::instance()->color()[m_channelIndex] * width());
 }

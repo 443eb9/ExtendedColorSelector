@@ -10,7 +10,9 @@
 #include <KoColorDisplayRendererInterface.h>
 #include <kis_canvas2.h>
 
-class ChannelValueBar : public QWidget
+#include "EXEditable.h"
+
+class ChannelValueBar : public EXEditable
 {
     Q_OBJECT
 
@@ -20,8 +22,12 @@ public:
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+
+    void edit(QMouseEvent *event) override;
+    void shift(QMouseEvent *event, QVector2D delta) override;
+
+    float currentWidgetCoord();
 
     void setCanvas(KisCanvas2 *canvas);
 
@@ -29,6 +35,7 @@ private:
     int m_channelIndex;
     KoColorDisplayRendererInterface *m_dri;
     QImage m_image;
+    float m_editStart;
 
     void updateImage();
 };

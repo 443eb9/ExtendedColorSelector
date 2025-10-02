@@ -7,6 +7,7 @@ set(
     EXColorSelectorDock.cpp
     EXColorSelectorPlugin.cpp
     EXColorState.cpp
+    EXEditable.cpp
     EXKoColorConverter.cpp
     EXShape.cpp
     EXUtils.cpp
