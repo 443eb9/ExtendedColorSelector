@@ -16,7 +16,8 @@
 EXChannelPlane::EXChannelPlane(QWidget *parent)
     : QWidget(parent)
     , m_dri(nullptr)
-    , m_shape(new EXSquareChannelPlaneShape())
+    // , m_shape(new EXSquareChannelPlaneShape())
+    , m_shape(new EXTriangleChannelPlaneShape())
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);
@@ -38,8 +39,8 @@ EXChannelPlane::EXChannelPlane(QWidget *parent)
 
     // TODO read from settings.
     float size = qMin(width(), height());
-    m_ring.margin = 5 / size;
-    m_ring.thickness = 20 / size;
+    m_ring.margin = 5 / size * 2;
+    m_ring.thickness = 20 / size * 2;
     m_ring.rotationOffset = 0;
 }
 
@@ -56,8 +57,8 @@ void EXChannelPlane::resizeEvent(QResizeEvent *event)
     updateImage();
     // TODO read from settings.
     float size = qMin(width(), height());
-    m_ring.margin = 5 / size;
-    m_ring.thickness = 20 / size;
+    m_ring.margin = 5 / size * 2;
+    m_ring.thickness = 20 / size * 2;
 }
 
 void EXChannelPlane::updateImage()
@@ -86,10 +87,11 @@ void EXChannelPlane::updateImage()
             color[colorState->primaryChannelIndex()] = ringValue;
         } else {
             float boundaryDiameter = m_ring.marginedBoundaryDiameter();
-            QPointF shapeCoord = m_shape->widgetToShapeCoord(widgetCoord, m_ring);
+            QPointF shapeCoord;
+            bool isInShape = m_shape->widgetToShapeCoord(widgetCoord, shapeCoord, m_ring);
             float channel1 = shapeCoord.x();
             float channel2 = shapeCoord.y();
-            if (channel1 < 0 || channel1 > 1 || channel2 < 0 || channel2 > 1) {
+            if (!isInShape) {
                 channels[mapper[3]] = 0;
                 return;
             }
@@ -129,7 +131,8 @@ void EXChannelPlane::mouseMoveEvent(QMouseEvent *event)
     int size = qMin(width(), height());
     QPointF widgetCoord = QPointF(event->pos()) / size;
     widgetCoord = widgetCoord * 2 - QPointF(1, 1);
-    QPointF shapeCoord = m_shape->widgetToShapeCoord(widgetCoord, m_ring);
+    QPointF shapeCoord;
+    m_shape->widgetToShapeCoord(widgetCoord, shapeCoord, m_ring);
 
     shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
     shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));

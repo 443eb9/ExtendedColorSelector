@@ -18,7 +18,8 @@ public:
 class EXChannelPlaneShape
 {
 public:
-    virtual QPointF widgetToShapeCoord(const QPointF &widgetCoordCentered, const EXPrimaryChannelRing &ring) = 0;
+    virtual bool
+    widgetToShapeCoord(const QPointF &widgetCoordCentered, QPointF &shapeCoord, const EXPrimaryChannelRing &ring) = 0;
     virtual QPointF shapeToWidgetCoordCentered(const QPointF &shapeCoordCentered, const EXPrimaryChannelRing &ring) = 0;
 
     QPointF shapeToWidgetCoord(const QPointF &shapeCoord, const EXPrimaryChannelRing &ring)
@@ -31,7 +32,18 @@ public:
 class EXSquareChannelPlaneShape : public EXChannelPlaneShape
 {
 public:
-    QPointF widgetToShapeCoord(const QPointF &widgetCoordCentered, const EXPrimaryChannelRing &ring) override;
+    bool widgetToShapeCoord(const QPointF &widgetCoordCentered,
+                            QPointF &shapeCoord,
+                            const EXPrimaryChannelRing &ring) override;
+    QPointF shapeToWidgetCoordCentered(const QPointF &shapeCoordCentered, const EXPrimaryChannelRing &ring) override;
+};
+
+class EXTriangleChannelPlaneShape : public EXChannelPlaneShape
+{
+public:
+    bool widgetToShapeCoord(const QPointF &widgetCoordCentered,
+                            QPointF &shapeCoord,
+                            const EXPrimaryChannelRing &ring) override;
     QPointF shapeToWidgetCoordCentered(const QPointF &shapeCoordCentered, const EXPrimaryChannelRing &ring) override;
 };
 
