@@ -6,8 +6,8 @@
 class EXPrimaryChannelRing
 {
 public:
-    float boundaryDiameter(float widgetSize) const;
-    float marginedBoundaryDiameter(float widgetSize) const;
+    float boundaryDiameter() const;
+    float marginedBoundaryDiameter() const;
     float getRingValue(QPointF widgetCoordCentered) const;
 
     float margin;
@@ -18,20 +18,20 @@ public:
 class EXChannelPlaneShape
 {
 public:
-    virtual QPointF widgetToShapeCoord(const QPointF &widgetCoordCentered, float boundaryDiameter = -1) = 0;
-    virtual QPointF shapeToWidgetCoord(const QPointF &shapeCoordCentered, float boundaryDiameter = -1) = 0;
+    virtual QPointF widgetToShapeCoord(const QPointF &widgetCoordCentered, const EXPrimaryChannelRing &ring) = 0;
+    virtual QPointF shapeToWidgetCoord(const QPointF &shapeCoordCentered, const EXPrimaryChannelRing &ring) = 0;
 
-    QPointF widgetToShapeCoord01(const QPointF &widgetCoord, float boundaryDiameter = -1)
+    QPointF widgetToShapeCoord01(const QPointF &widgetCoord, const EXPrimaryChannelRing &ring)
     {
         QPointF widget = widgetCoord * 2 - QPointF(1, 1);
-        QPointF shape = widgetToShapeCoord(widget, boundaryDiameter);
+        QPointF shape = widgetToShapeCoord(widget, ring);
         return shape * 0.5 + QPointF(0.5, 0.5);
     }
 
-    QPointF shapeToWidgetCoord01(const QPointF &shapeCoord, float boundaryDiameter = -1)
+    QPointF shapeToWidgetCoord01(const QPointF &shapeCoord, const EXPrimaryChannelRing &ring)
     {
         QPointF shape = shapeCoord * 2 - QPointF(1, 1);
-        QPointF widget = shapeToWidgetCoord(shape, boundaryDiameter);
+        QPointF widget = shapeToWidgetCoord(shape, ring);
         return widget * 0.5 + QPointF(0.5, 0.5);
     }
 };
@@ -39,8 +39,8 @@ public:
 class EXSquareChannelPlaneShape : public EXChannelPlaneShape
 {
 public:
-    QPointF widgetToShapeCoord(const QPointF &widgetCoordCentered, float boundaryDiameter = -1) override;
-    QPointF shapeToWidgetCoord(const QPointF &shapeCoordCentered, float boundaryDiameter = -1) override;
+    QPointF widgetToShapeCoord(const QPointF &widgetCoordCentered, const EXPrimaryChannelRing &ring) override;
+    QPointF shapeToWidgetCoord(const QPointF &shapeCoordCentered, const EXPrimaryChannelRing &ring) override;
 };
 
 #endif // EXTENDED_SHAPE_H

@@ -3,22 +3,14 @@
 
 #include "EXShape.h"
 
-float EXPrimaryChannelRing::boundaryDiameter(float widgetSize) const
+float EXPrimaryChannelRing::boundaryDiameter() const
 {
-    if (thickness <= 0) {
-        return -1;
-    } else {
-        return (widgetSize - thickness * 2) / widgetSize;
-    }
+    return 1 - thickness * 2;
 }
 
-float EXPrimaryChannelRing::marginedBoundaryDiameter(float widgetSize) const
+float EXPrimaryChannelRing::marginedBoundaryDiameter() const
 {
-    if (thickness <= 0) {
-        return -1;
-    } else {
-        return (widgetSize - (margin + thickness) * 2) / widgetSize;
-    }
+    return 1 - (margin + thickness) * 2;
 }
 
 float EXPrimaryChannelRing::getRingValue(QPointF widgetCoordCentered) const
@@ -27,25 +19,25 @@ float EXPrimaryChannelRing::getRingValue(QPointF widgetCoordCentered) const
     return x - floorf(x);
 }
 
-QPointF EXSquareChannelPlaneShape::widgetToShapeCoord(const QPointF &widgetCoordCentered, float boundaryDiameter)
+QPointF EXSquareChannelPlaneShape::widgetToShapeCoord(const QPointF &widgetCoordCentered, const EXPrimaryChannelRing &ring)
 {
-    if (boundaryDiameter == -1) {
+    if (ring.thickness == 0.0f) {
         return widgetCoordCentered;
     }
 
-    float a = boundaryDiameter * 0.7071067812;
+    float a = ring.marginedBoundaryDiameter() * 0.7071067812;
     float x = widgetCoordCentered.x() / a;
     float y = widgetCoordCentered.y() / a;
     return QPointF(x, y);
 }
 
-QPointF EXSquareChannelPlaneShape::shapeToWidgetCoord(const QPointF &shapeCoordCentered, float boundaryDiameter)
+QPointF EXSquareChannelPlaneShape::shapeToWidgetCoord(const QPointF &shapeCoordCentered, const EXPrimaryChannelRing &ring)
 {
-    if (boundaryDiameter == -1) {
+    if (ring.thickness == 0.0f) {
         return shapeCoordCentered;
     }
 
-    float a = boundaryDiameter * 0.7071067812;
+    float a = ring.marginedBoundaryDiameter() * 0.7071067812;
     float x = shapeCoordCentered.x() * a;
     float y = shapeCoordCentered.y() * a;
     return QPointF(x, y);
