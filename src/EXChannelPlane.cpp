@@ -87,14 +87,14 @@ void EXChannelPlane::updateImage()
         } else {
             float boundaryDiameter = m_ring.marginedBoundaryDiameter();
             QPointF shapeCoord = m_shape->widgetToShapeCoord(widgetCoord, m_ring);
-            if (qAbs(shapeCoord.x()) > 1 || qAbs(shapeCoord.y()) > 1) {
+            float channel1 = shapeCoord.x();
+            float channel2 = shapeCoord.y();
+            if (channel1 < 0 || channel1 > 1 || channel2 < 0 || channel2 > 1) {
                 channels[mapper[3]] = 0;
                 return;
             }
 
             float primary = colorState->primaryChannelValue();
-            float channel1 = shapeCoord.x() * 0.5 + 0.5;
-            float channel2 = shapeCoord.y() * 0.5 + 0.5;
 
             switch (colorState->primaryChannelIndex()) {
             case 0:
@@ -128,7 +128,8 @@ void EXChannelPlane::mouseMoveEvent(QMouseEvent *event)
 {
     int size = qMin(width(), height());
     QPointF widgetCoord = QPointF(event->pos()) / size;
-    QPointF shapeCoord = m_shape->widgetToShapeCoord01(widgetCoord, m_ring);
+    widgetCoord = widgetCoord * 2 - QPointF(1, 1);
+    QPointF shapeCoord = m_shape->widgetToShapeCoord(widgetCoord, m_ring);
 
     shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
     shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
@@ -150,6 +151,6 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
 
     QVector2D planeValues = EXColorState::instance()->secondaryChannelValues();
     int size = qMin(width(), height());
-    QPointF cursorPos = m_shape->shapeToWidgetCoord01(QPointF(planeValues.x(), 1 - planeValues.y()), m_ring);
+    QPointF cursorPos = m_shape->shapeToWidgetCoord(QPointF(planeValues.x(), 1 - planeValues.y()), m_ring);
     painter.drawArc(QRectF(cursorPos.x() * size - 4, cursorPos.y() * size - 4, 8, 8), 0, 360 * 16);
 }
