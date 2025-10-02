@@ -47,4 +47,13 @@ public:
     QPointF shapeToWidgetCoordCentered(const QPointF &shapeCoordCentered, const EXPrimaryChannelRing &ring) override;
 };
 
+class EXCircleChannelPlaneShape : public EXChannelPlaneShape
+{
+public:
+    bool widgetToShapeCoord(const QPointF &widgetCoordCentered,
+                            QPointF &shapeCoord,
+                            const EXPrimaryChannelRing &ring) override;
+    QPointF shapeToWidgetCoordCentered(const QPointF &shapeCoordCentered, const EXPrimaryChannelRing &ring) override;
+};
+
 #endif // EXTENDED_SHAPE_H

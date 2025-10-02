@@ -17,7 +17,8 @@ EXChannelPlane::EXChannelPlane(QWidget *parent)
     : QWidget(parent)
     , m_dri(nullptr)
     // , m_shape(new EXSquareChannelPlaneShape())
-    , m_shape(new EXTriangleChannelPlaneShape())
+    // , m_shape(new EXTriangleChannelPlaneShape())
+    , m_shape(new EXCircleChannelPlaneShape())
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);

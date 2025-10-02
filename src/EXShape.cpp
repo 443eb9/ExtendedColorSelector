@@ -92,3 +92,25 @@ QPointF EXTriangleChannelPlaneShape::shapeToWidgetCoordCentered(const QPointF &s
     QVector2D p = (v0 * (1 - y) + v1 * y) + (v2 - v1) * y * x;
     return QPointF(p.x(), p.y());
 }
+
+bool EXCircleChannelPlaneShape::widgetToShapeCoord(const QPointF &widgetCoordCentered,
+                                                   QPointF &shapeCoord,
+                                                   const EXPrimaryChannelRing &ring)
+{
+    float x = widgetCoordCentered.x();
+    float y = widgetCoordCentered.y();
+    float r = sqrtf(x * x + y * y);
+    float a = atan2f(y, x) / M_PI * 0.5 + 0.5;
+    shapeCoord = QPointF(r / (ring.marginedBoundaryDiameter()), a);
+    return shapeCoord.x() >= 0 && shapeCoord.x() <= 1;
+}
+
+QPointF EXCircleChannelPlaneShape::shapeToWidgetCoordCentered(const QPointF &shapeCoordCentered,
+                                                              const EXPrimaryChannelRing &ring)
+{
+    float x = shapeCoordCentered.x();
+    float y = shapeCoordCentered.y();
+    y = 2 * M_PI * y + M_PI;
+    x *= ring.marginedBoundaryDiameter();
+    return QPointF(cosf(y) * x, sinf(y) * x);
+}
