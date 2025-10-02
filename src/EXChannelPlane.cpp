@@ -17,8 +17,8 @@ EXChannelPlane::EXChannelPlane(QWidget *parent)
     : QWidget(parent)
     , m_dri(nullptr)
     // , m_shape(new EXSquareChannelPlaneShape())
-    // , m_shape(new EXTriangleChannelPlaneShape())
-    , m_shape(new EXCircleChannelPlaneShape())
+    , m_shape(new EXTriangleChannelPlaneShape())
+// , m_shape(new EXCircleChannelPlaneShape())
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);
@@ -132,13 +132,14 @@ void EXChannelPlane::mouseMoveEvent(QMouseEvent *event)
     int size = qMin(width(), height());
     QPointF widgetCoord = QPointF(event->pos()) / size;
     widgetCoord = widgetCoord * 2 - QPointF(1, 1);
+    widgetCoord.setY(-widgetCoord.y());
     QPointF shapeCoord;
     m_shape->widgetToShapeCoord(widgetCoord, shapeCoord, m_ring);
 
     shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
     shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
 
-    EXColorState::instance()->setSecondaryChannelValues(QVector2D(shapeCoord.x(), 1 - shapeCoord.y()));
+    EXColorState::instance()->setSecondaryChannelValues(QVector2D(shapeCoord));
 }
 
 void EXChannelPlane::mouseReleaseEvent(QMouseEvent *event)
@@ -155,6 +156,6 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
 
     QVector2D planeValues = EXColorState::instance()->secondaryChannelValues();
     int size = qMin(width(), height());
-    QPointF cursorPos = m_shape->shapeToWidgetCoord(QPointF(planeValues.x(), 1 - planeValues.y()), m_ring);
-    painter.drawArc(QRectF(cursorPos.x() * size - 4, cursorPos.y() * size - 4, 8, 8), 0, 360 * 16);
+    QPointF widgetCoord = m_shape->shapeToWidgetCoord(QPointF(planeValues.x(), planeValues.y()), m_ring);
+    painter.drawArc(QRectF(widgetCoord.x() * size - 4, (1 - widgetCoord.y()) * size - 4, 8, 8), 0, 360 * 16);
 }
