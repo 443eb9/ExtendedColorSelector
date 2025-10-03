@@ -3,10 +3,10 @@
 
 #include <QCheckBox>
 #include <QColorDialog>
-#include <QDialog>
 #include <QPushButton>
+#include <QWidget>
 
-class OptionalColorPicker : public QDialog
+class OptionalColorPicker : public QWidget
 {
     Q_OBJECT
 

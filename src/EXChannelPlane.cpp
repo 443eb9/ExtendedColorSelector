@@ -155,8 +155,9 @@ void EXChannelPlane::updateImage()
         }
 
         color = colorState->kritaColorModel()->fromXyz(colorState->colorModel()->toXyz(color));
-        if (!colorState->colorModel()->isSrgbBased()) {
-            ExtendedUtils::sanitizeOutOfGamutColor(color, QVector3D(0.5, 0.5, 0.5));
+        auto &settings = EXSettingsState::instance()->globalSettings;
+        if (!colorState->colorModel()->isSrgbBased() && settings.outOfGamutColorEnabled) {
+            ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
         }
         channels[mapper[0]] = color[0], channels[mapper[1]] = color[1], channels[mapper[2]] = color[2];
         channels[mapper[3]] = 1;
