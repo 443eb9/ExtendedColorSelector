@@ -9,8 +9,12 @@ set(
     EXColorState.cpp
     EXEditable.cpp
     EXKoColorConverter.cpp
+    EXSettings.cpp
+    EXSettingsDialog.cpp
+    EXSettingsState.cpp
     EXShape.cpp
     EXUtils.cpp
+    OptionalColorPicker.cpp
 )
 
 kis_add_library(extendedcolorselector MODULE ${extendedcolorselector_SOURCES})

@@ -31,6 +31,12 @@ QPointF EXPrimaryChannelRing::getWidgetCoord(float value) const
     return QPointF(x, y);
 }
 
+const QVector<EXChannelPlaneShapeId> EXShapeFactory::AllShapes = {
+    Square,
+    Triangle,
+    Circle,
+};
+
 bool EXSquareChannelPlaneShape::widgetCenteredToShapeCoord(const QPointF &widgetCoordCentered,
                                                            QPointF &shapeCoord,
                                                            const EXPrimaryChannelRing &ring)

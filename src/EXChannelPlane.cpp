@@ -16,9 +16,6 @@
 EXChannelPlane::EXChannelPlane(QWidget *parent)
     : EXEditable(parent)
     , m_dri(nullptr)
-    , m_shape(new EXSquareChannelPlaneShape())
-// , m_shape(new EXTriangleChannelPlaneShape())
-// , m_shape(new EXCircleChannelPlaneShape())
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);

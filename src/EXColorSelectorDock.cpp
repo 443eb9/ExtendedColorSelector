@@ -1,8 +1,10 @@
+#include <QPushButton>
 #include <QVBoxLayout>
 
 #include <KoColorDisplayRendererInterface.h>
 #include <kis_canvas_resource_provider.h>
 #include <kis_display_color_converter.h>
+#include <kis_icon_utils.h>
 
 #include "EXColorSelectorDock.h"
 #include "EXColorState.h"
@@ -19,6 +21,26 @@ EXColorSelectorDock::EXColorSelectorDock()
     mainLayout->addWidget(m_colorModelSwitchers);
     m_channelValues = new EXChannelSliders(this);
     mainLayout->addWidget(m_channelValues);
+    m_settings = new EXPerColorModelSettingsDialog(this);
+    m_globalSettings = new EXGlobalSettingsDialog(this);
+
+    auto settingsButtonLayout = new QHBoxLayout(this);
+    auto settingsButton = new QPushButton();
+    settingsButton->setIcon(KisIconUtils::loadIcon(("configure")));
+    settingsButton->setFlat(true);
+    connect(settingsButton, &QPushButton::clicked, [this]() {
+        m_settings->show();
+    });
+    auto globalSettingsButton = new QPushButton(this);
+    globalSettingsButton->setIcon(KisIconUtils::loadIcon(("applications-system")));
+    globalSettingsButton->setFlat(true);
+    connect(globalSettingsButton, &QPushButton::clicked, [this]() {
+        m_globalSettings->show();
+    });
+    settingsButtonLayout->addWidget(settingsButton);
+    settingsButtonLayout->addStretch(1);
+    settingsButtonLayout->addWidget(globalSettingsButton);
+    mainLayout->addLayout(settingsButtonLayout);
 
     auto mainWidget = new QWidget(this);
     mainWidget->setLayout(mainLayout);

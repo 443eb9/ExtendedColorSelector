@@ -10,6 +10,7 @@
 #include "EXChannelPlane.h"
 #include "EXChannelSlider.h"
 #include "EXColorModelSwitchers.h"
+#include "EXSettingsDialog.h"
 
 class EXColorSelectorDock : public QDockWidget, public KisMainwindowObserver
 {
@@ -25,6 +26,8 @@ private:
     EXChannelPlane *m_plane;
     EXChannelSliders *m_channelValues;
     EXColorModelSwitchers *m_colorModelSwitchers;
+    EXGlobalSettingsDialog* m_globalSettings;
+    EXPerColorModelSettingsDialog* m_settings;
 };
 
 #endif // EXTENDEDCOLORSELECTORDOCK_H

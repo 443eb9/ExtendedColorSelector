@@ -54,4 +54,26 @@ void saturateColor(QVector3D &color)
     color[1] = qBound(0.0f, color[1], 1.0f);
     color[2] = qBound(0.0f, color[2], 1.0f);
 }
+
+QString colorToString(QVector3D color)
+{
+    return QString::number(color[0], 'f', 4) + "," + QString::number(color[1], 'f', 4) + ","
+        + QString::number(color[2], 'f', 4);
+}
+
+QVector3D stringToColor(const QString &str)
+{
+    QStringList parts = str.split(',');
+    if (parts.size() != 3) {
+        return QVector3D(0.0f, 0.0f, 0.0f);
+    }
+    bool ok1, ok2, ok3;
+    float r = parts[0].toFloat(&ok1);
+    float g = parts[1].toFloat(&ok2);
+    float b = parts[2].toFloat(&ok3);
+    if (!ok1 || !ok2 || !ok3) {
+        return QVector3D(0.0f, 0.0f, 0.0f);
+    }
+    return QVector3D(r, g, b);
+}
 } // namespace ExtendedUtils

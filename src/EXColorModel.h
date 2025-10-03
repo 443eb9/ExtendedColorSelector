@@ -400,6 +400,18 @@ public:
         }
     }
 
+    static ColorModel *fromName(const QString &name)
+    {
+        for (auto id : AllModels) {
+            auto model = fromId(id);
+            if (model && model->displayName() == name) {
+                return model;
+            }
+            delete model;
+        }
+        return nullptr;
+    }
+
     static ColorModel *fromKoColorSpace(const KoColorSpace *colorSpace)
     {
         auto id = colorSpace->colorModelId();
@@ -411,7 +423,7 @@ public:
         }
     }
 
-    static const ColorModelId AllModels[10];
+    static const QVector<ColorModelId> AllModels;
 };
 
 #endif

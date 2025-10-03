@@ -4,16 +4,16 @@
 #include "EXColorModel.h"
 #include "ok_color.h"
 
-const ColorModelId ColorModelFactory::AllModels[] = {ColorModelId::Rgb,
-                                                     ColorModelId::Hsv,
-                                                     ColorModelId::Hsl,
-                                                     ColorModelId::Xyz,
-                                                     ColorModelId::Lab,
-                                                     ColorModelId::Lch,
-                                                     ColorModelId::Oklab,
-                                                     ColorModelId::Oklch,
-                                                     ColorModelId::Okhsv,
-                                                     ColorModelId::Okhsl};
+const QVector<ColorModelId> ColorModelFactory::AllModels = {ColorModelId::Rgb,
+                                                            ColorModelId::Hsv,
+                                                            ColorModelId::Hsl,
+                                                            ColorModelId::Xyz,
+                                                            ColorModelId::Lab,
+                                                            ColorModelId::Lch,
+                                                            ColorModelId::Oklab,
+                                                            ColorModelId::Oklch,
+                                                            ColorModelId::Okhsv,
+                                                            ColorModelId::Okhsl};
 
 const float D65_WHITE_XYZ[3]{0.95047, 1.0, 1.08883};
 const float CIE_EPSILON = 216.0 / 24389.0;
