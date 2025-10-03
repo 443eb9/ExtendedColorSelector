@@ -51,7 +51,9 @@ EXGlobalSettings::EXGlobalSettings()
 {
     outOfGamutColorEnabled = m_configGroup.readEntry("outOfGamutColorEnabled", true);
     pWidth = m_configGroup.readEntry("pWidth", 300.0f);
+    pEnableChannelPlane = m_configGroup.readEntry("pEnableChannelPlane", true);
     pEnableColorModelSwitcher = m_configGroup.readEntry("pEnableColorModelSwitcher", true);
+    pEnableSliders = m_configGroup.readEntry("pEnableSliders", true);
     currentColorModel = m_configGroup.readEntry("currentColorModel", 0);
 
     auto displayOrder = m_configGroup.readEntry("displayOrder", "");
