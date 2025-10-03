@@ -135,10 +135,12 @@ QVector3D HSVModel::toXyz(const QVector3D &color) const
     return RGBModel().toXyz(hwbToRgb(QVector3D(color[0], (1. - color[1]) * color[2], 1. - color[2])));
 }
 
-void HSVModel::makeColorful(QVector3D &color) const
+void HSVModel::makeColorful(QVector3D &color, int channelIndex) const
 {
-    color[1] = 1.0;
-    color[2] = 1.0;
+    if (channelIndex == 0) {
+        color[1] = 1.0;
+        color[2] = 1.0;
+    }
 }
 
 QVector3D HSLModel::fromXyz(const QVector3D &color) const
@@ -159,10 +161,12 @@ QVector3D HSLModel::toXyz(const QVector3D &color) const
     return HSVModel().toXyz(QVector3D(color[0], saturation, value));
 }
 
-void HSLModel::makeColorful(QVector3D &color) const
+void HSLModel::makeColorful(QVector3D &color, int channelIndex) const
 {
-    color[1] = 1.0;
-    color[2] = 0.5;
+    if (channelIndex == 0) {
+        color[1] = 1.0;
+        color[2] = 0.5;
+    }
 }
 
 QVector3D XYZModel::fromXyz(const QVector3D &color) const
@@ -315,10 +319,12 @@ QVector3D OKHSVModel::toXyz(const QVector3D &color) const
     return QVector3D(xyz[0], xyz[1], xyz[2]);
 }
 
-void OKHSVModel::makeColorful(QVector3D &color) const
+void OKHSVModel::makeColorful(QVector3D &color, int channelIndex) const
 {
-    color[1] = 1.0;
-    color[2] = 1.0;
+    if (channelIndex == 0) {
+        color[1] = 1.0;
+        color[2] = 1.0;
+    }
 }
 
 QVector3D OKHSLModel::fromXyz(const QVector3D &color) const

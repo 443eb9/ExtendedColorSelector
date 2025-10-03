@@ -138,7 +138,7 @@ void ChannelValueBar::updateImage()
         QVector3D color = colorState->color();
         color[m_channelIndex] = x;
         if (makeColorful) {
-            colorState->colorModel()->makeColorful(color);
+            colorState->colorModel()->makeColorful(color, m_channelIndex);
         }
         color = colorState->colorModel()->transferTo(colorState->kritaColorModel(), color, nullptr);
         auto settings = EXSettingsState::instance()->globalSettings;

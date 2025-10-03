@@ -30,7 +30,7 @@ class ColorModel : public KisShared
 public:
     virtual QVector3D toXyz(const QVector3D &color) const = 0;
     virtual QVector3D fromXyz(const QVector3D &color) const = 0;
-    virtual void makeColorful(QVector3D &color) const
+    virtual void makeColorful(QVector3D &color, int channelIndex) const
     {
     }
 
@@ -92,7 +92,7 @@ class HSVModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
-    void makeColorful(QVector3D &color) const override;
+    void makeColorful(QVector3D &color, int channelIndex) const override;
 
     ColorModelId id() const override
     {
@@ -125,7 +125,7 @@ class HSLModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
-    void makeColorful(QVector3D &color) const override;
+    void makeColorful(QVector3D &color, int channelIndex) const override;
 
     ColorModelId id() const override
     {
@@ -318,7 +318,7 @@ class OKHSVModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
-    void makeColorful(QVector3D &color) const override;
+    void makeColorful(QVector3D &color, int channelIndex) const override;
 
     ColorModelId id() const override
     {

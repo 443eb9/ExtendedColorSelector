@@ -127,7 +127,7 @@ void EXChannelPlane::updateImage()
             color = colorState->color();
             color[primaryChannelIndex] = ringValue;
             if (makeColorful) {
-                colorState->colorModel()->makeColorful(color);
+                colorState->colorModel()->makeColorful(color, primaryChannelIndex);
             }
         } else {
             QPointF shapeCoord;
