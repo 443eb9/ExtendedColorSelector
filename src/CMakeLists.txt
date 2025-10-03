@@ -9,6 +9,7 @@ set(
     EXColorState.cpp
     EXEditable.cpp
     EXKoColorConverter.cpp
+    EXPortableColorSelector.cpp
     EXSettings.cpp
     EXSettingsDialog.cpp
     EXSettingsState.cpp

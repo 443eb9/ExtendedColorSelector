@@ -50,7 +50,8 @@ public:
     float barHeight;
     bool dontSyncIfOutOfGamut;
     float pWidth;
-    float pBarHeight;
+    bool pEnableChannelPlane;
+    bool pEnableSliders;
     bool pEnableColorModelSwitcher;
     int currentColorModel;
 

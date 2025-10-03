@@ -1,6 +1,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
+#include <KisViewManager.h>
 #include <KoColorDisplayRendererInterface.h>
 #include <kis_canvas_resource_provider.h>
 #include <kis_display_color_converter.h>
@@ -17,11 +18,12 @@ EXColorSelectorDock::EXColorSelectorDock()
     auto mainLayout = new QVBoxLayout();
 
     m_plane = new EXChannelPlane(this);
-    mainLayout->addWidget(m_plane);
     m_colorModelSwitchers = new EXColorModelSwitchers(this);
+    m_sliders = new EXChannelSliders(this);
+    mainLayout->addWidget(m_plane);
     mainLayout->addWidget(m_colorModelSwitchers);
-    m_channelValues = new EXChannelSliders(this);
-    mainLayout->addWidget(m_channelValues);
+    mainLayout->addWidget(m_sliders);
+
     m_settings = new EXPerColorModelSettingsDialog(this);
     m_globalSettings = new EXGlobalSettingsDialog(this);
 
@@ -46,10 +48,13 @@ EXColorSelectorDock::EXColorSelectorDock()
     auto mainWidget = new QWidget(this);
     mainWidget->setLayout(mainLayout);
     setWidget(mainWidget);
+
+    m_portableSelector = new EXPortableColorSelector();
 }
 
 void EXColorSelectorDock::setViewManager(KisViewManager *kisview)
 {
+    m_portableSelector->setViewManager(kisview);
 }
 
 void EXColorSelectorDock::setCanvas(KoCanvasBase *canvas)
@@ -57,9 +62,8 @@ void EXColorSelectorDock::setCanvas(KoCanvasBase *canvas)
     m_canvas = qobject_cast<KisCanvas2 *>(canvas);
     if (m_canvas) {
         m_plane->setCanvas(m_canvas);
-        m_channelValues->setCanvas(m_canvas);
-        // This emits signals that requires the canvas to be set.
-        // So color state should be set canvas after other widgets.
+        m_sliders->setCanvas(m_canvas);
+        m_portableSelector->setCanvas(m_canvas);
         EXColorState::instance()->setCanvas(m_canvas);
         Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
     }
@@ -69,4 +73,7 @@ void EXColorSelectorDock::unsetCanvas()
 {
     m_canvas = nullptr;
     m_plane->setCanvas(nullptr);
+    m_sliders->setCanvas(nullptr);
+    EXColorState::instance()->setCanvas(nullptr);
+    m_portableSelector->setCanvas(nullptr);
 }

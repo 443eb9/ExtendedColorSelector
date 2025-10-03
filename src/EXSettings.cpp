@@ -51,7 +51,6 @@ EXGlobalSettings::EXGlobalSettings()
 {
     outOfGamutColorEnabled = m_configGroup.readEntry("outOfGamutColorEnabled", true);
     pWidth = m_configGroup.readEntry("pWidth", 300.0f);
-    pBarHeight = m_configGroup.readEntry("pBarHeight", 20.0f);
     pEnableColorModelSwitcher = m_configGroup.readEntry("pEnableColorModelSwitcher", true);
     currentColorModel = m_configGroup.readEntry("currentColorModel", 0);
 
@@ -79,7 +78,8 @@ void EXGlobalSettings::writeAll()
     m_configGroup.writeEntry("outOfGamutColorEnabled", outOfGamutColorEnabled);
     m_configGroup.writeEntry("outOfGamutColor", ExtendedUtils::colorToString(outOfGamutColor));
     m_configGroup.writeEntry("pWidth", pWidth);
-    m_configGroup.writeEntry("pBarHeight", pBarHeight);
+    m_configGroup.writeEntry("pEnableChannelPlane", pEnableChannelPlane);
+    m_configGroup.writeEntry("pEnableSliders", pEnableSliders);
     m_configGroup.writeEntry("pEnableColorModelSwitcher", pEnableColorModelSwitcher);
     m_configGroup.writeEntry("currentColorModel", currentColorModel);
     m_configGroup.sync();

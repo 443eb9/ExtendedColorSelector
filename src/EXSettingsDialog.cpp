@@ -1,6 +1,7 @@
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QDoubleSpinBox>
+#include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -279,9 +280,10 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(QWidget *parent)
         Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
     });
 
-    auto portableSelectorSettingsGroup = new QGroupBox("Portable Color Selector");
-    auto pSettingsLayouts = new QVBoxLayout();
-    auto pSettingsLayout1 = new QHBoxLayout();
+    auto pSettingsGroup = new QGroupBox("Portable Color Selector");
+    auto pSettingsLayout = new QVBoxLayout();
+    pSettingsGroup->setLayout(pSettingsLayout);
+    auto pSettingForm = new QFormLayout();
     auto pWidthBox = new QSpinBox();
     pWidthBox->setMaximum(1000);
     pWidthBox->setValue(settings.pWidth);
@@ -289,17 +291,16 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(QWidget *parent)
         settings.pWidth = val;
         Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
     });
-    auto pBarHeightBox = new QSpinBox();
-    pBarHeightBox->setValue(settings.pBarHeight);
-    connect(pBarHeightBox, QOverload<int>::of(&QSpinBox::valueChanged), [&settings](int val) {
-        settings.pBarHeight = val;
+    pSettingForm->addRow("Width", pWidthBox);
+
+    auto pSettingsButtons = new QVBoxLayout();
+    auto pEnableChannelPlane = new QCheckBox("Enable Channel Plane");
+    pEnableChannelPlane->setChecked(settings.pEnableChannelPlane);
+    connect(pEnableChannelPlane, &QCheckBox::clicked, [&settings](bool checked) {
+        settings.pEnableChannelPlane = checked;
         Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
     });
-    pSettingsLayout1->addWidget(new QLabel("Width"));
-    pSettingsLayout1->addWidget(pWidthBox);
-    pSettingsLayout1->addWidget(new QLabel("Bar Height"));
-    pSettingsLayout1->addWidget(pBarHeightBox);
-    auto pSettingsLayout2 = new QHBoxLayout();
+
     auto pEnableColorModelSwitcher = new QCheckBox("Enable Color Model Switcher");
     pEnableColorModelSwitcher->setChecked(settings.pEnableColorModelSwitcher);
     connect(pEnableColorModelSwitcher, &QCheckBox::clicked, [&settings](bool checked) {
@@ -307,15 +308,23 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(QWidget *parent)
         Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
     });
 
-    pSettingsLayout2->addWidget(pEnableColorModelSwitcher);
-    pSettingsLayouts->addLayout(pSettingsLayout1);
-    pSettingsLayouts->addLayout(pSettingsLayout2);
-    portableSelectorSettingsGroup->setLayout(pSettingsLayouts);
+    auto pEnableSliders = new QCheckBox("Enable Sliders");
+    pEnableSliders->setChecked(settings.pEnableSliders);
+    connect(pEnableSliders, &QCheckBox::clicked, [&settings](bool checked) {
+        settings.pEnableSliders = checked;
+        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+    });
+
+    pSettingsButtons->addWidget(pEnableChannelPlane);
+    pSettingsButtons->addWidget(pEnableColorModelSwitcher);
+    pSettingsButtons->addWidget(pEnableSliders);
+    pSettingsLayout->addLayout(pSettingsButtons);
+    pSettingsLayout->addLayout(pSettingForm);
 
     mainLayout->addWidget(outOfGamutColorPicker);
     mainLayout->addWidget(dontSyncIfOutOfGamutBox);
     mainLayout->addLayout(barHeightLayout);
-    mainLayout->addWidget(portableSelectorSettingsGroup);
+    mainLayout->addWidget(pSettingsGroup);
     mainLayout->addStretch(1);
 }
 
