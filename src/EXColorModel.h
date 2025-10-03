@@ -51,6 +51,8 @@ public:
         auto [mn, mx] = channelRanges();
         return (normalized + mn) / (mx - mn);
     }
+
+    QVector3D transferTo(const ColorModel *toModel, const QVector3D &color, const QVector3D *reference = nullptr) const;
 };
 
 class RGBModel : public ColorModel

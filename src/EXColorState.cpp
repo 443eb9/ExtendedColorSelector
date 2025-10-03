@@ -30,7 +30,7 @@ void EXColorState::setColorModel(ColorModelId model)
     }
 
     auto newModel = ColorModelFactory::fromId(model);
-    m_color = newModel->fromXyz(m_colorModel->toXyz(m_color));
+    m_color = m_colorModel->transferTo(newModel, m_color, nullptr);
     ExtendedUtils::saturateColor(m_color);
     m_colorModel = newModel;
     Q_EMIT sigColorModelChanged(model);
@@ -45,7 +45,7 @@ const ColorModelSP EXColorState::colorModel() const
 void EXColorState::sendToKrita()
 {
     RGBModel rgbConverter;
-    QVector3D currentRgb = rgbConverter.fromXyz(m_colorModel->toXyz(m_color));
+    QVector3D currentRgb = m_colorModel->transferTo(&rgbConverter, m_color, nullptr);
     QVector<float> channels(4, 1);
     channels[0] = currentRgb.x(), channels[1] = currentRgb.y(), channels[2] = currentRgb.z();
 

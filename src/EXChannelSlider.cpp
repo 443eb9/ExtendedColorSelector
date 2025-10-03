@@ -140,7 +140,7 @@ void ChannelValueBar::updateImage()
         if (makeColorful) {
             colorState->colorModel()->makeColorful(color);
         }
-        color = colorState->kritaColorModel()->fromXyz(colorState->colorModel()->toXyz(color));
+        color = colorState->colorModel()->transferTo(colorState->kritaColorModel(), color, nullptr);
         if (!colorState->colorModel()->isSrgbBased()) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, QVector3D(0.5, 0.5, 0.5));
         }

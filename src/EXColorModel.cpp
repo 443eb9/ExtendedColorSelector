@@ -15,6 +15,18 @@ const QVector<ColorModelId> ColorModelFactory::AllModels = {ColorModelId::Rgb,
                                                             ColorModelId::Okhsv,
                                                             ColorModelId::Okhsl};
 
+QVector3D ColorModel::transferTo(const ColorModel *toModel, const QVector3D &color, const QVector3D *reference) const
+{
+    if (toModel->id() == id()) {
+        return color;
+    }
+
+    QVector3D xyz = toXyz(color);
+    QVector3D result = toModel->fromXyz(xyz);
+    // TODO use reference color
+    return result;
+}
+
 const float D65_WHITE_XYZ[3]{0.95047, 1.0, 1.08883};
 const float CIE_EPSILON = 216.0 / 24389.0;
 const float CIE_KAPPA = 24389.0 / 27.0;
