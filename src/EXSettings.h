@@ -18,9 +18,7 @@ public:
     void writeAll();
 
     bool enabled;
-    bool barEnabled;
     EXChannelPlaneShapeId shape;
-    bool displayChannels;
     bool swapAxes;
     bool reverseX;
     bool reverseY;

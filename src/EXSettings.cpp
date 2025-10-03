@@ -8,8 +8,6 @@ EXPerColorModelSettings::EXPerColorModelSettings(QString colorModel)
     , m_colorModel(colorModel)
 {
     enabled = m_configGroup.readEntry(m_colorModel + ".enabled", true);
-    barEnabled = m_configGroup.readEntry(m_colorModel + ".barEnabled", false);
-    displayChannels = m_configGroup.readEntry(m_colorModel + ".displayChannels", true);
     swapAxes = m_configGroup.readEntry(m_colorModel + ".swapAxes", false);
     reverseX = m_configGroup.readEntry(m_colorModel + ".reverseX", false);
     reverseY = m_configGroup.readEntry(m_colorModel + ".reverseY", false);
@@ -31,9 +29,7 @@ EXPerColorModelSettings::EXPerColorModelSettings(QString colorModel)
 void EXPerColorModelSettings::writeAll()
 {
     m_configGroup.writeEntry(m_colorModel + ".enabled", enabled);
-    m_configGroup.writeEntry(m_colorModel + ".barEnabled", barEnabled);
     m_configGroup.writeEntry(m_colorModel + ".shape", (int)shape);
-    m_configGroup.writeEntry(m_colorModel + ".displayChannels", displayChannels);
     m_configGroup.writeEntry(m_colorModel + ".swapAxes", swapAxes);
     m_configGroup.writeEntry(m_colorModel + ".reverseX", reverseX);
     m_configGroup.writeEntry(m_colorModel + ".reverseY", reverseY);
