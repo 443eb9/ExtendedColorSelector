@@ -24,7 +24,8 @@ public:
     void edit(QMouseEvent *event) override;
     void shift(QMouseEvent *event, QVector2D delta) override;
 
-    QPointF currentRingWidgetCoordPx();
+    float size() const;
+    QPointF currentRingWidgetCoord();
 
     void setCanvas(KisCanvas2 *canvas);
 

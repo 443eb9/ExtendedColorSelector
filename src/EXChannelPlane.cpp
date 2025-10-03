@@ -70,12 +70,12 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
     painter.drawImage(0, 0, m_image);
 
     QVector2D planeValues = EXColorState::instance()->secondaryChannelValues();
-    int size = qMin(width(), height());
+    int size = this->size();
     QPointF widgetCoord = m_shape->shapeToWidgetCoord(QPointF(planeValues.x(), planeValues.y()), m_ring);
     painter.drawArc(QRectF(widgetCoord.x() * size - 4, widgetCoord.y() * size - 4, 8, 8), 0, 360 * 16);
 
-    QPointF ringWidgetCoord = currentRingWidgetCoordPx();
-    painter.drawArc(QRectF(ringWidgetCoord.x() - 4, ringWidgetCoord.y() - 4, 8, 8), 0, 360 * 16);
+    QPointF ringWidgetCoord = currentRingWidgetCoord();
+    painter.drawArc(QRectF(ringWidgetCoord.x() * size - 4, ringWidgetCoord.y() * size - 4, 8, 8), 0, 360 * 16);
 }
 
 void EXChannelPlane::updateImage()
@@ -85,13 +85,11 @@ void EXChannelPlane::updateImage()
         return;
     }
 
-    int size = qMin(width(), height());
-
     auto colorState = EXColorState::instance();
     auto converter = EXColorConverter(colorState->colorSpace());
     auto mapper = converter.displayToMemoryPositionMapper();
 
-    auto pixelGet = [this, size, colorState, mapper](float x, float y, QVector<float> &channels) {
+    auto pixelGet = [this, colorState, mapper](float x, float y, QVector<float> &channels) {
         QVector3D color;
         QPointF widgetCoord = QPointF(x * 2 - 1, (1 - y) * 2 - 1);
         float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
@@ -135,7 +133,7 @@ void EXChannelPlane::updateImage()
         channels[mapper[0]] = color[0], channels[mapper[1]] = color[1], channels[mapper[2]] = color[2];
         channels[mapper[3]] = 1;
     };
-    m_image = ExtendedUtils::generateGradient(size, size, colorState->colorSpace(), m_dri, pixelGet);
+    m_image = ExtendedUtils::generateGradient(size(), size(), colorState->colorSpace(), m_dri, pixelGet);
 }
 
 void EXChannelPlane::mousePressEvent(QMouseEvent *event)
@@ -143,22 +141,21 @@ void EXChannelPlane::mousePressEvent(QMouseEvent *event)
     EXEditable::mousePressEvent(event);
     QPointF widgetCoord = QPointF(event->pos()) / qMin(width(), height()) * 2 - QPointF(1, 1);
     float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
+    float size = this->size();
 
     if (dist < 1 && dist > m_ring.boundaryDiameter()) {
         m_editMode = Ring;
-        m_editStart = currentRingWidgetCoordPx();
+        m_editStart = currentRingWidgetCoord() * size;
     } else {
         m_editMode = Plane;
         QVector2D values = EXColorState::instance()->secondaryChannelValues();
-        m_editStart = m_shape->shapeToWidgetCoord(QPointF(values.x(), values.y()), m_ring);
-        m_editStart *= qMin(width(), height());
+        m_editStart = m_shape->shapeToWidgetCoord(QPointF(values.x(), values.y()), m_ring) * size;
     }
 }
 
 void EXChannelPlane::edit(QMouseEvent *event)
 {
-    int size = qMin(width(), height());
-    QPointF widgetCoord = QPointF(event->pos()) / size;
+    QPointF widgetCoord = QPointF(event->pos()) / size();
 
     switch (m_editMode) {
     case Ring: {
@@ -181,8 +178,7 @@ void EXChannelPlane::edit(QMouseEvent *event)
 
 void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
 {
-    int size = qMin(width(), height());
-    QPointF widgetCoord = (m_editStart + QPointF(delta.x(), delta.y())) / size;
+    QPointF widgetCoord = (m_editStart + QPointF(delta.x(), delta.y())) / this->size();
 
     switch (m_editMode) {
     case Ring: {
@@ -207,9 +203,12 @@ void EXChannelPlane::mouseReleaseEvent(QMouseEvent *event)
     EXColorState::instance()->sendToKrita();
 }
 
-QPointF EXChannelPlane::currentRingWidgetCoordPx()
+float EXChannelPlane::size() const
 {
-    QPointF widgetCoord = m_ring.getWidgetCoord(EXColorState::instance()->primaryChannelValue());
-    int size = qMin(width(), height());
-    return widgetCoord * size;
+    return qMin(width(), height());
+}
+
+QPointF EXChannelPlane::currentRingWidgetCoord()
+{
+    return m_ring.getWidgetCoord(EXColorState::instance()->primaryChannelValue());
 }
