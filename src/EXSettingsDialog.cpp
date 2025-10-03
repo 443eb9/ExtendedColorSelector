@@ -44,9 +44,9 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
         auto barEnabled = new QCheckBox(QString("Enable %1 Bar").arg(colorModel->displayName()));
 
         auto colorfulPrimaryChannel = new QCheckBox("Colorful Primary Channel");
-        colorfulPrimaryChannel->setChecked(settings.colorfulPrimaryChannel);
+        colorfulPrimaryChannel->setChecked(settings.colorfulHueRing);
         connect(colorfulPrimaryChannel, &QCheckBox::clicked, [&settings](bool checked) {
-            settings.colorfulPrimaryChannel = checked;
+            settings.colorfulHueRing = checked;
             Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
         });
 

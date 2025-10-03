@@ -114,15 +114,21 @@ void EXChannelPlane::updateImage()
     auto colorState = EXColorState::instance();
     auto converter = EXColorConverter(colorState->colorSpace());
     auto mapper = converter.displayToMemoryPositionMapper();
+    auto makeColorful = EXSettingsState::instance()->settings[colorState->colorModel()->id()].colorfulHueRing;
 
-    auto pixelGet = [this, colorState, mapper](float x, float y, QVector<float> &channels) {
+    auto pixelGet = [this, colorState, mapper, makeColorful](float x, float y, QVector<float> &channels) {
         QVector3D color;
         QPointF widgetCoord = QPointF(x * 2 - 1, (1 - y) * 2 - 1);
         float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
+        int primaryChannelIndex = colorState->primaryChannelIndex();
+
         if (m_shape->ring.thickness > 0 && dist > m_shape->ring.boundaryDiameter() && dist < 1) {
             float ringValue = m_shape->ring.getRingValue(QPointF(x, y));
             color = colorState->color();
-            color[colorState->primaryChannelIndex()] = ringValue;
+            color[primaryChannelIndex] = ringValue;
+            if (makeColorful) {
+                colorState->colorModel()->makeColorful(color);
+            }
         } else {
             QPointF shapeCoord;
             bool isInShape = m_shape->widgetCenteredToShape(widgetCoord, shapeCoord);
@@ -135,7 +141,7 @@ void EXChannelPlane::updateImage()
 
             float primary = colorState->primaryChannelValue();
 
-            switch (colorState->primaryChannelIndex()) {
+            switch (primaryChannelIndex) {
             case 0:
                 color[0] = primary, color[1] = channel1, color[2] = channel2;
                 break;

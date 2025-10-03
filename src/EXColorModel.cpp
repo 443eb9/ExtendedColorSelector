@@ -123,6 +123,12 @@ QVector3D HSVModel::toXyz(const QVector3D &color) const
     return RGBModel().toXyz(hwbToRgb(QVector3D(color[0], (1. - color[1]) * color[2], 1. - color[2])));
 }
 
+void HSVModel::makeColorful(QVector3D &color) const
+{
+    color[1] = 1.0;
+    color[2] = 1.0;
+}
+
 QVector3D HSLModel::fromXyz(const QVector3D &color) const
 {
     auto hsv = HSVModel().fromXyz(color);
@@ -139,6 +145,12 @@ QVector3D HSLModel::toXyz(const QVector3D &color) const
     float saturation = value == 0. ? 0. : 2. * (1. - (color[2] / value));
 
     return HSVModel().toXyz(QVector3D(color[0], saturation, value));
+}
+
+void HSLModel::makeColorful(QVector3D &color) const
+{
+    color[1] = 1.0;
+    color[2] = 0.5;
 }
 
 QVector3D XYZModel::fromXyz(const QVector3D &color) const
@@ -289,6 +301,12 @@ QVector3D OKHSVModel::toXyz(const QVector3D &color) const
     auto rgb = ok_color::okhsv_to_srgb(ok_color::HSV{color[0], color[1], color[2]});
     auto xyz = RGBModel().toXyz(QVector3D(rgb.r, rgb.g, rgb.b));
     return QVector3D(xyz[0], xyz[1], xyz[2]);
+}
+
+void OKHSVModel::makeColorful(QVector3D &color) const
+{
+    color[1] = 1.0;
+    color[2] = 1.0;
 }
 
 QVector3D OKHSLModel::fromXyz(const QVector3D &color) const

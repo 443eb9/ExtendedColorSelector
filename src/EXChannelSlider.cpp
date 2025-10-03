@@ -9,6 +9,7 @@
 #include "EXChannelSlider.h"
 #include "EXColorState.h"
 #include "EXKoColorConverter.h"
+#include "EXSettingsState.h"
 #include "EXUtils.h"
 
 EXChannelSliders::EXChannelSliders(QWidget *parent)
@@ -123,10 +124,14 @@ void ChannelValueBar::updateImage()
     auto colorState = EXColorState::instance();
     auto converter = EXColorConverter(colorState->colorSpace());
     auto mapper = converter.displayToMemoryPositionMapper();
+    auto makeColorful = EXSettingsState::instance()->settings[colorState->colorModel()->id()].colorfulHueRing;
 
-    auto pixelGet = [this, colorState, mapper](float x, float y, QVector<float> &channels) {
+    auto pixelGet = [this, colorState, mapper, makeColorful](float x, float y, QVector<float> &channels) {
         QVector3D color = colorState->color();
         color[m_channelIndex] = x;
+        if (makeColorful) {
+            colorState->colorModel()->makeColorful(color);
+        }
         color = colorState->kritaColorModel()->fromXyz(colorState->colorModel()->toXyz(color));
         if (!colorState->colorModel()->isSrgbBased()) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, QVector3D(0.5, 0.5, 0.5));

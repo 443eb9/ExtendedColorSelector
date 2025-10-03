@@ -19,7 +19,7 @@ EXPerColorModelSettings::EXPerColorModelSettings(QString colorModel)
     ringReversed = m_configGroup.readEntry(m_colorModel + ".ringReversed", false);
     planeRotateWithRing = m_configGroup.readEntry(m_colorModel + ".planeRotateWithRing", false);
     primaryIndex = m_configGroup.readEntry(m_colorModel + ".primaryIndex", 0);
-    colorfulPrimaryChannel = m_configGroup.readEntry(m_colorModel + ".colorfulPrimaryChannel", true);
+    colorfulHueRing = m_configGroup.readEntry(m_colorModel + ".colorfulHueRing", true);
     clipToSrgbGamut = m_configGroup.readEntry(m_colorModel + ".clipToSrgbGamut", false);
 
     int shape = m_configGroup.readEntry(colorModel + ".shape", (int)EXChannelPlaneShapeId::Square);
@@ -41,7 +41,7 @@ void EXPerColorModelSettings::writeAll()
     m_configGroup.writeEntry(m_colorModel + ".ringReversed", ringReversed);
     m_configGroup.writeEntry(m_colorModel + ".planeRotateWithRing", planeRotateWithRing);
     m_configGroup.writeEntry(m_colorModel + ".primaryIndex", primaryIndex);
-    m_configGroup.writeEntry(m_colorModel + ".colorfulPrimaryChannel", colorfulPrimaryChannel);
+    m_configGroup.writeEntry(m_colorModel + ".colorfulHueRing", colorfulHueRing);
     m_configGroup.writeEntry(m_colorModel + ".clipToSrgbGamut", clipToSrgbGamut);
     m_configGroup.sync();
 }

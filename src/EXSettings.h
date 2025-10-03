@@ -30,7 +30,7 @@ public:
     bool ringReversed;
     bool planeRotateWithRing;
     int primaryIndex;
-    bool colorfulPrimaryChannel;
+    bool colorfulHueRing;
     bool clipToSrgbGamut;
 
 private:
