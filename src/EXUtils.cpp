@@ -1,3 +1,4 @@
+#include <QtConcurrent>
 #include <qmath.h>
 
 #include "EXColorModel.h"
@@ -11,32 +12,30 @@ QImage generateGradient(int width,
                         const KoColorDisplayRendererInterface *dri,
                         std::function<void(float, float, QVector<float> &)> pixelGet)
 {
-    // const qreal deviceDivider = 1.0 / devicePixelRatioF();
-    const qreal deviceDivider = 1.0;
-    const int deviceWidth = qCeil(width * deviceDivider);
-    const int deviceHeight = qCeil(height * deviceDivider);
+    const int deviceWidth = qCeil(width);
+    const int deviceHeight = qCeil(height);
     const qsizetype pixelSize = colorSpace->pixelSize();
     quint32 imageSize = deviceWidth * deviceHeight * pixelSize;
     QScopedArrayPointer<quint8> raw(new quint8[imageSize]{});
     quint8 *dataPtr = raw.data();
-    RGBModel rgbConverter;
 
-    QVector<float> channels(4, 1);
-    KoColor color(colorSpace);
-    for (int y = 0; y < deviceHeight; y++) {
+    QVector<int> rows(deviceHeight);
+    std::iota(rows.begin(), rows.end(), 0);
+
+    QtConcurrent::blockingMap(rows, [&](int y) {
+        QVector<float> channels(4, 1);
+        KoColor color(colorSpace);
+        quint8 *rowPtr = dataPtr + y * deviceWidth * pixelSize;
+
         for (int x = 0; x < deviceWidth; x++) {
             pixelGet((float)x / (width - 1), (float)y / (height - 1), channels);
-
             colorSpace->fromNormalisedChannelsValue(color.data(), channels);
-            memcpy(dataPtr, color.data(), pixelSize);
-            dataPtr += pixelSize;
+            memcpy(rowPtr, color.data(), pixelSize);
+            rowPtr += pixelSize;
         }
-    }
+    });
 
-    QImage image = dri->toQImage(colorSpace, raw.data(), QSize(deviceWidth, deviceHeight), false);
-    // image.setDevicePixelRatio(devicePixelRatioF());
-
-    return image;
+    return dri->toQImage(colorSpace, raw.data(), QSize(deviceWidth, deviceHeight), false);
 }
 
 void sanitizeOutOfGamutColor(QVector3D &color, const QVector3D &outOfGamutColor)
