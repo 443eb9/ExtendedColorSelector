@@ -29,21 +29,20 @@ class EXChannelPlaneShape
 public:
     virtual QString displayName() const = 0;
 
-    QPointF shapeToWidgetCenteredTransformed(const QPointF &shapeCoord, const EXPrimaryChannelRing &ring);
-    bool widgetCenteredToShapeTransformed(const QPointF &widgetCoordCentered,
-                                               QPointF &shapeCoord,
-                                               const EXPrimaryChannelRing &ring);
-
-    QPointF shapeToWidget01Transformed(const QPointF &shapeCoord, const EXPrimaryChannelRing &ring);
+    QPointF shapeToWidgetCentered(const QPointF &shapeCoord, const EXPrimaryChannelRing &ring);
     bool
-    widget01ToShapeTransformed(const QPointF &widgetCoord, QPointF &shapeCoord, const EXPrimaryChannelRing &ring);
+    widgetCenteredToShape(const QPointF &widgetCoordCentered, QPointF &shapeCoord, const EXPrimaryChannelRing &ring);
+
+    QPointF shapeToWidget01(const QPointF &shapeCoord, const EXPrimaryChannelRing &ring);
+    bool widget01ToShape(const QPointF &widgetCoord, QPointF &shapeCoord, const EXPrimaryChannelRing &ring);
     void updateTransform(bool reverseX, bool reverseY, float rotation, bool swapAxes);
 
 protected:
-    virtual bool widgetCenteredToShape(const QPointF &widgetCoordCentered,
-                                            QPointF &shapeCoord,
-                                            const EXPrimaryChannelRing &ring) = 0;
-    virtual QPointF shapeToWidgetCentered(const QPointF &shapeCoordCentered, const EXPrimaryChannelRing &ring) = 0;
+    virtual bool widgetCenteredToShapeUntransformed(const QPointF &widgetCoordCentered,
+                                                    QPointF &shapeCoord,
+                                                    const EXPrimaryChannelRing &ring) = 0;
+    virtual QPointF shapeToWidgetCenteredUntransformed(const QPointF &shapeCoordCentered,
+                                                       const EXPrimaryChannelRing &ring) = 0;
 
 private:
     bool m_reverseX;
@@ -62,10 +61,11 @@ public:
         return "Square";
     }
 
-    bool widgetCenteredToShape(const QPointF &widgetCoordCentered,
-                                    QPointF &shapeCoord,
-                                    const EXPrimaryChannelRing &ring) override;
-    QPointF shapeToWidgetCentered(const QPointF &shapeCoordCentered, const EXPrimaryChannelRing &ring) override;
+    bool widgetCenteredToShapeUntransformed(const QPointF &widgetCoordCentered,
+                                            QPointF &shapeCoord,
+                                            const EXPrimaryChannelRing &ring) override;
+    QPointF shapeToWidgetCenteredUntransformed(const QPointF &shapeCoordCentered,
+                                               const EXPrimaryChannelRing &ring) override;
 };
 
 class EXTriangleChannelPlaneShape : public EXChannelPlaneShape
@@ -76,10 +76,11 @@ public:
         return "Triangle";
     }
 
-    bool widgetCenteredToShape(const QPointF &widgetCoordCentered,
-                                    QPointF &shapeCoord,
-                                    const EXPrimaryChannelRing &ring) override;
-    QPointF shapeToWidgetCentered(const QPointF &shapeCoordCentered, const EXPrimaryChannelRing &ring) override;
+    bool widgetCenteredToShapeUntransformed(const QPointF &widgetCoordCentered,
+                                            QPointF &shapeCoord,
+                                            const EXPrimaryChannelRing &ring) override;
+    QPointF shapeToWidgetCenteredUntransformed(const QPointF &shapeCoordCentered,
+                                               const EXPrimaryChannelRing &ring) override;
 };
 
 class EXCircleChannelPlaneShape : public EXChannelPlaneShape
@@ -90,10 +91,11 @@ public:
         return "Circle";
     }
 
-    bool widgetCenteredToShape(const QPointF &widgetCoordCentered,
-                                    QPointF &shapeCoord,
-                                    const EXPrimaryChannelRing &ring) override;
-    QPointF shapeToWidgetCentered(const QPointF &shapeCoordCentered, const EXPrimaryChannelRing &ring) override;
+    bool widgetCenteredToShapeUntransformed(const QPointF &widgetCoordCentered,
+                                            QPointF &shapeCoord,
+                                            const EXPrimaryChannelRing &ring) override;
+    QPointF shapeToWidgetCenteredUntransformed(const QPointF &shapeCoordCentered,
+                                               const EXPrimaryChannelRing &ring) override;
 };
 
 class EXShapeFactory
