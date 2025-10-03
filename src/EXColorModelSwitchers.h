@@ -9,6 +9,7 @@ class EXColorModelSwitchers : public QWidget
 
 public:
     EXColorModelSwitchers(QWidget *parent);
+    void settingsChanged();
 };
 
 #endif

@@ -5,6 +5,7 @@
 #include "EXColorModel.h"
 #include "EXColorModelSwitchers.h"
 #include "EXColorState.h"
+#include "EXSettingsState.h"
 
 EXColorModelSwitchers::EXColorModelSwitchers(QWidget *parent)
     : QWidget(parent)
@@ -13,10 +14,39 @@ EXColorModelSwitchers::EXColorModelSwitchers(QWidget *parent)
     auto group = new QButtonGroup();
     group->setExclusive(true);
 
-    for (auto id : ColorModelFactory::AllModels) {
+    connect(EXSettingsState::instance(),
+            &EXSettingsState::sigSettingsChanged,
+            this,
+            &EXColorModelSwitchers::settingsChanged);
+
+    setLayout(layout);
+}
+
+void EXColorModelSwitchers::settingsChanged()
+{
+    while (true) {
+        auto widget = layout()->takeAt(0);
+        if (!widget) {
+            break;
+        }
+        if (auto w = widget->widget()) {
+            w->deleteLater();
+        }
+    }
+
+    auto &globalSettings = EXSettingsState::instance()->globalSettings;
+    auto &settings = EXSettingsState::instance()->settings;
+    auto currentModelId = EXColorState::instance()->colorModel()->id();
+
+    for (auto id : globalSettings.displayOrder) {
+        if (!settings[id].enabled) {
+            continue;
+        }
+
         auto model = ColorModelFactory::fromId(id);
         auto button = new QRadioButton(model->displayName());
-        layout->addWidget(button);
+        button->setChecked(currentModelId == id);
+        layout()->addWidget(button);
 
         connect(button, &QRadioButton::toggled, [id](bool enabled) {
             if (enabled) {
@@ -28,6 +58,4 @@ EXColorModelSwitchers::EXColorModelSwitchers(QWidget *parent)
             button->setChecked(newId == id);
         });
     }
-
-    setLayout(layout);
 }

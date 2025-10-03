@@ -61,7 +61,7 @@ void EXColorSelectorDock::setCanvas(KoCanvasBase *canvas)
         // This emits signals that requires the canvas to be set.
         // So color state should be set canvas after other widgets.
         EXColorState::instance()->setCanvas(m_canvas);
-        Q_EMIT EXSettingsState::instance()->settingsChanged();
+        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
     }
 }
 

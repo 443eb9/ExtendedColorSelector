@@ -19,7 +19,7 @@ public:
     QVector<EXPerColorModelSettings> settings;
 
 Q_SIGNALS:
-    void settingsChanged();
+    void sigSettingsChanged();
 };
 
 #endif // EXSETTINGSSTATE_H

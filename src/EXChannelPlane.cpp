@@ -39,7 +39,7 @@ EXChannelPlane::EXChannelPlane(QWidget *parent)
         update();
     });
 
-    connect(EXSettingsState::instance(), &EXSettingsState::settingsChanged, this, &EXChannelPlane::settingsChanged);
+    connect(EXSettingsState::instance(), &EXSettingsState::sigSettingsChanged, this, &EXChannelPlane::settingsChanged);
 }
 
 void EXChannelPlane::setCanvas(KisCanvas2 *canvas)
