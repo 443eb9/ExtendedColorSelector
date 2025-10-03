@@ -32,13 +32,13 @@ EXColorSelectorDock::EXColorSelectorDock()
     settingsButton->setIcon(KisIconUtils::loadIcon(("configure")));
     settingsButton->setFlat(true);
     connect(settingsButton, &QPushButton::clicked, this, [this]() {
-        m_settings->show();
+        m_settings->exec();
     });
     auto globalSettingsButton = new QPushButton(this);
     globalSettingsButton->setIcon(KisIconUtils::loadIcon(("applications-system")));
     globalSettingsButton->setFlat(true);
     connect(globalSettingsButton, &QPushButton::clicked, this, [this]() {
-        m_globalSettings->show();
+        m_globalSettings->exec();
     });
     settingsButtonLayout->addWidget(settingsButton);
     settingsButtonLayout->addStretch(1);
