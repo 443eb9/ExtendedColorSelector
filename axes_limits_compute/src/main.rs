@@ -89,7 +89,8 @@ fn toe_inv(x: f32) -> f32 {
 }
 
 fn map_oklxx(color: [f32; 3]) -> [f32; 3] {
-    [toe_inv(color[0]), color[1], color[2]]
+    // [toe_inv(color[0]), color[1], color[2]]
+    color
 }
 
 macro_rules! define_transfer_function {

@@ -6,8 +6,9 @@
 #include "EXGamutClipping.h"
 
 const int Segments = 256;
+const float AxesLimitOffset = 1.0f / Segments;
 
-static EXGamutClipping *s_gamutClipping = nullptr; 
+static EXGamutClipping *s_gamutClipping = nullptr;
 
 EXGamutClipping *EXGamutClipping::instance()
 {
@@ -54,7 +55,8 @@ int EXGamutClipping::getColorModelOffset(ColorModelId colorModel)
     }
 }
 
-QVector2D EXGamutClipping::unmapAxesFromLimited(ColorModelId colorModel, int primary, float primaryValue, QVector2D axes)
+QVector2D
+EXGamutClipping::unmapAxesFromLimited(ColorModelId colorModel, int primary, float primaryValue, QVector2D axes)
 {
     auto [minLimits, maxLimits] = getAxesLimitsInterpolated(colorModel, primary, primaryValue);
 
@@ -62,8 +64,7 @@ QVector2D EXGamutClipping::unmapAxesFromLimited(ColorModelId colorModel, int pri
                      (axes.y() - minLimits.y()) / (maxLimits.y() - minLimits.y()));
 }
 
-QVector2D
-EXGamutClipping::mapAxesToLimited(ColorModelId colorModel, int primary, float primaryValue, QVector2D limited)
+QVector2D EXGamutClipping::mapAxesToLimited(ColorModelId colorModel, int primary, float primaryValue, QVector2D limited)
 {
     auto [minLimits, maxLimits] = getAxesLimitsInterpolated(colorModel, primary, primaryValue);
 
@@ -95,7 +96,7 @@ QPair<QVector2D, QVector2D> EXGamutClipping::getAxesLimits(ColorModelId colorMod
     int base = (offset * 3 + primary) * (Segments + 1) + primaryValue;
     base *= 4;
     return {
-        QVector2D(m_limits[base + 0], m_limits[base + 1]),
-        QVector2D(m_limits[base + 2], m_limits[base + 3]),
+        QVector2D(m_limits[base + 0] - AxesLimitOffset, m_limits[base + 1] - AxesLimitOffset),
+        QVector2D(m_limits[base + 2] + AxesLimitOffset, m_limits[base + 3] + AxesLimitOffset),
     };
 }
