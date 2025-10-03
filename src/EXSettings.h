@@ -18,6 +18,7 @@ public:
     void writeAll();
 
     bool enabled;
+    bool slidersEnabled;
     EXChannelPlaneShapeId shape;
     bool swapAxes;
     bool reverseX;

@@ -42,7 +42,12 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
         auto pageLayout = new QVBoxLayout();
         page->setLayout(pageLayout);
 
-        auto barEnabled = new QCheckBox(QString("Enable %1 Bar").arg(colorModel->displayName()));
+        auto slidersEnabled = new QCheckBox(QString("Enable %1 Sliders").arg(colorModel->displayName()));
+        slidersEnabled->setChecked(settings.slidersEnabled);
+        connect(slidersEnabled, &QCheckBox::clicked, [&settings](bool checked) {
+            settings.slidersEnabled = checked;
+            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+        });
 
         auto colorfulPrimaryChannel = new QCheckBox("Colorful Primary Channel");
         colorfulPrimaryChannel->setChecked(settings.colorfulHueRing);
@@ -158,7 +163,7 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
             Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
         });
 
-        pageLayout->addWidget(barEnabled);
+        pageLayout->addWidget(slidersEnabled);
         pageLayout->addWidget(colorfulPrimaryChannel);
         if (colorModel->isSrgbBased()) {
             clipGamutBox->deleteLater();

@@ -25,6 +25,14 @@ EXChannelSliders::EXChannelSliders(QWidget *parent)
         layout->addWidget(m_channelWidgets[i]);
     }
     setLayout(layout);
+
+    connect(EXSettingsState::instance(), &EXSettingsState::sigSettingsChanged, this, [this]() {
+        setVisible(EXSettingsState::instance()->settings[EXColorState::instance()->colorModel()->id()].slidersEnabled);
+    });
+
+    connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, this, [this](ColorModelId) {
+        setVisible(EXSettingsState::instance()->settings[EXColorState::instance()->colorModel()->id()].slidersEnabled);
+    });
 }
 
 void EXChannelSliders::setCanvas(KisCanvas2 *canvas)
