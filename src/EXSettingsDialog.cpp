@@ -19,7 +19,7 @@
 EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
     : QDialog(parent)
 {
-    setWindowTitle("Extended Color Selector Settings");
+    setWindowTitle("Extended Color Selector - Settings");
     auto settingsState = EXSettingsState::instance();
     auto mainLayout = new QHBoxLayout();
 
@@ -242,7 +242,6 @@ void EXPerColorModelSettingsDialog::closeEvent(QCloseEvent *event)
 EXGlobalSettingsDialog::EXGlobalSettingsDialog(QWidget *parent)
     : QDialog(parent)
 {
-    setWindowTitle("Extended Color Selector Global Settings");
     auto mainLayout = new QVBoxLayout(this);
     setWindowTitle("Extended Color Selector - Global Settings");
     auto &settings = EXSettingsState::instance()->globalSettings;
