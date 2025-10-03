@@ -42,14 +42,14 @@ bool EXSquareChannelPlaneShape::widgetCenteredToShapeCoord(const QPointF &widget
                                                            const EXPrimaryChannelRing &ring)
 {
     if (ring.thickness == 0.0f) {
-        shapeCoord = widgetCoordCentered;
-        return true;
+        shapeCoord = widgetCoordCentered * 0.5 + QPointF(0.5, 0.5);
+    } else {
+        float a = ring.marginedBoundaryDiameter() * 0.7071067812;
+        float x = widgetCoordCentered.x() / a;
+        float y = widgetCoordCentered.y() / a;
+        shapeCoord = QPointF(x * 0.5 + 0.5, y * 0.5 + 0.5);
     }
 
-    float a = ring.marginedBoundaryDiameter() * 0.7071067812;
-    float x = widgetCoordCentered.x() / a;
-    float y = widgetCoordCentered.y() / a;
-    shapeCoord = QPointF(x * 0.5 + 0.5, y * 0.5 + 0.5);
     return shapeCoord.x() >= 0 && shapeCoord.x() <= 1 && shapeCoord.y() >= 0 && shapeCoord.y() <= 1;
 }
 
@@ -57,7 +57,7 @@ QPointF EXSquareChannelPlaneShape::shapeToWidgetCoordCentered(const QPointF &sha
                                                               const EXPrimaryChannelRing &ring)
 {
     if (ring.thickness == 0.0f) {
-        return shapeCoordCentered;
+        return shapeCoordCentered * 2 - QPointF(1, 1);
     }
 
     float a = ring.marginedBoundaryDiameter() * 0.7071067812;

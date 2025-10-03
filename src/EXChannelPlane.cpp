@@ -89,8 +89,10 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
     QPointF widgetCoord = m_shape->shapeToWidgetCoord(QPointF(planeValues.x(), planeValues.y()), m_ring);
     painter.drawArc(QRectF(widgetCoord.x() * size - 4, widgetCoord.y() * size - 4, 8, 8), 0, 360 * 16);
 
-    QPointF ringWidgetCoord = currentRingWidgetCoord();
-    painter.drawArc(QRectF(ringWidgetCoord.x() * size - 4, ringWidgetCoord.y() * size - 4, 8, 8), 0, 360 * 16);
+    if (m_ring.thickness > 0) {
+        QPointF ringWidgetCoord = currentRingWidgetCoord();
+        painter.drawArc(QRectF(ringWidgetCoord.x() * size - 4, ringWidgetCoord.y() * size - 4, 8, 8), 0, 360 * 16);
+    }
 }
 
 void EXChannelPlane::updateImage()
@@ -108,10 +110,7 @@ void EXChannelPlane::updateImage()
         QVector3D color;
         QPointF widgetCoord = QPointF(x * 2 - 1, (1 - y) * 2 - 1);
         float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
-        if (dist > 1) {
-            channels[mapper[3]] = 0;
-            return;
-        } else if (dist > m_ring.boundaryDiameter()) {
+        if (m_ring.thickness > 0 && dist > m_ring.boundaryDiameter() && dist < 1) {
             float ringValue = m_ring.getRingValue(QPointF(x, y));
             color = colorState->color();
             color[colorState->primaryChannelIndex()] = ringValue;
