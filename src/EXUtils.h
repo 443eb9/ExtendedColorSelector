@@ -13,6 +13,7 @@ namespace ExtendedUtils
 {
 QImage generateGradient(int width,
                         int height,
+                        bool useParallel,
                         const KoColorSpace *colorSpace,
                         const KoColorDisplayRendererInterface *dri,
                         std::function<void(float, float, QVector<float> &)> pixelGet);

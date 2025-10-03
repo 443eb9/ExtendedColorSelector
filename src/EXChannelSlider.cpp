@@ -148,7 +148,7 @@ void ChannelValueBar::updateImage()
         channels[mapper[0]] = color.x(), channels[mapper[1]] = color.y(), channels[mapper[2]] = color.z();
         channels[mapper[3]] = 1;
     };
-    m_image = ExtendedUtils::generateGradient(width(), 1, colorState->colorSpace(), m_dri, pixelGet);
+    m_image = ExtendedUtils::generateGradient(width(), 1, false, colorState->colorSpace(), m_dri, pixelGet);
 }
 
 void ChannelValueBar::resizeEvent(QResizeEvent *event)

@@ -1,5 +1,5 @@
 {
-    "Id": "ExtendedColorSelector",
+    "Id": "extended_color_selector_cpp",
     "Type": "Service",
     "X-KDE-Library": "extended_color_selector",
     "X-KDE-ServiceTypes": [

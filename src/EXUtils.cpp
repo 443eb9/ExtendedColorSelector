@@ -8,6 +8,7 @@ namespace ExtendedUtils
 {
 QImage generateGradient(int width,
                         int height,
+                        bool useParallel,
                         const KoColorSpace *colorSpace,
                         const KoColorDisplayRendererInterface *dri,
                         std::function<void(float, float, QVector<float> &)> pixelGet)
@@ -19,21 +20,28 @@ QImage generateGradient(int width,
     QScopedArrayPointer<quint8> raw(new quint8[imageSize]{});
     quint8 *dataPtr = raw.data();
 
-    QVector<int> rows(deviceHeight);
-    std::iota(rows.begin(), rows.end(), 0);
-
-    QtConcurrent::blockingMap(rows, [&](int y) {
+    auto processRow = [&](int y) {
         QVector<float> channels(4, 1);
         KoColor color(colorSpace);
         quint8 *rowPtr = dataPtr + y * deviceWidth * pixelSize;
-
+        
         for (int x = 0; x < deviceWidth; x++) {
             pixelGet((float)x / (width - 1), (float)y / (height - 1), channels);
             colorSpace->fromNormalisedChannelsValue(color.data(), channels);
             memcpy(rowPtr, color.data(), pixelSize);
             rowPtr += pixelSize;
         }
-    });
+    };
+    
+    if (useParallel) {
+        QVector<int> rows(deviceHeight);
+        std::iota(rows.begin(), rows.end(), 0);
+        QtConcurrent::blockingMap(rows, processRow);
+    } else {
+        for (int y = 0; y < deviceHeight; y++) {
+            processRow(y);
+        }
+    }
 
     return dri->toQImage(colorSpace, raw.data(), QSize(deviceWidth, deviceHeight), false);
 }

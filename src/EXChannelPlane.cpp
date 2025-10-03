@@ -162,7 +162,12 @@ void EXChannelPlane::updateImage()
         channels[mapper[0]] = color[0], channels[mapper[1]] = color[1], channels[mapper[2]] = color[2];
         channels[mapper[3]] = 1;
     };
-    m_image = ExtendedUtils::generateGradient(size(), size(), colorState->colorSpace(), m_dri, pixelGet);
+    m_image = ExtendedUtils::generateGradient(size(),
+                                              size(),
+                                              colorState->colorModel()->parallelGradientGen(),
+                                              colorState->colorSpace(),
+                                              m_dri,
+                                              pixelGet);
 }
 
 void EXChannelPlane::mousePressEvent(QMouseEvent *event)
