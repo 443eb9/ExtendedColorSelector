@@ -15,6 +15,7 @@ public:
     float margin;
     float thickness;
     float rotationOffset;
+    bool reversed;
 };
 
 enum EXChannelPlaneShapeId {

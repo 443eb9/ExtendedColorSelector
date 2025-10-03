@@ -19,11 +19,19 @@ float EXPrimaryChannelRing::getRingValue(QPointF widgetCoord) const
     float x = widgetCoord.x() * 2 - 1;
     float y = -(widgetCoord.y() * 2 - 1);
     float t = (atan2f(y, x) + rotationOffset) / M_PI * 0.5 + 0.5;
-    return t - floorf(t);
+    float v = t - floorf(t);
+    if (reversed) {
+        v = 1 - v;
+    }
+
+    return v;
 }
 
 QPointF EXPrimaryChannelRing::getWidgetCoord(float value) const
 {
+    if (reversed) {
+        value = 1 - value;
+    }
     value = (value + 0.5) * 2 * M_PI - rotationOffset;
     float r = 1 - thickness;
     float x = cosf(value) * r * 0.5 + 0.5;

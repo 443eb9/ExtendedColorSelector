@@ -54,6 +54,7 @@ void EXChannelPlane::settingsChanged()
         m_ring.margin = settings.ringMargin / size() * 2;
         m_ring.thickness = settings.ringThickness / size() * 2;
         m_ring.rotationOffset = settings.ringRotation;
+        m_ring.reversed = settings.ringReversed;
     } else {
         m_ring.thickness = 0;
     }
