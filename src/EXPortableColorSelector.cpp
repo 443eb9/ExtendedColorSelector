@@ -21,7 +21,10 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
 
     setLayout(mainLayout);
 
-    connect(EXSettingsState::instance(), &EXSettingsState::sigSettingsChanged, this, &EXPortableColorSelector::settingsChanged);
+    connect(EXSettingsState::instance(),
+            &EXSettingsState::sigSettingsChanged,
+            this,
+            &EXPortableColorSelector::settingsChanged);
 }
 
 void EXPortableColorSelector::settingsChanged()
@@ -81,12 +84,12 @@ void EXPortableColorSelector::keyPressEvent(QKeyEvent *event)
 {
     QDialog::keyPressEvent(event);
 
-    if (!m_toggleAction) {
+    if (event->key() == Qt::Key_Escape) {
+        hide();
         return;
     }
 
-    if (event->key() == Qt::Key_Escape
-        || m_toggleAction->shortcut() == QKeySequence(event->key() + int(event->modifiers()))) {
+    if (m_toggleAction && m_toggleAction->shortcut() == QKeySequence(event->key() + int(event->modifiers()))) {
         toggle();
     }
 }
