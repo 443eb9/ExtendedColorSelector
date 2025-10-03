@@ -28,7 +28,7 @@ public:
     float ringMargin;
     float ringRotation;
     bool ringReversed;
-    bool wheelRotateWithRing;
+    bool planeRotateWithRing;
     int primaryIndex;
     bool colorfulPrimaryChannel;
     bool clipToSrgbGamut;

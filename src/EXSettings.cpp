@@ -17,7 +17,7 @@ EXPerColorModelSettings::EXPerColorModelSettings(QString colorModel)
     ringMargin = m_configGroup.readEntry(m_colorModel + ".ringMargin", 0.0f);
     ringRotation = m_configGroup.readEntry(m_colorModel + ".ringRotation", 0.0f);
     ringReversed = m_configGroup.readEntry(m_colorModel + ".ringReversed", false);
-    wheelRotateWithRing = m_configGroup.readEntry(m_colorModel + ".wheelRotateWithRing", false);
+    planeRotateWithRing = m_configGroup.readEntry(m_colorModel + ".planeRotateWithRing", false);
     primaryIndex = m_configGroup.readEntry(m_colorModel + ".primaryIndex", 0);
     colorfulPrimaryChannel = m_configGroup.readEntry(m_colorModel + ".colorfulPrimaryChannel", true);
     clipToSrgbGamut = m_configGroup.readEntry(m_colorModel + ".clipToSrgbGamut", false);
@@ -39,7 +39,7 @@ void EXPerColorModelSettings::writeAll()
     m_configGroup.writeEntry(m_colorModel + ".ringMargin", ringMargin);
     m_configGroup.writeEntry(m_colorModel + ".ringRotation", ringRotation);
     m_configGroup.writeEntry(m_colorModel + ".ringReversed", ringReversed);
-    m_configGroup.writeEntry(m_colorModel + ".wheelRotateWithRing", wheelRotateWithRing);
+    m_configGroup.writeEntry(m_colorModel + ".planeRotateWithRing", planeRotateWithRing);
     m_configGroup.writeEntry(m_colorModel + ".primaryIndex", primaryIndex);
     m_configGroup.writeEntry(m_colorModel + ".colorfulPrimaryChannel", colorfulPrimaryChannel);
     m_configGroup.writeEntry(m_colorModel + ".clipToSrgbGamut", clipToSrgbGamut);

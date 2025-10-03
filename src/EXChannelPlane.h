@@ -25,7 +25,6 @@ public:
     void shift(QMouseEvent *event, QVector2D delta) override;
 
     float size() const;
-    QPointF currentRingWidgetCoord();
 
     void setCanvas(KisCanvas2 *canvas);
 
@@ -43,6 +42,7 @@ private:
     KoColorDisplayRendererInterface *m_dri;
 
     void updateImage();
+    void trySyncRingRotation();
 
 private Q_SLOTS:
     void settingsChanged();

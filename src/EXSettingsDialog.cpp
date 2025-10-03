@@ -42,23 +42,11 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
         page->setLayout(pageLayout);
 
         auto barEnabled = new QCheckBox(QString("Enable %1 Bar").arg(colorModel->displayName()));
-        barEnabled->setChecked(settings.barEnabled);
-        connect(barEnabled, &QCheckBox::clicked, [&settings](bool checked) {
-            settings.barEnabled = checked;
-            Q_EMIT EXSettingsState::instance()->settingsChanged();
-        });
 
         auto colorfulPrimaryChannel = new QCheckBox("Colorful Primary Channel");
         colorfulPrimaryChannel->setChecked(settings.colorfulPrimaryChannel);
         connect(colorfulPrimaryChannel, &QCheckBox::clicked, [&settings](bool checked) {
             settings.colorfulPrimaryChannel = checked;
-            Q_EMIT EXSettingsState::instance()->settingsChanged();
-        });
-
-        auto channelsSpinBoxEnabled = new QCheckBox("Display Channel Values");
-        channelsSpinBoxEnabled->setChecked(settings.displayChannels);
-        connect(channelsSpinBoxEnabled, &QCheckBox::clicked, [&settings](bool checked) {
-            settings.displayChannels = checked;
             Q_EMIT EXSettingsState::instance()->settingsChanged();
         });
 
@@ -152,10 +140,10 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
         ringSettingsLayout2->addWidget(ringReversed);
         ringSettingsLayout2->addWidget(new QLabel("Ring Rotation"));
         ringSettingsLayout2->addWidget(ringRotation);
-        auto wheelRotateWithRingBox = new QCheckBox("Wheel Rotate With Ring");
-        wheelRotateWithRingBox->setChecked(settings.wheelRotateWithRing);
+        auto wheelRotateWithRingBox = new QCheckBox("Plane Rotate With Ring");
+        wheelRotateWithRingBox->setChecked(settings.planeRotateWithRing);
         connect(wheelRotateWithRingBox, &QCheckBox::clicked, [&settings](bool checked) {
-            settings.wheelRotateWithRing = checked;
+            settings.planeRotateWithRing = checked;
             Q_EMIT EXSettingsState::instance()->settingsChanged();
         });
         ringSettingsLayouts->addLayout(ringSettingsLayout1);
@@ -171,7 +159,6 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
 
         pageLayout->addWidget(barEnabled);
         pageLayout->addWidget(colorfulPrimaryChannel);
-        pageLayout->addWidget(channelsSpinBoxEnabled);
         if (colorModel->isSrgbBased()) {
             clipGamutBox->deleteLater();
         } else {

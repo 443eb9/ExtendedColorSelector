@@ -49,27 +49,23 @@ public:
     bool widgetCenteredToShape(const QPointF &widgetCoordCentered, QPointF &shapeCoord);
     QPointF shapeToWidget01(const QPointF &shapeCoord);
     bool widget01ToShape(const QPointF &widgetCoord, QPointF &shapeCoord);
-    void updateTransform(bool reverseX, bool reverseY, float rotation, bool swapAxes);
 
-    void setRing(const EXPrimaryChannelRing &ring)
+    void setRotation(float rotation)
     {
-        m_ring = ring;
+        m_rotation = rotation;
+        sincosf(rotation, &m_rotSin, &m_rotCos);
     }
 
-    const EXPrimaryChannelRing &ring() const
-    {
-        return m_ring;
-    }
+    EXPrimaryChannelRing ring;
+    bool reverseX;
+    bool reverseY;
+    bool swapAxes;
 
 protected:
     virtual bool widgetCenteredToShapeUntransformed(const QPointF &widgetCoordCentered, QPointF &shapeCoord) = 0;
     virtual QPointF shapeToWidgetCenteredUntransformed(const QPointF &shapeCoordCentered) = 0;
-    EXPrimaryChannelRing m_ring;
 
 private:
-    bool m_reverseX;
-    bool m_reverseY;
-    bool m_swapAxes;
     float m_rotation;
     float m_rotCos;
     float m_rotSin;
