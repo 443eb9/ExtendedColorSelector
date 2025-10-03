@@ -176,7 +176,7 @@ void EXChannelPlane::mousePressEvent(QMouseEvent *event)
     float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
     float size = this->size();
 
-    if (dist > m_shape->ring.boundaryDiameter()) {
+    if (m_shape->ring.thickness > 0 && dist > m_shape->ring.boundaryDiameter()) {
         m_editMode = Ring;
         m_editStart = m_shape->ring.getWidgetCoord(EXColorState::instance()->primaryChannelValue()) * size;
     } else {
