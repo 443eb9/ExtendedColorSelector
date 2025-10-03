@@ -141,8 +141,9 @@ void ChannelValueBar::updateImage()
             colorState->colorModel()->makeColorful(color);
         }
         color = colorState->colorModel()->transferTo(colorState->kritaColorModel(), color, nullptr);
-        if (!colorState->colorModel()->isSrgbBased()) {
-            ExtendedUtils::sanitizeOutOfGamutColor(color, QVector3D(0.5, 0.5, 0.5));
+        auto settings = EXSettingsState::instance()->globalSettings;
+        if (!colorState->colorModel()->isSrgbBased() && settings.outOfGamutColorEnabled) {
+            ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
         }
         channels[mapper[0]] = color.x(), channels[mapper[1]] = color.y(), channels[mapper[2]] = color.z();
         channels[mapper[3]] = 1;
