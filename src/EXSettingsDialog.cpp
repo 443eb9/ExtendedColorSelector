@@ -209,6 +209,8 @@ void EXPerColorModelSettingsDialog::updateOrder()
         }
     }
 
+    globalSettings.writeAll();
+
     Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
 }
 
@@ -221,6 +223,9 @@ void EXPerColorModelSettingsDialog::handleColorModelEnabledChange(QListWidgetIte
 
     auto &settings = EXSettingsState::instance()->settings[colorModel->id()];
     settings.enabled = item->checkState() == Qt::CheckState::Checked;
+
+    settings.writeAll();
+
     Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
 }
 

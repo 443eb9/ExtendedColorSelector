@@ -61,7 +61,7 @@ EXGlobalSettings::EXGlobalSettings()
         int id = str.toInt(&ok);
         return static_cast<ColorModelId>(id);
     });
-    if (this->displayOrder.empty()) {
+    if (this->displayOrder.size() != ColorModelFactory::AllModels.size()) {
         this->displayOrder = ColorModelFactory::AllModels;
     }
 
