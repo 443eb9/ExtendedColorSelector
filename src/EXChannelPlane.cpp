@@ -53,7 +53,6 @@ void EXChannelPlane::settingsChanged()
     if (settings.ringEnabled) {
         m_ring.margin = settings.ringMargin / size() * 2;
         m_ring.thickness = settings.ringThickness / size() * 2;
-        qDebug() << "thickness" << m_ring.thickness << "margin" << m_ring.margin;
         m_ring.rotationOffset = settings.ringRotation;
     } else {
         m_ring.thickness = 0;
@@ -163,7 +162,7 @@ void EXChannelPlane::mousePressEvent(QMouseEvent *event)
     float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
     float size = this->size();
 
-    if (dist < 1 && dist > m_ring.boundaryDiameter()) {
+    if (dist > m_ring.boundaryDiameter()) {
         m_editMode = Ring;
         m_editStart = currentRingWidgetCoord() * size;
     } else {
