@@ -22,18 +22,18 @@ EXChannelPlane::EXChannelPlane(QWidget *parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);
 
-    connect(EXColorState::instance(), &EXColorState::sigColorChanged, [this]() {
+    connect(EXColorState::instance(), &EXColorState::sigColorChanged, this, [this]() {
         trySyncRingRotation();
         updateImage();
         update();
     });
 
-    connect(EXColorState::instance(), &EXColorState::sigPrimaryChannelIndexChanged, [this]() {
+    connect(EXColorState::instance(), &EXColorState::sigPrimaryChannelIndexChanged, this, [this]() {
         updateImage();
         update();
     });
 
-    connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, [this]() {
+    connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, this, [this]() {
         settingsChanged();
         updateImage();
         update();

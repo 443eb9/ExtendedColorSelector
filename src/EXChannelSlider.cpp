@@ -53,17 +53,17 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QButtonGroup *group, QW
     layout->addWidget(m_radioButton);
     setLayout(layout);
 
-    connect(m_spinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this, colorState](double value) {
+    connect(m_spinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [this, colorState](double value) {
         auto [chmn, chmx] = colorState->colorModel()->channelRanges();
         colorState->setChannel(m_channelIndex,
                                (value - chmn[m_channelIndex]) / (chmx[m_channelIndex] - chmn[m_channelIndex]));
     });
 
-    connect(colorState, &EXColorState::sigPrimaryChannelIndexChanged, [this, colorState]() {
+    connect(colorState, &EXColorState::sigPrimaryChannelIndexChanged, this, [this, colorState]() {
         m_radioButton->setChecked(colorState->primaryChannelIndex() == m_channelIndex);
     });
 
-    connect(colorState, &EXColorState::sigColorChanged, [this, colorState]() {
+    connect(colorState, &EXColorState::sigColorChanged, this, [this, colorState]() {
         auto [chmn, chmx] = colorState->colorModel()->channelRanges();
         m_spinBox->setRange(chmn[m_channelIndex], chmx[m_channelIndex]);
         m_spinBox->blockSignals(true);
@@ -78,7 +78,7 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QButtonGroup *group, QW
         }
     });
 
-    connect(colorState, &EXColorState::sigColorModelChanged, [this, colorState]() {
+    connect(colorState, &EXColorState::sigColorModelChanged, this, [this, colorState]() {
         m_radioButton->setText(colorState->colorModel()->channelNames()[m_channelIndex]);
     });
 }
@@ -95,12 +95,12 @@ ChannelValueBar::ChannelValueBar(int channelIndex, QWidget *parent)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    connect(EXColorState::instance(), &EXColorState::sigColorChanged, [this]() {
+    connect(EXColorState::instance(), &EXColorState::sigColorChanged, this, [this]() {
         updateImage();
         update();
     });
 
-    connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, [this]() {
+    connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, this, [this]() {
         updateImage();
         update();
     });

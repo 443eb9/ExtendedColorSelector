@@ -48,13 +48,13 @@ void EXColorModelSwitchers::settingsChanged()
         button->setChecked(currentModelId == id);
         layout()->addWidget(button);
 
-        connect(button, &QRadioButton::toggled, [id](bool enabled) {
+        connect(button, &QRadioButton::toggled, button, [id](bool enabled) {
             if (enabled) {
                 EXColorState::instance()->setColorModel(id);
             }
         });
 
-        connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, [button, id](ColorModelId newId) {
+        connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, button, [button, id](ColorModelId newId) {
             button->setChecked(newId == id);
         });
     }

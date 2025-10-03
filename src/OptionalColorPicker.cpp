@@ -17,11 +17,11 @@ OptionalColorPicker::OptionalColorPicker(QWidget *parent, const QString &labelTe
 
     indicator->setFocusPolicy(Qt::NoFocus);
 
-    connect(indicator, &QPushButton::clicked, [this]() {
+    connect(indicator, &QPushButton::clicked, this, [this]() {
         colorDialog->show();
     });
 
-    connect(colorDialog, &QColorDialog::colorSelected, [this](const QColor &color) {
+    connect(colorDialog, &QColorDialog::colorSelected, this, [this](const QColor &color) {
         cachedColor = color;
         indicator->setStyleSheet(QString("QPushButton { background-color: %1; border: none; }").arg(color.name()));
     });
