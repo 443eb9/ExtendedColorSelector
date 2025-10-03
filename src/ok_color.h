@@ -16,6 +16,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+// 
+// Modified by 443eb9#C, 2024, to suit Extended Color Selector plugin
 
 #include <cmath>
 #include <cfloat>
@@ -478,7 +480,7 @@ Cs get_Cs(float L, float a_, float b_)
 	return { C_0, C_mid, C_max };
 }
 
-RGB okhsl_to_srgb(HSL hsl)
+RGB okhsl_to_linear_rgb(HSL hsl)
 {
 	float h = hsl.h;
 	float s = hsl.s;
@@ -528,21 +530,12 @@ RGB okhsl_to_srgb(HSL hsl)
 		C = k_0 + t * k_1 / (1.f - k_2 * t);
 	}
 
-	RGB rgb = oklab_to_linear_srgb({ L, C * a_, C * b_ });
-	return {
-		srgb_transfer_function(rgb.r),
-		srgb_transfer_function(rgb.g),
-		srgb_transfer_function(rgb.b),
-	};
+	return oklab_to_linear_srgb({ L, C * a_, C * b_ });
 }
 
-HSL srgb_to_okhsl(RGB rgb)
+HSL linear_rgb_to_okhsl(RGB rgb)
 {
-	Lab lab = linear_srgb_to_oklab({
-		srgb_transfer_function_inv(rgb.r),
-		srgb_transfer_function_inv(rgb.g),
-		srgb_transfer_function_inv(rgb.b)
-		});
+	Lab lab = linear_srgb_to_oklab(rgb);
 
 	float C = sqrtf(lab.a * lab.a + lab.b * lab.b);
 	float a_ = lab.a / C;
@@ -556,7 +549,7 @@ HSL srgb_to_okhsl(RGB rgb)
 	float C_mid = cs.C_mid;
 	float C_max = cs.C_max;
 
-	// Inverse of the interpolation in okhsl_to_srgb:
+	// Inverse of the interpolation in okhsl_to_linear_rgb:
 
 	float mid = 0.8f;
 	float mid_inv = 1.25f;
@@ -585,7 +578,7 @@ HSL srgb_to_okhsl(RGB rgb)
 }
 
 
-RGB okhsv_to_srgb(HSV hsv)
+RGB okhsv_to_linear_rgb(HSV hsv)
 {
 	float h = hsv.h;
 	float s = hsv.s;
@@ -624,21 +617,12 @@ RGB okhsv_to_srgb(HSV hsv)
 	L = L * scale_L;
 	C = C * scale_L;
 
-	RGB rgb = oklab_to_linear_srgb({ L, C * a_, C * b_ });
-	return {
-		srgb_transfer_function(rgb.r),
-		srgb_transfer_function(rgb.g),
-		srgb_transfer_function(rgb.b),
-	};
+	return oklab_to_linear_srgb({ L, C * a_, C * b_ });
 }
 
-HSV srgb_to_okhsv(RGB rgb)
+HSV linear_rgb_to_okhsv(RGB rgb)
 {
-	Lab lab = linear_srgb_to_oklab({
-		srgb_transfer_function_inv(rgb.r),
-		srgb_transfer_function_inv(rgb.g),
-		srgb_transfer_function_inv(rgb.b)
-		});
+	Lab lab = linear_srgb_to_oklab(rgb);
 
 	float C = sqrtf(lab.a * lab.a + lab.b * lab.b);
 	float a_ = lab.a / C;

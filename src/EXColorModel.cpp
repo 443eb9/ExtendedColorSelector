@@ -308,13 +308,13 @@ QVector3D OKLCHModel::toXyz(const QVector3D &color) const
 QVector3D OKHSVModel::fromXyz(const QVector3D &color) const
 {
     auto rgb = RGBModel().fromXyz(color);
-    auto okhsv = ok_color::srgb_to_okhsv(ok_color::RGB{rgb[0], rgb[1], rgb[2]});
+    auto okhsv = ok_color::linear_rgb_to_okhsv(ok_color::RGB{rgb[0], rgb[1], rgb[2]});
     return QVector3D(okhsv.h, okhsv.s, okhsv.v);
 }
 
 QVector3D OKHSVModel::toXyz(const QVector3D &color) const
 {
-    auto rgb = ok_color::okhsv_to_srgb(ok_color::HSV{color[0], color[1], color[2]});
+    auto rgb = ok_color::okhsv_to_linear_rgb(ok_color::HSV{color[0], color[1], color[2]});
     auto xyz = RGBModel().toXyz(QVector3D(rgb.r, rgb.g, rgb.b));
     return QVector3D(xyz[0], xyz[1], xyz[2]);
 }
@@ -330,13 +330,13 @@ void OKHSVModel::makeColorful(QVector3D &color, int channelIndex) const
 QVector3D OKHSLModel::fromXyz(const QVector3D &color) const
 {
     auto rgb = RGBModel().fromXyz(color);
-    auto okhsl = ok_color::srgb_to_okhsl(ok_color::RGB{rgb[0], rgb[1], rgb[2]});
+    auto okhsl = ok_color::linear_rgb_to_okhsl(ok_color::RGB{rgb[0], rgb[1], rgb[2]});
     return QVector3D(okhsl.h, okhsl.s, okhsl.l);
 }
 
 QVector3D OKHSLModel::toXyz(const QVector3D &color) const
 {
-    auto rgb = ok_color::okhsl_to_srgb(ok_color::HSL{color[0], color[1], color[2]});
+    auto rgb = ok_color::okhsl_to_linear_rgb(ok_color::HSL{color[0], color[1], color[2]});
     auto xyz = RGBModel().toXyz(QVector3D(rgb.r, rgb.g, rgb.b));
     return QVector3D(xyz[0], xyz[1], xyz[2]);
 }
