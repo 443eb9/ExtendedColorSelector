@@ -38,7 +38,6 @@ private:
     EditMode m_editMode;
     QPointF m_editStart;
     QColor m_imageColor;
-    EXPrimaryChannelRing m_ring;
     EXChannelPlaneShape *m_shape;
     QImage m_image;
     KoColorDisplayRendererInterface *m_dri;
