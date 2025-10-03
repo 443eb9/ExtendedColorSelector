@@ -8,6 +8,7 @@ set(
     EXColorSelectorPlugin.cpp
     EXColorState.cpp
     EXEditable.cpp
+    EXGamutClipping.cpp
     EXKoColorConverter.cpp
     EXPortableColorSelector.cpp
     EXSettings.cpp
@@ -18,7 +19,9 @@ set(
     OptionalColorPicker.cpp
 )
 
-kis_add_library(extendedcolorselector MODULE ${extendedcolorselector_SOURCES})
+qt5_add_resources(extendedcolorselector_RESOURCES resources.qrc)
+
+kis_add_library(extendedcolorselector MODULE ${extendedcolorselector_SOURCES} ${extendedcolorselector_RESOURCES})
 
 generate_export_header(extendedcolorselector BASE_NAME extendedcolorselector)
 

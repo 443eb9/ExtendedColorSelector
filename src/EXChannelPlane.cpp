@@ -10,6 +10,7 @@
 
 #include "EXChannelPlane.h"
 #include "EXColorState.h"
+#include "EXGamutClipping.h"
 #include "EXKoColorConverter.h"
 #include "EXSettingsState.h"
 #include "EXUtils.h"
@@ -95,6 +96,16 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
 
     QVector2D planeValues = EXColorState::instance()->secondaryChannelValues();
     int size = this->size();
+    auto colorState = EXColorState::instance();
+    auto settings = EXSettingsState::instance()->settings[colorState->colorModel()->id()];
+
+    if (settings.clipToSrgbGamut) {
+        planeValues = EXGamutClipping::instance()->unmapAxesFromLimited(colorState->colorModel()->id(),
+                                                                        colorState->primaryChannelIndex(),
+                                                                        colorState->primaryChannelValue(),
+                                                                        planeValues);
+    }
+
     QPointF widgetCoord = m_shape->shapeToWidget01(QPointF(planeValues.x(), planeValues.y()));
     painter.drawArc(QRectF(widgetCoord.x() * size - 4, widgetCoord.y() * size - 4, 8, 8), 0, 360 * 16);
 
@@ -114,54 +125,65 @@ void EXChannelPlane::updateImage()
     auto colorState = EXColorState::instance();
     auto converter = EXColorConverter(colorState->colorSpace());
     auto mapper = converter.displayToMemoryPositionMapper();
-    auto makeColorful = EXSettingsState::instance()->settings[colorState->colorModel()->id()].colorfulHueRing;
+    auto &settings = EXSettingsState::instance()->settings[colorState->colorModel()->id()];
+    auto makeColorful = settings.colorfulHueRing;
+    auto clipToSrgbGamut = settings.clipToSrgbGamut;
 
-    auto pixelGet = [this, colorState, mapper, makeColorful](float x, float y, QVector<float> &channels) {
-        QVector3D color;
-        QPointF widgetCoord = QPointF(x * 2 - 1, (1 - y) * 2 - 1);
-        float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
-        int primaryChannelIndex = colorState->primaryChannelIndex();
+    auto pixelGet =
+        [this, colorState, mapper, makeColorful, clipToSrgbGamut](float x, float y, QVector<float> &channels) {
+            QVector3D color;
+            QPointF widgetCoord = QPointF(x * 2 - 1, (1 - y) * 2 - 1);
+            float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
+            int primaryChannelIndex = colorState->primaryChannelIndex();
 
-        if (m_shape->ring.thickness > 0 && dist > m_shape->ring.boundaryDiameter() && dist < 1) {
-            float ringValue = m_shape->ring.getRingValue(QPointF(x, y));
-            color = colorState->color();
-            color[primaryChannelIndex] = ringValue;
-            if (makeColorful) {
-                colorState->colorModel()->makeColorful(color, primaryChannelIndex);
+            if (m_shape->ring.thickness > 0 && dist > m_shape->ring.boundaryDiameter() && dist < 1) {
+                float ringValue = m_shape->ring.getRingValue(QPointF(x, y));
+                color = colorState->color();
+                color[primaryChannelIndex] = ringValue;
+                if (makeColorful) {
+                    colorState->colorModel()->makeColorful(color, primaryChannelIndex);
+                }
+            } else {
+                float primary = colorState->primaryChannelValue();
+                QPointF shapeCoord;
+                bool isInShape = m_shape->widgetCenteredToShape(widgetCoord, shapeCoord);
+                if (!isInShape) {
+                    channels[mapper[3]] = 0;
+                    return;
+                }
+
+                QVector2D axes(shapeCoord);
+                if (clipToSrgbGamut) {
+                    axes = EXGamutClipping::instance()->mapAxesToLimited(colorState->colorModel()->id(),
+                                                                         primaryChannelIndex,
+                                                                         primary,
+                                                                         axes);
+                }
+
+                float channel1 = axes.x();
+                float channel2 = axes.y();
+
+                switch (primaryChannelIndex) {
+                case 0:
+                    color[0] = primary, color[1] = channel1, color[2] = channel2;
+                    break;
+                case 1:
+                    color[0] = channel1, color[1] = primary, color[2] = channel2;
+                    break;
+                case 2:
+                    color[0] = channel1, color[1] = channel2, color[2] = primary;
+                    break;
+                }
             }
-        } else {
-            QPointF shapeCoord;
-            bool isInShape = m_shape->widgetCenteredToShape(widgetCoord, shapeCoord);
-            float channel1 = shapeCoord.x();
-            float channel2 = shapeCoord.y();
-            if (!isInShape) {
-                channels[mapper[3]] = 0;
-                return;
+
+            color = colorState->colorModel()->transferTo(colorState->kritaColorModel(), color, nullptr);
+            auto &settings = EXSettingsState::instance()->globalSettings;
+            if (!colorState->colorModel()->isSrgbBased() && settings.outOfGamutColorEnabled) {
+                ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
             }
-
-            float primary = colorState->primaryChannelValue();
-
-            switch (primaryChannelIndex) {
-            case 0:
-                color[0] = primary, color[1] = channel1, color[2] = channel2;
-                break;
-            case 1:
-                color[0] = channel1, color[1] = primary, color[2] = channel2;
-                break;
-            case 2:
-                color[0] = channel1, color[1] = channel2, color[2] = primary;
-                break;
-            }
-        }
-
-        color = colorState->colorModel()->transferTo(colorState->kritaColorModel(), color, nullptr);
-        auto &settings = EXSettingsState::instance()->globalSettings;
-        if (!colorState->colorModel()->isSrgbBased() && settings.outOfGamutColorEnabled) {
-            ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
-        }
-        channels[mapper[0]] = color[0], channels[mapper[1]] = color[1], channels[mapper[2]] = color[2];
-        channels[mapper[3]] = 1;
-    };
+            channels[mapper[0]] = color[0], channels[mapper[1]] = color[1], channels[mapper[2]] = color[2];
+            channels[mapper[3]] = 1;
+        };
     m_image = ExtendedUtils::generateGradient(size(),
                                               size(),
                                               colorState->colorModel()->parallelGradientGen(),
@@ -208,11 +230,19 @@ void EXChannelPlane::edit(QMouseEvent *event)
     case Plane: {
         QPointF shapeCoord;
         m_shape->widget01ToShape(widgetCoord, shapeCoord);
+        auto colorState = EXColorState::instance();
+        if (EXSettingsState::instance()->settings[colorState->colorModel()->id()].clipToSrgbGamut) {
+            QVector2D clipped = EXGamutClipping::instance()->mapAxesToLimited(colorState->colorModel()->id(),
+                                                                              colorState->primaryChannelIndex(),
+                                                                              colorState->primaryChannelValue(),
+                                                                              QVector2D(shapeCoord));
+            shapeCoord = QPointF(clipped.x(), clipped.y());
+        }
 
         shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
         shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
 
-        EXColorState::instance()->setSecondaryChannelValues(QVector2D(shapeCoord));
+        colorState->setSecondaryChannelValues(QVector2D(shapeCoord));
         break;
     }
     }
@@ -235,11 +265,19 @@ void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
     case Plane: {
         QPointF shapeCoord;
         m_shape->widget01ToShape(widgetCoord, shapeCoord);
+        auto colorState = EXColorState::instance();
+        if (EXSettingsState::instance()->settings[colorState->colorModel()->id()].clipToSrgbGamut) {
+            QVector2D clipped = EXGamutClipping::instance()->mapAxesToLimited(colorState->colorModel()->id(),
+                                                                              colorState->primaryChannelIndex(),
+                                                                              colorState->primaryChannelValue(),
+                                                                              QVector2D(shapeCoord));
+            shapeCoord = QPointF(clipped.x(), clipped.y());
+        }
 
         shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
         shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
 
-        EXColorState::instance()->setSecondaryChannelValues(QVector2D(shapeCoord));
+        colorState->setSecondaryChannelValues(QVector2D(shapeCoord));
     }
     }
 }

@@ -5,10 +5,12 @@ use std::{
     path::PathBuf,
 };
 
-use bevy_color::{ColorToComponents, Laba, LinearRgba, Oklaba, Oklcha, Xyza};
+use bevy_color::{ColorToComponents, Laba, Lcha, LinearRgba, Oklaba, Oklcha, Xyza};
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
+
+const SEGMENTS: u32 = 256;
 
 type TransferFunc = fn([f32; 3]) -> [f32; 3];
 
@@ -71,8 +73,8 @@ fn compute_axes_limits(transfer: TransferFunc, segments: u32) -> Vec<f32> {
         let max_y = max_y.unwrap_or(min_y);
 
         data[0] = min_x as f32 / max_value;
-        data[1] = max_x as f32 / max_value;
-        data[2] = min_y as f32 / max_value;
+        data[1] = min_y as f32 / max_value;
+        data[2] = max_x as f32 / max_value;
         data[3] = max_y as f32 / max_value;
     });
 
@@ -125,6 +127,7 @@ define_transfer_function!(
 );
 define_transfer_function!(Xyza, xyz_transfer, [[0.0, 1.0], [0.0, 1.0], [0.0, 1.0]]);
 define_transfer_function!(Laba, lab_transfer, [[0.0, 1.5], [-1.5, 1.5], [-1.5, 1.5]]);
+define_transfer_function!(Lcha, lch_transfer, [[0.0, 1.5], [0.0, 1.5], [0.0, 360.0]]);
 define_transfer_function!(
     Oklcha,
     oklch_transfer,
@@ -140,12 +143,8 @@ fn find_plugin_dir() -> Result<PathBuf, Box<dyn Error>> {
             .ok_or("Search reached root folder, but still can't find the folder containing .desktop file")?
             .to_path_buf();
     }
-    let release_env = current.join("extended_color_selector");
-    if release_env.exists() {
-        return Ok(release_env);
-    }
 
-    let dev_env = current.join("python");
+    let dev_env = current.join("src");
     if dev_env.exists() {
         return Ok(dev_env);
     }
@@ -157,12 +156,12 @@ fn main() {
     let plugin_dir = find_plugin_dir().unwrap();
     println!("Found plugin directory: {:?}", &plugin_dir);
     let mut file = File::create(plugin_dir.join("axes_limits.bytes")).unwrap();
-    const SEGMENTS: u32 = 256;
 
     for (transfer, name) in [
-        (oklab_transfer as TransferFunc, "OkLab"),
-        (xyz_transfer, "XYZ"),
+        (xyz_transfer as TransferFunc, "XYZ"),
         (lab_transfer, "LAB"),
+        (lch_transfer, "LCH"),
+        (oklab_transfer, "OkLab"),
         (oklch_transfer, "OkLch"),
     ] {
         println!("Computing for {} color model.", name);
