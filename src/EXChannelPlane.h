@@ -6,8 +6,8 @@
 #include <KoColorDisplayRendererInterface.h>
 #include <kis_canvas2.h>
 
-#include "EXShape.h"
 #include "EXEditable.h"
+#include "EXShape.h"
 
 class EXChannelPlane : public EXEditable
 {
@@ -39,11 +39,14 @@ private:
     QPointF m_editStart;
     QColor m_imageColor;
     EXPrimaryChannelRing m_ring;
-    QScopedPointer<EXChannelPlaneShape> m_shape;
+    EXChannelPlaneShape *m_shape;
     QImage m_image;
     KoColorDisplayRendererInterface *m_dri;
 
     void updateImage();
+
+private Q_SLOTS:
+    void settingsChanged();
 };
 
 #endif // COLORWHEEL_H

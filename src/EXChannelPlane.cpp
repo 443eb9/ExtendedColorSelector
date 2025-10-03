@@ -11,11 +11,13 @@
 #include "EXChannelPlane.h"
 #include "EXColorState.h"
 #include "EXKoColorConverter.h"
+#include "EXSettingsState.h"
 #include "EXUtils.h"
 
 EXChannelPlane::EXChannelPlane(QWidget *parent)
     : EXEditable(parent)
     , m_dri(nullptr)
+    , m_shape(nullptr)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);
@@ -35,11 +37,7 @@ EXChannelPlane::EXChannelPlane(QWidget *parent)
         update();
     });
 
-    // TODO read from settings.
-    float size = qMin(width(), height());
-    m_ring.margin = 5 / size * 2;
-    m_ring.thickness = 20 / size * 2;
-    m_ring.rotationOffset = 0;
+    connect(EXSettingsState::instance(), &EXSettingsState::settingsChanged, this, &EXChannelPlane::settingsChanged);
 }
 
 void EXChannelPlane::setCanvas(KisCanvas2 *canvas)
@@ -49,18 +47,39 @@ void EXChannelPlane::setCanvas(KisCanvas2 *canvas)
     }
 }
 
+void EXChannelPlane::settingsChanged()
+{
+    auto &settings = EXSettingsState::instance()->settings[EXColorState::instance()->colorModel()->id()];
+    if (settings.ringEnabled) {
+        m_ring.margin = settings.ringMargin / size() * 2;
+        m_ring.thickness = settings.ringThickness / size() * 2;
+        qDebug() << "thickness" << m_ring.thickness << "margin" << m_ring.margin;
+        m_ring.rotationOffset = settings.ringRotation;
+    } else {
+        m_ring.thickness = 0;
+    }
+
+    if (m_shape) {
+        delete m_shape;
+    }
+    m_shape = EXShapeFactory::fromId(settings.shape);
+
+    updateImage();
+    update();
+}
+
 void EXChannelPlane::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     updateImage();
-    // TODO read from settings.
-    float size = qMin(width(), height());
-    m_ring.margin = 5 / size * 2;
-    m_ring.thickness = 20 / size * 2;
 }
 
 void EXChannelPlane::paintEvent(QPaintEvent *event)
 {
+    if (m_image.isNull() || m_shape == nullptr) {
+        return;
+    }
+
     QWidget::paintEvent(event);
     QPainter painter(this);
 
@@ -77,7 +96,7 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
 
 void EXChannelPlane::updateImage()
 {
-    if (m_dri == nullptr) {
+    if (m_dri == nullptr || m_shape == nullptr) {
         m_image = QImage();
         return;
     }
@@ -135,6 +154,10 @@ void EXChannelPlane::updateImage()
 
 void EXChannelPlane::mousePressEvent(QMouseEvent *event)
 {
+    if (m_shape == nullptr) {
+        return;
+    }
+
     EXEditable::mousePressEvent(event);
     QPointF widgetCoord = QPointF(event->pos()) / qMin(width(), height()) * 2 - QPointF(1, 1);
     float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
@@ -152,6 +175,10 @@ void EXChannelPlane::mousePressEvent(QMouseEvent *event)
 
 void EXChannelPlane::edit(QMouseEvent *event)
 {
+    if (m_shape == nullptr) {
+        return;
+    }
+
     QPointF widgetCoord = QPointF(event->pos()) / size();
 
     switch (m_editMode) {
@@ -175,6 +202,10 @@ void EXChannelPlane::edit(QMouseEvent *event)
 
 void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
 {
+    if (m_shape == nullptr) {
+        return;
+    }
+
     QPointF widgetCoord = (m_editStart + QPointF(delta.x(), delta.y())) / this->size();
 
     switch (m_editMode) {
