@@ -63,6 +63,7 @@ void EXChannelPlane::settingsChanged()
         delete m_shape;
     }
     m_shape = EXShapeFactory::fromId(settings.shape);
+    m_shape->updateTransform(settings.reverseX, settings.reverseY, settings.rotation, settings.swapAxes);
 
     updateImage();
     update();
@@ -87,7 +88,7 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
 
     QVector2D planeValues = EXColorState::instance()->secondaryChannelValues();
     int size = this->size();
-    QPointF widgetCoord = m_shape->shapeToWidgetCoord(QPointF(planeValues.x(), planeValues.y()), m_ring);
+    QPointF widgetCoord = m_shape->shapeToWidget01Transformed(QPointF(planeValues.x(), planeValues.y()), m_ring);
     painter.drawArc(QRectF(widgetCoord.x() * size - 4, widgetCoord.y() * size - 4, 8, 8), 0, 360 * 16);
 
     if (m_ring.thickness > 0) {
@@ -118,7 +119,7 @@ void EXChannelPlane::updateImage()
         } else {
             float boundaryDiameter = m_ring.marginedBoundaryDiameter();
             QPointF shapeCoord;
-            bool isInShape = m_shape->widgetCenteredToShapeCoord(widgetCoord, shapeCoord, m_ring);
+            bool isInShape = m_shape->widgetCenteredToShapeTransformed(widgetCoord, shapeCoord, m_ring);
             float channel1 = shapeCoord.x();
             float channel2 = shapeCoord.y();
             if (!isInShape) {
@@ -168,7 +169,7 @@ void EXChannelPlane::mousePressEvent(QMouseEvent *event)
     } else {
         m_editMode = Plane;
         QVector2D values = EXColorState::instance()->secondaryChannelValues();
-        m_editStart = m_shape->shapeToWidgetCoord(QPointF(values.x(), values.y()), m_ring) * size;
+        m_editStart = m_shape->shapeToWidget01Transformed(QPointF(values.x(), values.y()), m_ring) * size;
     }
 }
 
@@ -188,7 +189,7 @@ void EXChannelPlane::edit(QMouseEvent *event)
     }
     case Plane: {
         QPointF shapeCoord;
-        m_shape->widgetToShapeCoord(widgetCoord, shapeCoord, m_ring);
+        m_shape->widget01ToShapeTransformed(widgetCoord, shapeCoord, m_ring);
 
         shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
         shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
@@ -215,7 +216,7 @@ void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
     }
     case Plane: {
         QPointF shapeCoord;
-        m_shape->widgetToShapeCoord(widgetCoord, shapeCoord, m_ring);
+        m_shape->widget01ToShapeTransformed(widgetCoord, shapeCoord, m_ring);
 
         shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
         shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));

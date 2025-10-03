@@ -1,6 +1,7 @@
 #include <QVector2D>
 #include <cmath>
 #include <qmath.h>
+#include <qdebug.h>
 
 #include "EXShape.h"
 
@@ -45,9 +46,83 @@ const QVector<EXChannelPlaneShapeId> EXShapeFactory::AllShapes = {
     Circle,
 };
 
-bool EXSquareChannelPlaneShape::widgetCenteredToShapeCoord(const QPointF &widgetCoordCentered,
+QPointF EXChannelPlaneShape::shapeToWidgetCenteredTransformed(const QPointF &shapeCoord,
+                                                              const EXPrimaryChannelRing &ring)
+{
+    QPointF shape = shapeCoord;
+    if (m_swapAxes) {
+        shape = QPointF(shape.y(), shape.x());
+    }
+    if (m_reverseX) {
+        shape.setX(1 - shape.x());
+    }
+    if (m_reverseY) {
+        shape.setY(1 - shape.y());
+    }
+
+    QPointF widget = shapeToWidgetCentered(shape, ring);
+    if (m_rotation == 0.0f) {
+        return widget;
+    }
+
+    float x = widget.x() * m_rotCos - widget.y() * m_rotSin;
+    float y = widget.x() * m_rotSin + widget.y() * m_rotCos;
+    return QPointF(x, y);
+}
+
+bool EXChannelPlaneShape::widgetCenteredToShapeTransformed(const QPointF &widgetCoordCentered,
                                                            QPointF &shapeCoord,
                                                            const EXPrimaryChannelRing &ring)
+{
+    QPointF widget = widgetCoordCentered;
+    if (m_rotation != 0.0f) {
+        float x = widgetCoordCentered.x() * m_rotCos - widgetCoordCentered.y() * (-m_rotSin);
+        float y = widgetCoordCentered.x() * (-m_rotSin) + widgetCoordCentered.y() * m_rotCos;
+        widget = QPointF(x, y);
+    }
+
+    bool result = widgetCenteredToShape(widget, shapeCoord, ring);
+    if (m_reverseX) {
+        shapeCoord.setX(1 - shapeCoord.x());
+    }
+    if (m_reverseY) {
+        shapeCoord.setY(1 - shapeCoord.y());
+    }
+    if (m_swapAxes) {
+        shapeCoord = QPointF(shapeCoord.y(), shapeCoord.x());
+    }
+
+    return result;
+}
+
+QPointF EXChannelPlaneShape::shapeToWidget01Transformed(const QPointF &shapeCoord, const EXPrimaryChannelRing &ring)
+{
+    QPointF widget = shapeToWidgetCenteredTransformed(shapeCoord, ring);
+    widget.setY(-widget.y());
+    return widget * 0.5 + QPointF(0.5, 0.5);
+}
+
+bool EXChannelPlaneShape::widget01ToShapeTransformed(const QPointF &widgetCoord,
+                                                     QPointF &shapeCoord,
+                                                     const EXPrimaryChannelRing &ring)
+{
+    QPointF widgetCoordCentered = (widgetCoord - QPointF(0.5, 0.5)) * 2;
+    widgetCoordCentered.setY(-widgetCoordCentered.y());
+    return widgetCenteredToShapeTransformed(widgetCoordCentered, shapeCoord, ring);
+}
+
+void EXChannelPlaneShape::updateTransform(bool reverseX, bool reverseY, float rotation, bool swapAxes)
+{
+    m_reverseX = reverseX;
+    m_reverseY = reverseY;
+    m_rotation = rotation;
+    sincosf(rotation, &m_rotSin, &m_rotCos);
+    m_swapAxes = swapAxes;
+}
+
+bool EXSquareChannelPlaneShape::widgetCenteredToShape(const QPointF &widgetCoordCentered,
+                                                      QPointF &shapeCoord,
+                                                      const EXPrimaryChannelRing &ring)
 {
     if (ring.thickness == 0.0f) {
         shapeCoord = widgetCoordCentered * 0.5 + QPointF(0.5, 0.5);
@@ -61,8 +136,8 @@ bool EXSquareChannelPlaneShape::widgetCenteredToShapeCoord(const QPointF &widget
     return shapeCoord.x() >= 0 && shapeCoord.x() <= 1 && shapeCoord.y() >= 0 && shapeCoord.y() <= 1;
 }
 
-QPointF EXSquareChannelPlaneShape::shapeToWidgetCoordCentered(const QPointF &shapeCoordCentered,
-                                                              const EXPrimaryChannelRing &ring)
+QPointF EXSquareChannelPlaneShape::shapeToWidgetCentered(const QPointF &shapeCoordCentered,
+                                                         const EXPrimaryChannelRing &ring)
 {
     if (ring.thickness == 0.0f) {
         return shapeCoordCentered * 2 - QPointF(1, 1);
@@ -74,9 +149,9 @@ QPointF EXSquareChannelPlaneShape::shapeToWidgetCoordCentered(const QPointF &sha
     return QPointF(x, y);
 }
 
-bool EXTriangleChannelPlaneShape::widgetCenteredToShapeCoord(const QPointF &widgetCoordCentered,
-                                                             QPointF &shapeCoord,
-                                                             const EXPrimaryChannelRing &ring)
+bool EXTriangleChannelPlaneShape::widgetCenteredToShape(const QPointF &widgetCoordCentered,
+                                                        QPointF &shapeCoord,
+                                                        const EXPrimaryChannelRing &ring)
 {
     bool result = true;
     QVector2D p = QVector2D(widgetCoordCentered);
@@ -102,8 +177,8 @@ bool EXTriangleChannelPlaneShape::widgetCenteredToShapeCoord(const QPointF &widg
     return result && y >= 0 && y <= 1 && x >= 0 && x <= 1;
 }
 
-QPointF EXTriangleChannelPlaneShape::shapeToWidgetCoordCentered(const QPointF &shapeCoordCentered,
-                                                                const EXPrimaryChannelRing &ring)
+QPointF EXTriangleChannelPlaneShape::shapeToWidgetCentered(const QPointF &shapeCoordCentered,
+                                                           const EXPrimaryChannelRing &ring)
 {
     float x = shapeCoordCentered.x();
     float y = shapeCoordCentered.y();
@@ -118,9 +193,9 @@ QPointF EXTriangleChannelPlaneShape::shapeToWidgetCoordCentered(const QPointF &s
     return QPointF(p.x(), p.y());
 }
 
-bool EXCircleChannelPlaneShape::widgetCenteredToShapeCoord(const QPointF &widgetCoordCentered,
-                                                           QPointF &shapeCoord,
-                                                           const EXPrimaryChannelRing &ring)
+bool EXCircleChannelPlaneShape::widgetCenteredToShape(const QPointF &widgetCoordCentered,
+                                                      QPointF &shapeCoord,
+                                                      const EXPrimaryChannelRing &ring)
 {
     float x = widgetCoordCentered.x();
     float y = widgetCoordCentered.y();
@@ -130,8 +205,8 @@ bool EXCircleChannelPlaneShape::widgetCenteredToShapeCoord(const QPointF &widget
     return shapeCoord.x() >= 0 && shapeCoord.x() <= 1;
 }
 
-QPointF EXCircleChannelPlaneShape::shapeToWidgetCoordCentered(const QPointF &shapeCoordCentered,
-                                                              const EXPrimaryChannelRing &ring)
+QPointF EXCircleChannelPlaneShape::shapeToWidgetCentered(const QPointF &shapeCoordCentered,
+                                                         const EXPrimaryChannelRing &ring)
 {
     float x = shapeCoordCentered.x();
     float y = shapeCoordCentered.y();
