@@ -43,6 +43,7 @@ public:
 
     void setColorModel(ColorModelId model);
     const ColorModelSP colorModel() const;
+    bool possibleOutOfGamut() const;
 
     void sendToKrita();
     void syncFromKrita();

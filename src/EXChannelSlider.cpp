@@ -145,7 +145,7 @@ void ChannelValueBar::updateImage()
         }
         color = colorState->colorModel()->transferTo(colorState->kritaColorModel(), color, nullptr);
         auto settings = EXSettingsState::instance()->globalSettings;
-        if (!colorState->colorModel()->isSrgbBased() && settings.outOfGamutColorEnabled) {
+        if (colorState->possibleOutOfGamut() && settings.outOfGamutColorEnabled) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
         }
         return QVector4D(color, 1.0f);
