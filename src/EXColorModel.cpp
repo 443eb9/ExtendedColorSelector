@@ -116,6 +116,7 @@ QVector3D hwbToRgb(const QVector3D &color)
         red = v, green = w, blue = n;
         break;
     default:
+        red = v, green = n, blue = w;
         break;
     };
 
@@ -125,7 +126,7 @@ QVector3D hwbToRgb(const QVector3D &color)
 QVector3D HSVModel::fromXyz(const QVector3D &color) const
 {
     QVector3D hwb = rgbToHwb(RGBModel().fromXyz(color));
-    float value = 1. - hwb[1];
+    float value = 1. - hwb[2];
     float saturation = value != 0. ? 1. - (hwb[1] / value) : 0.;
     return QVector3D(hwb[0], saturation, value);
 }

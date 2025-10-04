@@ -60,11 +60,16 @@ void EXColorState::syncFromKrita()
         return;
     }
 
-    KoColor color = m_resourceProvider->fgColor();
-    auto channels = m_koColorConverter->koColorToDisplayChannels(color);
-    for (int i = 0; i < 3; i++) {
-        m_color[i] = channels[i];
-    }
+    KoColor koColor = m_resourceProvider->fgColor();
+    auto channels = m_koColorConverter->koColorToDisplayChannels(koColor);
+    QVector3D newColor(channels[0], channels[1], channels[2]);
+    m_color = m_kritaColorModel->transferTo(m_colorModel, newColor, nullptr);
+
+    RGBModel rgb;
+    HSVModel hsv;
+
+    // qDebug() << m_colorModel->displayName() << m_kritaColorModel->displayName();
+    // qDebug() << "Sync from Krita:" << newColor << ", Converted: " << m_color;
     Q_EMIT sigColorChanged(m_color);
 }
 
