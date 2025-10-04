@@ -147,17 +147,18 @@ void HSVModel::makeColorful(QVector3D &color, int channelIndex) const
 QVector3D HSLModel::fromXyz(const QVector3D &color) const
 {
     auto hsv = HSVModel().fromXyz(color);
-    float lightness = hsv[2] * (1. - hsv[1] / 2.);
-    float saturation =
-        (lightness == 0.0f || lightness == 1.0f) ? 0.0f : ((color[2] - lightness) / qMin(lightness, 1.0f - lightness));
+    float saturation = hsv[1], value = hsv[2];
+    float lightness = value * (1. - saturation / 2.);
+    saturation = (lightness == 0. || lightness == 1.) ? 0. : (value - lightness) / qMin(lightness, 1.f - lightness);
 
     return QVector3D(hsv[0], saturation, lightness);
 }
 
 QVector3D HSLModel::toXyz(const QVector3D &color) const
 {
-    float value = color[2] + color[1] * qMin(color[2], 1.0f - color[2]);
-    float saturation = value == 0. ? 0. : 2. * (1. - (color[2] / value));
+    float saturation = color[1], lightness = color[2];
+    float value = lightness + saturation * qMin(lightness, 1.f - lightness);
+    saturation = value == 0. ? 0. : 2. * (1. - (lightness / value));
 
     return HSVModel().toXyz(QVector3D(color[0], saturation, value));
 }

@@ -30,7 +30,10 @@ void EXColorState::setColorModel(ColorModelId model)
     }
 
     auto newModel = ColorModelFactory::fromId(model);
+
+    qDebug() << "old color: " << m_color;
     m_color = m_colorModel->transferTo(newModel, m_color, nullptr);
+    qDebug() << "old from new: " << newModel->transferTo(m_colorModel, m_color, nullptr);
     ExtendedUtils::saturateColor(m_color);
     m_colorModel = newModel;
     Q_EMIT sigColorModelChanged(model);
@@ -64,12 +67,6 @@ void EXColorState::syncFromKrita()
     auto channels = m_koColorConverter->koColorToDisplayChannels(koColor);
     QVector3D newColor(channels[0], channels[1], channels[2]);
     m_color = m_kritaColorModel->transferTo(m_colorModel, newColor, nullptr);
-
-    RGBModel rgb;
-    HSVModel hsv;
-
-    // qDebug() << m_colorModel->displayName() << m_kritaColorModel->displayName();
-    // qDebug() << "Sync from Krita:" << newColor << ", Converted: " << m_color;
     Q_EMIT sigColorChanged(m_color);
 }
 
