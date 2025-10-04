@@ -33,6 +33,16 @@ public:
     float size() const;
 
     void setCanvas(KisCanvas2 *canvas);
+    
+    bool hasHeightForWidth() const override
+    {
+        return true;
+    }
+
+    int heightForWidth(int width) const override
+    {
+        return width;
+    }
 
 private:
     enum EditMode {

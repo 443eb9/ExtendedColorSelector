@@ -25,6 +25,7 @@ EXColorSelectorDock::EXColorSelectorDock()
     mainLayout->addWidget(m_plane);
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);
+    mainLayout->addStretch(1);
 
     m_settings = new EXPerColorModelSettingsDialog(m_settingsState, this);
     m_globalSettings = new EXGlobalSettingsDialog(m_settingsState, this);
