@@ -172,11 +172,13 @@ void ChannelValueBar::paintEvent(QPaintEvent *event)
     painter.drawRect(x - 1, 0, 2, height());
 }
 
-void ChannelValueBar::mousePressEvent(QMouseEvent *event)
+void ChannelValueBar::startEdit(QMouseEvent *event, bool isShift)
 {
-    EXEditable::mousePressEvent(event);
     m_editStart = currentWidgetCoord();
-    EXColorState::instance()->setChannel(m_channelIndex, (event->pos().x() / width()));
+
+    if (!isShift) {
+        edit(event);
+    }
 
     if (m_colorPatchPopup) {
         m_colorPatchPopup->popupAt(mapToGlobal(QPoint()) - QPoint(m_colorPatchPopup->width(), 0));

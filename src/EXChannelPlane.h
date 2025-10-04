@@ -19,9 +19,9 @@ public:
 
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
-    void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
 
+    void startEdit(QMouseEvent *event, bool isShift) override;
     void edit(QMouseEvent *event) override;
     void shift(QMouseEvent *event, QVector2D delta) override;
 

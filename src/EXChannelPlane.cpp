@@ -192,13 +192,12 @@ void EXChannelPlane::updateImage()
                                               pixelGet);
 }
 
-void EXChannelPlane::mousePressEvent(QMouseEvent *event)
+void EXChannelPlane::startEdit(QMouseEvent *event, bool isShift)
 {
     if (m_shape == nullptr) {
         return;
     }
 
-    EXEditable::mousePressEvent(event);
     QPointF widgetCoord = QPointF(event->pos()) / qMin(width(), height());
     QPointF centeredCoord = widgetCoord * 2 - QPointF(1, 1);
     float dist = qSqrt(centeredCoord.x() * centeredCoord.x() + centeredCoord.y() * centeredCoord.y());
@@ -207,12 +206,14 @@ void EXChannelPlane::mousePressEvent(QMouseEvent *event)
     if (m_shape->ring.thickness > 0 && dist > m_shape->ring.boundaryDiameter()) {
         m_editMode = Ring;
         m_editStart = m_shape->ring.getWidgetCoord(EXColorState::instance()->primaryChannelValue()) * size;
-        sendRingColor(widgetCoord);
     } else {
         m_editMode = Plane;
         QVector2D values = EXColorState::instance()->secondaryChannelValues();
         m_editStart = m_shape->shapeToWidget01(QPointF(values.x(), values.y())) * size;
-        sendPlaneColor(widgetCoord);
+    }
+
+    if (!isShift) {
+        handleCursorEdit(widgetCoord);
     }
 
     if (m_colorPatchPopup) {

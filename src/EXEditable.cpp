@@ -8,6 +8,7 @@ EXEditable::EXEditable(QWidget *parent)
 void EXEditable::mousePressEvent(QMouseEvent *event)
 {
     m_editStart = event->pos();
+    startEdit(event, event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::AltModifier));
 }
 
 void EXEditable::mouseMoveEvent(QMouseEvent *event)
