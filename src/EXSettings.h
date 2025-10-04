@@ -9,7 +9,7 @@
 #include "EXColorModel.h"
 #include "EXShape.h"
 
-const QString EXSettingsGroupName = "ExtendedColorSelector_CPP";
+const QString EXSettingsGroupName = "Extended Color Selector CPP";
 
 class EXPerColorModelSettings
 {
