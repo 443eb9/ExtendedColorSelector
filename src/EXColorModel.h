@@ -528,9 +528,12 @@ public:
         auto id = colorSpace->colorModelId();
         if (id == RGBAColorModelID) {
             return new RGBModel();
+        } else if (id == LABAColorModelID) {
+            return new LABModel();
+        } else if (id == XYZAColorModelID) {
+            return new XYZModel();
         } else {
-            // TODO handle this.
-            return 0;
+            return nullptr;
         }
     }
 
