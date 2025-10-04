@@ -16,11 +16,11 @@
 #include "EXSettingsState.h"
 #include "OptionalColorPicker.h"
 
-EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
+EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(EXSettingsStateSP settingsState, QWidget *parent)
     : QDialog(parent)
+    , m_settingsState(settingsState)
 {
     setWindowTitle("Extended Color Selector - Settings");
-    auto settingsState = EXSettingsState::instance();
     auto mainLayout = new QHBoxLayout();
 
     auto pageSwitchers = new QListWidget();
@@ -28,8 +28,8 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
     pageSwitchers->setDragDropMode(QListWidget::InternalMove);
     auto pages = new QStackedLayout();
 
-    for (const auto &colorModelId : settingsState->globalSettings.displayOrder) {
-        auto &settings = settingsState->settings[colorModelId];
+    for (const auto &colorModelId : m_settingsState->globalSettings.displayOrder) {
+        auto &settings = m_settingsState->settings[colorModelId];
         auto colorModel = ColorModelFactory::fromId(colorModelId);
 
         pageSwitchers->addItem(colorModel->displayName());
@@ -44,23 +44,23 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
 
         auto slidersEnabled = new QCheckBox(QString("Enable %1 Sliders").arg(colorModel->displayName()));
         slidersEnabled->setChecked(settings.slidersEnabled);
-        connect(slidersEnabled, &QCheckBox::clicked, [&settings](bool checked) {
+        connect(slidersEnabled, &QCheckBox::clicked, [this, &settings](bool checked) {
             settings.slidersEnabled = checked;
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
 
         auto colorfulPrimaryChannel = new QCheckBox("Colorful Primary Channel");
         colorfulPrimaryChannel->setChecked(settings.colorfulHueRing);
-        connect(colorfulPrimaryChannel, &QCheckBox::clicked, [&settings](bool checked) {
+        connect(colorfulPrimaryChannel, &QCheckBox::clicked, [this, &settings](bool checked) {
             settings.colorfulHueRing = checked;
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
 
         auto clipGamutBox = new QCheckBox("Clip Gamut To SRGB Range");
         clipGamutBox->setChecked(settings.clipToSrgbGamut);
-        connect(clipGamutBox, &QCheckBox::clicked, [&settings](bool checked) {
+        connect(clipGamutBox, &QCheckBox::clicked, [this, &settings](bool checked) {
             settings.clipToSrgbGamut = checked;
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
 
         auto shapeButtonsAndRotLayout = new QHBoxLayout();
@@ -70,9 +70,9 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
 
             auto button = new QRadioButton(shape->displayName());
             button->setChecked(shapeId == settings.shape);
-            connect(button, &QRadioButton::clicked, [shapeId, &settings]() {
+            connect(button, &QRadioButton::clicked, [this, shapeId, &settings]() {
                 settings.shape = shapeId;
-                Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+                Q_EMIT m_settingsState->sigSettingsChanged();
             });
             shapeButtonsAndRotLayout->addWidget(button);
             shapesGroup->addButton(button);
@@ -81,9 +81,9 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
         auto wheelRotationBox = new QDoubleSpinBox();
         wheelRotationBox->setMaximum(360);
         wheelRotationBox->setValue(qRadiansToDegrees(settings.rotation));
-        connect(wheelRotationBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [&settings](double val) {
+        connect(wheelRotationBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this, &settings](double val) {
             settings.rotation = qDegreesToRadians(val);
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
         shapeButtonsAndRotLayout->addWidget(new QLabel("Rotation"));
         shapeButtonsAndRotLayout->addWidget(wheelRotationBox);
@@ -91,21 +91,21 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
         auto axesSettingsLayout = new QHBoxLayout();
         auto swapAxesButton = new QCheckBox("Swap Axes");
         swapAxesButton->setChecked(settings.swapAxes);
-        connect(swapAxesButton, &QCheckBox::clicked, [&settings](bool checked) {
+        connect(swapAxesButton, &QCheckBox::clicked, [this, &settings](bool checked) {
             settings.swapAxes = checked;
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
         auto reverseXAxisButton = new QCheckBox("Revert X Axis");
         reverseXAxisButton->setChecked(settings.reverseX);
-        connect(reverseXAxisButton, &QCheckBox::clicked, [&settings](bool checked) {
+        connect(reverseXAxisButton, &QCheckBox::clicked, [this, &settings](bool checked) {
             settings.reverseX = checked;
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
         auto reverseYAxisButton = new QCheckBox("Revert Y Axis");
         reverseYAxisButton->setChecked(settings.reverseY);
-        connect(reverseYAxisButton, &QCheckBox::clicked, [&settings](bool checked) {
+        connect(reverseYAxisButton, &QCheckBox::clicked, [this, &settings](bool checked) {
             settings.reverseY = checked;
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
         axesSettingsLayout->addWidget(swapAxesButton);
         axesSettingsLayout->addWidget(reverseXAxisButton);
@@ -115,15 +115,15 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
         auto ringSettingsLayout1 = new QHBoxLayout();
         auto ringThicknessBox = new QDoubleSpinBox();
         ringThicknessBox->setValue(settings.ringThickness);
-        connect(ringThicknessBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [&settings](double val) {
+        connect(ringThicknessBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this, &settings](double val) {
             settings.ringThickness = val;
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
         auto ringMarginBox = new QDoubleSpinBox();
         ringMarginBox->setValue(settings.ringMargin);
-        connect(ringMarginBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [&settings](double val) {
+        connect(ringMarginBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this, &settings](double val) {
             settings.ringMargin = val;
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
         ringSettingsLayout1->addWidget(new QLabel("Ring Thickness"));
         ringSettingsLayout1->addWidget(ringThicknessBox);
@@ -132,25 +132,25 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
         auto ringSettingsLayout2 = new QHBoxLayout();
         auto ringReversed = new QCheckBox("Ring Reversed");
         ringReversed->setChecked(settings.ringReversed);
-        connect(ringReversed, &QCheckBox::clicked, [&settings](bool checked) {
+        connect(ringReversed, &QCheckBox::clicked, [this, &settings](bool checked) {
             settings.ringReversed = checked;
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
         auto ringRotation = new QDoubleSpinBox();
         ringRotation->setMaximum(360);
         ringRotation->setValue(qRadiansToDegrees(settings.ringRotation));
-        connect(ringRotation, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [&settings](double val) {
+        connect(ringRotation, QOverload<double>::of(&QDoubleSpinBox::valueChanged), [this, &settings](double val) {
             settings.ringRotation = qDegreesToRadians(val);
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
         ringSettingsLayout2->addWidget(ringReversed);
         ringSettingsLayout2->addWidget(new QLabel("Ring Rotation"));
         ringSettingsLayout2->addWidget(ringRotation);
         auto wheelRotateWithRingBox = new QCheckBox("Plane Rotate With Ring");
         wheelRotateWithRingBox->setChecked(settings.planeRotateWithRing);
-        connect(wheelRotateWithRingBox, &QCheckBox::clicked, [&settings](bool checked) {
+        connect(wheelRotateWithRingBox, &QCheckBox::clicked, [this, &settings](bool checked) {
             settings.planeRotateWithRing = checked;
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
         ringSettingsLayouts->addLayout(ringSettingsLayout1);
         ringSettingsLayouts->addLayout(ringSettingsLayout2);
@@ -158,9 +158,9 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
 
         auto ringEnabled = new QCheckBox("Enable Ring");
         ringEnabled->setChecked(settings.ringEnabled);
-        connect(ringEnabled, &QCheckBox::clicked, [&settings](bool checked) {
+        connect(ringEnabled, &QCheckBox::clicked, [this, &settings](bool checked) {
             settings.ringEnabled = checked;
-            Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+            Q_EMIT m_settingsState->sigSettingsChanged();
         });
 
         pageLayout->addWidget(slidersEnabled);
@@ -190,12 +190,14 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(QWidget *parent)
     });
     m_pageSwitchers = pageSwitchers;
     auto model = pageSwitchers->model();
-    connect(model, &QAbstractItemModel::rowsMoved, this, &EXPerColorModelSettingsDialog::updateOrder);
+    QObject::connect(model, &QAbstractItemModel::rowsMoved, this, [this]() {
+        updateOrder();
+    });
 
     mainLayout->addWidget(pageSwitchers);
     mainLayout->addLayout(pages);
     mainLayout->addStretch(1);
-    setLayout(mainLayout);
+    QDialog::setLayout(mainLayout);
 }
 
 void EXPerColorModelSettingsDialog::updateOrder()
@@ -205,7 +207,7 @@ void EXPerColorModelSettingsDialog::updateOrder()
         widgets.append(m_pageSwitchers->item(i));
     }
 
-    auto &globalSettings = EXSettingsState::instance()->globalSettings;
+    auto &globalSettings = m_settingsState->globalSettings;
     globalSettings.displayOrder.clear();
 
     for (const auto widget : widgets) {
@@ -217,7 +219,7 @@ void EXPerColorModelSettingsDialog::updateOrder()
 
     globalSettings.writeAll();
 
-    Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+    Q_EMIT m_settingsState->sigSettingsChanged();
 }
 
 void EXPerColorModelSettingsDialog::handleColorModelEnabledChange(QListWidgetItem *item)
@@ -227,35 +229,35 @@ void EXPerColorModelSettingsDialog::handleColorModelEnabledChange(QListWidgetIte
         return;
     }
 
-    auto &settings = EXSettingsState::instance()->settings[colorModel->id()];
+    auto &settings = m_settingsState->settings[colorModel->id()];
     settings.enabled = item->checkState() == Qt::CheckState::Checked;
 
     settings.writeAll();
 
-    Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+    Q_EMIT m_settingsState->sigSettingsChanged();
 }
 
 void EXPerColorModelSettingsDialog::closeEvent(QCloseEvent *event)
 {
     QDialog::closeEvent(event);
-    auto settingsState = EXSettingsState::instance();
-    for (auto &settings : settingsState->settings) {
+    for (auto &settings : m_settingsState->settings) {
         settings.writeAll();
     }
 }
 
-EXGlobalSettingsDialog::EXGlobalSettingsDialog(QWidget *parent)
+EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, QWidget *parent)
     : QDialog(parent)
+    , m_settingsState(settingsState)
 {
     auto mainLayout = new QVBoxLayout(this);
     setWindowTitle("Extended Color Selector - Global Settings");
-    auto &settings = EXSettingsState::instance()->globalSettings;
+    auto &settings = m_settingsState->globalSettings;
 
     auto recordLastColorWhenMouseReleaseBox = new QCheckBox("Record Last Color When Mouse Release");
     recordLastColorWhenMouseReleaseBox->setChecked(settings.recordLastColorWhenMouseRelease);
-    connect(recordLastColorWhenMouseReleaseBox, &QCheckBox::clicked, [&settings](bool checked) {
+    connect(recordLastColorWhenMouseReleaseBox, &QCheckBox::clicked, [this, &settings](bool checked) {
         settings.recordLastColorWhenMouseRelease = checked;
-        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+        Q_EMIT m_settingsState->sigSettingsChanged();
     });
 
     auto outOfGamutColorPicker = new OptionalColorPicker(
@@ -263,32 +265,32 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(QWidget *parent)
         "Out Of Gamut Color",
         QColor::fromRgbF(settings.outOfGamutColor[0], settings.outOfGamutColor[1], settings.outOfGamutColor[2]));
     outOfGamutColorPicker->setPickingEnabled(settings.outOfGamutColorEnabled);
-    connect(outOfGamutColorPicker->colorDialog, &QColorDialog::colorSelected, [&settings](const QColor &color) {
+    connect(outOfGamutColorPicker->colorDialog, &QColorDialog::colorSelected, [this, &settings](const QColor &color) {
         settings.outOfGamutColor[0] = color.redF();
         settings.outOfGamutColor[1] = color.greenF();
         settings.outOfGamutColor[2] = color.blueF();
-        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+        Q_EMIT m_settingsState->sigSettingsChanged();
     });
-    connect(outOfGamutColorPicker->enableBox, &QCheckBox::clicked, [&settings](bool checked) {
+    connect(outOfGamutColorPicker->enableBox, &QCheckBox::clicked, [this, &settings](bool checked) {
         settings.outOfGamutColorEnabled = checked;
-        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+        Q_EMIT m_settingsState->sigSettingsChanged();
     });
 
     auto barHeightLayout = new QHBoxLayout(this);
     auto barHeightBox = new QSpinBox();
     barHeightBox->setValue(settings.barHeight);
-    connect(barHeightBox, QOverload<int>::of(&QSpinBox::valueChanged), [&settings](int val) {
+    connect(barHeightBox, QOverload<int>::of(&QSpinBox::valueChanged), [this, &settings](int val) {
         settings.barHeight = val;
-        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+        Q_EMIT m_settingsState->sigSettingsChanged();
     });
     barHeightLayout->addWidget(new QLabel("Bar Height"));
     barHeightLayout->addWidget(barHeightBox);
 
     auto dontSyncIfOutOfGamutBox = new QCheckBox("Don't Sync Color From Krita If Out Of Gamut");
     dontSyncIfOutOfGamutBox->setChecked(settings.dontSyncIfOutOfGamut);
-    connect(dontSyncIfOutOfGamutBox, &QCheckBox::clicked, [&settings](bool checked) {
+    connect(dontSyncIfOutOfGamutBox, &QCheckBox::clicked, [this, &settings](bool checked) {
         settings.dontSyncIfOutOfGamut = checked;
-        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+        Q_EMIT m_settingsState->sigSettingsChanged();
     });
 
     auto pSettingsGroup = new QGroupBox("Portable Color Selector");
@@ -298,32 +300,32 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(QWidget *parent)
     auto pWidthBox = new QSpinBox();
     pWidthBox->setMaximum(1000);
     pWidthBox->setValue(settings.pWidth);
-    connect(pWidthBox, QOverload<int>::of(&QSpinBox::valueChanged), [&settings](int val) {
+    connect(pWidthBox, QOverload<int>::of(&QSpinBox::valueChanged), [this, &settings](int val) {
         settings.pWidth = val;
-        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+        Q_EMIT m_settingsState->sigSettingsChanged();
     });
     pSettingForm->addRow("Width", pWidthBox);
 
     auto pSettingsButtons = new QVBoxLayout();
     auto pEnableChannelPlane = new QCheckBox("Enable Channel Plane");
     pEnableChannelPlane->setChecked(settings.pEnableChannelPlane);
-    connect(pEnableChannelPlane, &QCheckBox::clicked, [&settings](bool checked) {
+    connect(pEnableChannelPlane, &QCheckBox::clicked, [this, &settings](bool checked) {
         settings.pEnableChannelPlane = checked;
-        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+        Q_EMIT m_settingsState->sigSettingsChanged();
     });
 
     auto pEnableColorModelSwitcher = new QCheckBox("Enable Color Model Switcher");
     pEnableColorModelSwitcher->setChecked(settings.pEnableColorModelSwitcher);
-    connect(pEnableColorModelSwitcher, &QCheckBox::clicked, [&settings](bool checked) {
+    connect(pEnableColorModelSwitcher, &QCheckBox::clicked, [this, &settings](bool checked) {
         settings.pEnableColorModelSwitcher = checked;
-        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+        Q_EMIT m_settingsState->sigSettingsChanged();
     });
 
     auto pEnableSliders = new QCheckBox("Enable Sliders");
     pEnableSliders->setChecked(settings.pEnableSliders);
-    connect(pEnableSliders, &QCheckBox::clicked, [&settings](bool checked) {
+    connect(pEnableSliders, &QCheckBox::clicked, [this, &settings](bool checked) {
         settings.pEnableSliders = checked;
-        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+        Q_EMIT m_settingsState->sigSettingsChanged();
     });
 
     pSettingsButtons->addWidget(pEnableChannelPlane);
@@ -343,6 +345,5 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(QWidget *parent)
 void EXGlobalSettingsDialog::closeEvent(QCloseEvent *event)
 {
     QDialog::closeEvent(event);
-    auto settingsState = EXSettingsState::instance();
-    settingsState->globalSettings.writeAll();
+    m_settingsState->globalSettings.writeAll();
 }

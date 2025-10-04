@@ -26,8 +26,8 @@ EXColorSelectorDock::EXColorSelectorDock()
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);
 
-    m_settings = new EXPerColorModelSettingsDialog(this);
-    m_globalSettings = new EXGlobalSettingsDialog(this);
+    m_settings = new EXPerColorModelSettingsDialog(m_settingsState, this);
+    m_globalSettings = new EXGlobalSettingsDialog(m_settingsState, this);
 
     auto settingsButtonLayout = new QHBoxLayout(this);
     auto settingsButton = new QPushButton();
