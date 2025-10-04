@@ -245,7 +245,7 @@ void EXChannelPlane::mouseReleaseEvent(QMouseEvent *event)
 {
     EXColorState::instance()->sendToKrita();
 
-    if (m_colorPatchPopup) {
+    if (m_colorPatchPopup && EXSettingsState::instance()->globalSettings.recordLastColorWhenMouseRelease) {
         m_colorPatchPopup->recordColor();
     }
 }

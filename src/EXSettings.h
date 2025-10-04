@@ -45,6 +45,7 @@ public:
     EXGlobalSettings();
     void writeAll();
 
+    bool recordLastColorWhenMouseRelease;
     QVector<ColorModelId> displayOrder;
     bool outOfGamutColorEnabled;
     QVector3D outOfGamutColor;

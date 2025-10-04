@@ -82,5 +82,6 @@ void EXColorSelectorDock::unsetCanvas()
 void EXColorSelectorDock::leaveEvent(QEvent *event)
 {
     QDockWidget::leaveEvent(event);
+    m_colorPatchPopup->recordColor();
     m_colorPatchPopup->hide();
 }

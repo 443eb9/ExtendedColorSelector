@@ -251,6 +251,13 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(QWidget *parent)
     setWindowTitle("Extended Color Selector - Global Settings");
     auto &settings = EXSettingsState::instance()->globalSettings;
 
+    auto recordLastColorWhenMouseReleaseBox = new QCheckBox("Record Last Color When Mouse Release");
+    recordLastColorWhenMouseReleaseBox->setChecked(settings.recordLastColorWhenMouseRelease);
+    connect(recordLastColorWhenMouseReleaseBox, &QCheckBox::clicked, [&settings](bool checked) {
+        settings.recordLastColorWhenMouseRelease = checked;
+        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+    });
+
     auto outOfGamutColorPicker = new OptionalColorPicker(
         this,
         "Out Of Gamut Color",
@@ -325,6 +332,7 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(QWidget *parent)
     pSettingsLayout->addLayout(pSettingsButtons);
     pSettingsLayout->addLayout(pSettingForm);
 
+    mainLayout->addWidget(recordLastColorWhenMouseReleaseBox);
     mainLayout->addWidget(outOfGamutColorPicker);
     mainLayout->addWidget(dontSyncIfOutOfGamutBox);
     mainLayout->addLayout(barHeightLayout);

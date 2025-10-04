@@ -188,7 +188,7 @@ void ChannelValueBar::mouseReleaseEvent(QMouseEvent *event)
     EXEditable::mouseReleaseEvent(event);
     EXColorState::instance()->sendToKrita();
 
-    if (m_colorPatchPopup) {
+    if (m_colorPatchPopup && EXSettingsState::instance()->globalSettings.recordLastColorWhenMouseRelease) {
         m_colorPatchPopup->recordColor();
     }
 }

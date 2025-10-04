@@ -67,6 +67,8 @@ void EXPortableColorSelector::toggle()
 {
     if (isVisible()) {
         hide();
+        m_colorPatchPopup->recordColor();
+        m_colorPatchPopup->shutdown();
     } else {
         move(QCursor::pos() - QPoint(width() / 2, height() / 2));
         activateWindow();
@@ -78,6 +80,8 @@ void EXPortableColorSelector::toggle()
 void EXPortableColorSelector::leaveEvent(QEvent *event)
 {
     QDialog::leaveEvent(event);
+    m_colorPatchPopup->recordColor();
+    m_colorPatchPopup->shutdown();
     hide();
 }
 
