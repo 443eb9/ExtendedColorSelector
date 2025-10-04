@@ -3,8 +3,10 @@
 
 #include "EXKoColorConverter.h"
 
-EXColorConverter::EXColorConverter(const KoColorSpace *cs)
+EXColorConverter::EXColorConverter(const KoColorSpace *cs, const ColorModelSP &colorModel)
     : m_colorSpace(cs)
+    , m_colorModel(colorModel)
+    , m_requiresLinearization(colorModel->requiresLinearization())
 {
     const QList<KoChannelInfo *> channelList = cs->channels();
 
@@ -31,11 +33,6 @@ EXColorConverter::EXColorConverter(const KoColorSpace *cs)
     }
 }
 
-const int *EXColorConverter::displayToMemoryPositionMapper() const
-{
-    return m_logicalToMemoryPosition;
-}
-
 KoColor EXColorConverter::displayChannelsToKoColor(const QVector4D &channels) const
 {
     KoColor c(m_colorSpace);
@@ -43,9 +40,7 @@ KoColor EXColorConverter::displayChannelsToKoColor(const QVector4D &channels) co
     QVector<float> channelVec(c.colorSpace()->channelCount());
 
     if (m_isRGBA) {
-        if (!m_isLinear) {
-            // Note: not all profiles define a TRC necessary for (de-)linearization,
-            // substituting with a linear profiles would be better
+        if (!m_isLinear && m_requiresLinearization) {
             QVector<qreal> tempVec({baseValues[0], baseValues[1], baseValues[2]});
             if (m_exposureSupported) {
                 m_colorSpace->profile()->delinearizeFloatValue(tempVec);
@@ -91,7 +86,7 @@ QVector4D EXColorConverter::koColorToDisplayChannels(const KoColor &c) const
                 channelValuesDisplay[i] = pow(channelValuesDisplay[i], 1 / 2.2);
             }
         }
-        if (!m_isLinear) {
+        if (!m_isLinear && m_requiresLinearization) {
             QVector<qreal> temp({channelValuesDisplay[0], channelValuesDisplay[1], channelValuesDisplay[2]});
             m_colorSpace->profile()->linearizeFloatValue(temp);
             channelValuesDisplay = QVector4D(temp[0], temp[1], temp[2], channelValuesDisplay[3]);
@@ -102,4 +97,14 @@ QVector4D EXColorConverter::koColorToDisplayChannels(const KoColor &c) const
         }
     }
     return coordinates;
+}
+
+const KoColorSpace *EXColorConverter::colorSpace() const
+{
+    return m_colorSpace;
+}
+
+const ColorModelSP EXColorConverter::colorModel() const
+{
+    return m_colorModel;
 }

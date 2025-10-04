@@ -38,6 +38,7 @@ public:
     void setColor(const QVector3D &color);
     const KoColorSpace *colorSpace() const;
     const ColorModelSP kritaColorModel() const;
+    const EXColorConverterSP koColorConverter() const;
     void setColorSpace(const KoColorSpace *colorSpace);
 
     void setColorModel(ColorModelId model);

@@ -37,6 +37,7 @@ void EXColorState::setColorModel(ColorModelId model)
     m_color = m_colorModel->transferTo(newModel, m_color, nullptr);
     ExtendedUtils::saturateColor(m_color);
     m_colorModel = newModel;
+    m_koColorConverter = new EXColorConverter(m_currentColorSpace, m_colorModel);
     Q_EMIT sigColorModelChanged(model);
     Q_EMIT sigColorChanged(m_color);
 }
@@ -48,11 +49,11 @@ const ColorModelSP EXColorState::colorModel() const
 
 void EXColorState::sendToKrita()
 {
-    RGBModel rgbConverter;
-    QVector3D currentRgb = m_colorModel->transferTo(&rgbConverter, m_color, nullptr);
+    QVector3D currentColor = m_colorModel->transferTo(m_kritaColorModel, m_color, nullptr);
+    ExtendedUtils::saturateColor(currentColor);
 
     m_blockSync = true;
-    m_resourceProvider->setFGColor(m_koColorConverter->displayChannelsToKoColor(QVector4D(currentRgb, 1.0f)));
+    m_resourceProvider->setFGColor(m_koColorConverter->displayChannelsToKoColor(QVector4D(currentColor, 1.0f)));
     m_blockSync = false;
 }
 
@@ -78,7 +79,7 @@ void EXColorState::setCanvas(KisCanvas2 *canvas)
 
         connect(m_resourceProvider, &KisCanvasResourceProvider::sigFGColorChanged, this, &EXColorState::syncFromKrita);
         connect(canvas->image(), &KisImage::sigColorSpaceChanged, this, [this, canvas]() {
-            m_currentColorSpace = canvas->image()->colorSpace();
+            setColorSpace(canvas->image()->colorSpace());
             syncFromKrita();
         });
 
@@ -183,9 +184,14 @@ const ColorModelSP EXColorState::kritaColorModel() const
     return m_kritaColorModel;
 }
 
+const EXColorConverterSP EXColorState::koColorConverter() const
+{
+    return m_koColorConverter;
+}
+
 void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
 {
     m_currentColorSpace = colorSpace;
-    m_koColorConverter = new EXColorConverter(colorSpace);
+    m_koColorConverter = new EXColorConverter(colorSpace, m_colorModel);
     m_kritaColorModel = ColorModelFactory::fromKoColorSpace(colorSpace);
 }

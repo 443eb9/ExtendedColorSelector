@@ -10,24 +10,24 @@ namespace ExtendedUtils
 QImage generateGradient(int width,
                         int height,
                         bool useParallel,
-                        const KoColorSpace *colorSpace,
+                        const EXColorConverterSP colorConverter,
                         const KoColorDisplayRendererInterface *dri,
                         std::function<QVector4D(float, float)> pixelGet)
 {
     const int deviceWidth = qCeil(width);
     const int deviceHeight = qCeil(height);
+    const KoColorSpace *colorSpace = colorConverter->colorSpace();
     const qsizetype pixelSize = colorSpace->pixelSize();
     quint32 imageSize = deviceWidth * deviceHeight * pixelSize;
     QScopedArrayPointer<quint8> raw(new quint8[imageSize]{});
     quint8 *dataPtr = raw.data();
-    auto converter = EXColorConverter(colorSpace);
 
     auto processRow = [&](int y) {
         quint8 *rowPtr = dataPtr + y * deviceWidth * pixelSize;
 
         for (int x = 0; x < deviceWidth; x++) {
             auto channels = pixelGet((float)x / (width - 1), (float)y / (height - 1));
-            auto koColor = converter.displayChannelsToKoColor(channels);
+            auto koColor = colorConverter->displayChannelsToKoColor(channels);
             // colorSpace->fromNormalisedChannelsValue(color.data(), channels);
             memcpy(rowPtr, koColor.data(), pixelSize);
             rowPtr += pixelSize;

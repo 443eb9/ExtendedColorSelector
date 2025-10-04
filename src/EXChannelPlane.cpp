@@ -12,7 +12,6 @@
 #include "EXChannelPlane.h"
 #include "EXColorState.h"
 #include "EXGamutClipping.h"
-#include "EXKoColorConverter.h"
 #include "EXSettingsState.h"
 #include "EXUtils.h"
 
@@ -127,13 +126,11 @@ void EXChannelPlane::updateImage()
     }
 
     auto colorState = EXColorState::instance();
-    auto converter = EXColorConverter(colorState->colorSpace());
-    auto mapper = converter.displayToMemoryPositionMapper();
     auto &settings = EXSettingsState::instance()->settings[colorState->colorModel()->id()];
     auto makeColorful = settings.colorfulHueRing;
     auto clipToSrgbGamut = settings.clipToSrgbGamut;
 
-    auto pixelGet = [this, colorState, mapper, makeColorful, clipToSrgbGamut](float x, float y) -> QVector4D {
+    auto pixelGet = [this, colorState, makeColorful, clipToSrgbGamut](float x, float y) -> QVector4D {
         QVector3D color;
         QPointF widgetCoord = QPointF(x * 2 - 1, (1 - y) * 2 - 1);
         float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
@@ -189,7 +186,7 @@ void EXChannelPlane::updateImage()
     m_image = ExtendedUtils::generateGradient(size(),
                                               size(),
                                               colorState->colorModel()->parallelGradientGen(),
-                                              colorState->colorSpace(),
+                                              colorState->koColorConverter(),
                                               m_dri,
                                               pixelGet);
 }

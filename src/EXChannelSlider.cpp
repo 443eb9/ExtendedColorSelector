@@ -135,11 +135,9 @@ void ChannelValueBar::updateImage()
     }
 
     auto colorState = EXColorState::instance();
-    auto converter = EXColorConverter(colorState->colorSpace());
-    auto mapper = converter.displayToMemoryPositionMapper();
     auto makeColorful = EXSettingsState::instance()->settings[colorState->colorModel()->id()].colorfulHueRing;
 
-    auto pixelGet = [this, colorState, mapper, makeColorful](float x, float y) -> QVector4D {
+    auto pixelGet = [this, colorState, makeColorful](float x, float y) -> QVector4D {
         QVector3D color = colorState->color();
         color[m_channelIndex] = x;
         if (makeColorful) {
@@ -152,7 +150,7 @@ void ChannelValueBar::updateImage()
         }
         return QVector4D(color, 1.0f);
     };
-    m_image = ExtendedUtils::generateGradient(width(), 1, false, colorState->colorSpace(), m_dri, pixelGet);
+    m_image = ExtendedUtils::generateGradient(width(), 1, false, colorState->koColorConverter(), m_dri, pixelGet);
 }
 
 void ChannelValueBar::resizeEvent(QResizeEvent *event)

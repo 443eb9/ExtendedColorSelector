@@ -9,12 +9,15 @@
 #include <KoColorDisplayRendererInterface.h>
 #include <KoColorSpace.h>
 
+#include "EXColorModel.h"
+#include "EXKoColorConverter.h"
+
 namespace ExtendedUtils
 {
 QImage generateGradient(int width,
                         int height,
                         bool useParallel,
-                        const KoColorSpace *colorSpace,
+                        const EXColorConverterSP colorConverter,
                         const KoColorDisplayRendererInterface *dri,
                         std::function<QVector4D(float, float)> pixelGet);
 

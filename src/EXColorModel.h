@@ -40,6 +40,7 @@ public:
     virtual std::array<QVector3D, 2> channelRanges() const;
     virtual bool isSrgbBased() const;
     virtual bool parallelGradientGen() const;
+    virtual bool requiresLinearization() const;
 
     virtual QVector3D unnormalize(const QVector3D &normalized)
     {
@@ -91,6 +92,11 @@ public:
     {
         return false;
     }
+
+    bool requiresLinearization() const override
+    {
+        return false;
+    }
 };
 
 class HSVModel : public ColorModel
@@ -126,6 +132,11 @@ public:
     }
 
     bool parallelGradientGen() const override
+    {
+        return false;
+    }
+
+    bool requiresLinearization() const override
     {
         return false;
     }
@@ -167,6 +178,11 @@ public:
     {
         return false;
     }
+
+    bool requiresLinearization() const override
+    {
+        return false;
+    }
 };
 
 class XYZModel : public ColorModel
@@ -203,6 +219,11 @@ public:
     bool parallelGradientGen() const override
     {
         return false;
+    }
+
+    bool requiresLinearization() const override
+    {
+        return true;
     }
 };
 
@@ -241,6 +262,11 @@ public:
     {
         return false;
     }
+
+    bool requiresLinearization() const override
+    {
+        return true;
+    }
 };
 
 class LCHModel : public ColorModel
@@ -277,6 +303,11 @@ public:
     bool parallelGradientGen() const override
     {
         return false;
+    }
+
+    bool requiresLinearization() const override
+    {
+        return true;
     }
 };
 
@@ -315,6 +346,11 @@ public:
     {
         return false;
     }
+
+    bool requiresLinearization() const override
+    {
+        return true;
+    }
 };
 
 class OKLCHModel : public ColorModel
@@ -351,6 +387,11 @@ public:
     bool parallelGradientGen() const override
     {
         return false;
+    }
+
+    bool requiresLinearization() const override
+    {
+        return true;
     }
 };
 
@@ -390,6 +431,11 @@ public:
     {
         return true;
     }
+
+    bool requiresLinearization() const override
+    {
+        return false;
+    }
 };
 
 class OKHSLModel : public ColorModel
@@ -426,6 +472,11 @@ public:
     bool parallelGradientGen() const override
     {
         return true;
+    }
+
+    bool requiresLinearization() const override
+    {
+        return false;
     }
 };
 

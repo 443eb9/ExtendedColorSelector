@@ -10,13 +10,16 @@
 #include <kis_shared.h>
 #include <kis_shared_ptr.h>
 
+#include "EXColorModel.h"
+
 class EXColorConverter : public KisShared
 {
 public:
-    EXColorConverter(const KoColorSpace *colorSpace);
-    const int *displayToMemoryPositionMapper() const;
+    EXColorConverter(const KoColorSpace *colorSpace, const ColorModelSP &colorModel);
     KoColor displayChannelsToKoColor(const QVector4D &channels) const;
     QVector4D koColorToDisplayChannels(const KoColor &color) const;
+    const KoColorSpace *colorSpace() const;
+    const ColorModelSP colorModel() const;
 
 private:
     const KoColorSpace *m_colorSpace;
@@ -25,6 +28,8 @@ private:
     bool m_isLinear;
     bool m_applyGamma;
     bool m_exposureSupported;
+    ColorModelSP m_colorModel;
+    bool m_requiresLinearization;
 };
 
 typedef KisSharedPtr<EXColorConverter> EXColorConverterSP;
