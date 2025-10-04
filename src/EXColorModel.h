@@ -434,7 +434,7 @@ public:
 
     bool requiresLinearization() const override
     {
-        return false;
+        return true;
     }
 };
 
@@ -476,7 +476,7 @@ public:
 
     bool requiresLinearization() const override
     {
-        return false;
+        return true;
     }
 };
 
