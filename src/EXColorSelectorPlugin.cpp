@@ -44,7 +44,7 @@ EXColorSelectorPlugin::EXColorSelectorPlugin(QObject *parent, const QVariantList
 extern "C" {
 Q_DECL_EXPORT void load_extended_color_selector_plugin()
 {
-    qDebug() << "Start loading extended color selector plugin...";
+    qDebug() << "Hello Krita, from Extended Color Selector plugin, in C++20!";
     EXColorSelectorPlugin plugin(nullptr, {});
 }
 }

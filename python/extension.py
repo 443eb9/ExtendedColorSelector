@@ -51,7 +51,7 @@ class ExtendedColorSelector(Extension):
 
         try:
             lib = ctypes.CDLL(str(lib_file.resolve()))
-            print("Calling to load_extended_color_selector_plugin")
+            print("Trying to wake up C++ library of Extended Color Selector from Python...")
             lib.load_extended_color_selector_plugin()
 
         except OSError as e:
