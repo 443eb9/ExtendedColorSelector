@@ -3,13 +3,20 @@
 
 #include <QWidget>
 
+#include "EXColorState.h"
+#include "EXSettingsState.h"
+
 class EXColorModelSwitchers : public QWidget
 {
     Q_OBJECT
 
 public:
-    EXColorModelSwitchers(QWidget *parent);
+    EXColorModelSwitchers(EXColorStateSP colorState, EXSettingsStateSP settingsState, QWidget *parent);
     void settingsChanged();
+
+private:
+    EXColorStateSP m_colorState;
+    EXSettingsStateSP m_settingsState;
 };
 
 #endif

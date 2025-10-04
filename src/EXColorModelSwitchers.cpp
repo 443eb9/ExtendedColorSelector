@@ -4,17 +4,19 @@
 
 #include "EXColorModel.h"
 #include "EXColorModelSwitchers.h"
-#include "EXColorState.h"
-#include "EXSettingsState.h"
 
-EXColorModelSwitchers::EXColorModelSwitchers(QWidget *parent)
+EXColorModelSwitchers::EXColorModelSwitchers(EXColorStateSP colorState,
+                                             EXSettingsStateSP settingsState,
+                                             QWidget *parent)
     : QWidget(parent)
+    , m_colorState(colorState)
+    , m_settingsState(settingsState)
 {
     auto layout = new QHBoxLayout();
     auto group = new QButtonGroup();
     group->setExclusive(true);
 
-    connect(EXSettingsState::instance(),
+    connect(m_settingsState.data(),
             &EXSettingsState::sigSettingsChanged,
             this,
             &EXColorModelSwitchers::settingsChanged);
@@ -34,9 +36,9 @@ void EXColorModelSwitchers::settingsChanged()
         }
     }
 
-    auto &globalSettings = EXSettingsState::instance()->globalSettings;
-    auto &settings = EXSettingsState::instance()->settings;
-    auto currentModelId = EXColorState::instance()->colorModel()->id();
+    auto &globalSettings = m_settingsState->globalSettings;
+    auto &settings = m_settingsState->settings;
+    auto currentModelId = m_colorState->colorModel()->id();
 
     for (auto id : globalSettings.displayOrder) {
         if (!settings[id].enabled) {
@@ -48,13 +50,13 @@ void EXColorModelSwitchers::settingsChanged()
         button->setChecked(currentModelId == id);
         layout()->addWidget(button);
 
-        connect(button, &QRadioButton::toggled, button, [id](bool enabled) {
+        connect(button, &QRadioButton::toggled, this, [this, id](bool enabled) {
             if (enabled) {
-                EXColorState::instance()->setColorModel(id);
+                m_colorState->setColorModel(id);
             }
         });
 
-        connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, button, [button, id](ColorModelId newId) {
+        connect(m_colorState.data(), &EXColorState::sigColorModelChanged, button, [button, id](ColorModelId newId) {
             button->setChecked(newId == id);
         });
     }

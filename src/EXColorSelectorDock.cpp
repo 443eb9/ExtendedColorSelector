@@ -8,19 +8,20 @@
 #include <kis_icon_utils.h>
 
 #include "EXColorSelectorDock.h"
-#include "EXColorState.h"
-#include "EXSettingsState.h"
 
 EXColorSelectorDock::EXColorSelectorDock()
     : QDockWidget("Extended Color Selector")
+    , m_canvas(nullptr)
+    , m_colorState(EXColorState::instance())
+    , m_settingsState(EXSettingsState::instance())
 {
     m_canvas = nullptr;
     auto mainLayout = new QVBoxLayout();
 
-    m_colorPatchPopup = new EXColorPatchPopup(this);
-    m_plane = new EXChannelPlane(m_colorPatchPopup, this);
-    m_colorModelSwitchers = new EXColorModelSwitchers(this);
-    m_sliders = new EXChannelSliders(m_colorPatchPopup, this);
+    m_colorPatchPopup = new EXColorPatchPopup(m_colorState, this);
+    m_plane = new EXChannelPlane(m_colorState, m_settingsState, m_colorPatchPopup, this);
+    m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
+    m_sliders = new EXChannelSliders(m_colorState, m_settingsState, m_colorPatchPopup, this);
     mainLayout->addWidget(m_plane);
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);
@@ -65,8 +66,8 @@ void EXColorSelectorDock::setCanvas(KoCanvasBase *canvas)
         m_plane->setCanvas(m_canvas);
         m_sliders->setCanvas(m_canvas);
         m_portableSelector->setCanvas(m_canvas);
-        EXColorState::instance()->setCanvas(m_canvas);
-        Q_EMIT EXSettingsState::instance()->sigSettingsChanged();
+        m_colorState->setCanvas(m_canvas);
+        Q_EMIT m_settingsState->sigSettingsChanged();
     }
 }
 
@@ -75,7 +76,7 @@ void EXColorSelectorDock::unsetCanvas()
     m_canvas = nullptr;
     m_plane->setCanvas(nullptr);
     m_sliders->setCanvas(nullptr);
-    EXColorState::instance()->setCanvas(nullptr);
+    m_colorState->setCanvas(nullptr);
     m_portableSelector->setCanvas(nullptr);
 }
 

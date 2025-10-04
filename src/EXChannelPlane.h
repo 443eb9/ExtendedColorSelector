@@ -7,7 +7,9 @@
 #include <kis_canvas2.h>
 
 #include "EXColorPatchPopup.h"
+#include "EXColorState.h"
 #include "EXEditable.h"
+#include "EXSettingsState.h"
 #include "EXShape.h"
 
 class EXChannelPlane : public EXEditable
@@ -15,7 +17,10 @@ class EXChannelPlane : public EXEditable
     Q_OBJECT
 
 public:
-    explicit EXChannelPlane(EXColorPatchPopup *colorPatchPopup = nullptr, QWidget *parent = nullptr);
+    explicit EXChannelPlane(EXColorStateSP colorState,
+                            EXSettingsStateSP settingsState,
+                            EXColorPatchPopup *colorPatchPopup = nullptr,
+                            QWidget *parent = nullptr);
 
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
@@ -42,6 +47,8 @@ private:
     QImage m_image;
     KoColorDisplayRendererInterface *m_dri;
     EXColorPatchPopup *m_colorPatchPopup;
+    EXColorStateSP m_colorState;
+    EXSettingsStateSP m_settingsState;
 
     void updateImage();
     void trySyncRingRotation();

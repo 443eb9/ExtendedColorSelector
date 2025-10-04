@@ -68,4 +68,6 @@ private:
     bool m_blockSync;
 };
 
+typedef KisSharedPtr<EXColorState> EXColorStateSP;
+
 #endif // COLORSTATE_H

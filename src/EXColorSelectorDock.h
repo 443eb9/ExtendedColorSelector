@@ -11,8 +11,10 @@
 #include "EXChannelSlider.h"
 #include "EXColorModelSwitchers.h"
 #include "EXColorPatchPopup.h"
+#include "EXColorState.h"
 #include "EXPortableColorSelector.h"
 #include "EXSettingsDialog.h"
+#include "EXSettingsState.h"
 
 class EXColorSelectorDock : public QDockWidget, public KisMainwindowObserver
 {
@@ -33,6 +35,9 @@ private:
     EXPerColorModelSettingsDialog *m_settings;
     EXPortableColorSelector *m_portableSelector;
     EXColorPatchPopup *m_colorPatchPopup;
+
+    EXColorStateSP m_colorState;
+    EXSettingsStateSP m_settingsState;
 };
 
 #endif // EXTENDEDCOLORSELECTORDOCK_H

@@ -13,7 +13,10 @@
 #include "EXSettingsState.h"
 #include "EXUtils.h"
 
-EXChannelSliders::EXChannelSliders(EXColorPatchPopup *colorPatchPopup, QWidget *parent)
+EXChannelSliders::EXChannelSliders(EXColorStateSP colorState,
+                                   EXSettingsStateSP settingsState,
+                                   EXColorPatchPopup *colorPatchPopup,
+                                   QWidget *parent)
     : QWidget(parent)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -22,25 +25,28 @@ EXChannelSliders::EXChannelSliders(EXColorPatchPopup *colorPatchPopup, QWidget *
     auto group = new QButtonGroup(this);
     group->setExclusive(true);
     for (int i = 0; i < 3; ++i) {
-        m_channelWidgets[i] = new ChannelValueWidget(i, group, colorPatchPopup, this);
+        m_channelWidgets[i] = new ChannelValueWidget(i, group, colorState, settingsState, colorPatchPopup, this);
         layout->addWidget(m_channelWidgets[i]);
     }
     setLayout(layout);
 
-    connect(EXSettingsState::instance(), &EXSettingsState::sigSettingsChanged, this, [this]() {
-        setVisible(EXSettingsState::instance()->settings[EXColorState::instance()->colorModel()->id()].slidersEnabled);
+    connect(settingsState.data(), &EXSettingsState::sigSettingsChanged, this, [this, colorState, settingsState]() {
+        setVisible(settingsState->settings[colorState->colorModel()->id()].slidersEnabled);
     });
 
-    connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, this, [this](ColorModelId) {
-        setVisible(EXSettingsState::instance()->settings[EXColorState::instance()->colorModel()->id()].slidersEnabled);
-        if (EXColorState::instance()->colorModel()->isOneDimensional()) {
-            m_channelWidgets[1]->hide();
-            m_channelWidgets[2]->hide();
-        } else {
-            m_channelWidgets[1]->show();
-            m_channelWidgets[2]->show();
-        }
-    });
+    connect(colorState.data(),
+            &EXColorState::sigColorModelChanged,
+            this,
+            [this, colorState, settingsState](ColorModelId) {
+                setVisible(settingsState->settings[colorState->colorModel()->id()].slidersEnabled);
+                if (colorState->colorModel()->isOneDimensional()) {
+                    m_channelWidgets[1]->hide();
+                    m_channelWidgets[2]->hide();
+                } else {
+                    m_channelWidgets[1]->show();
+                    m_channelWidgets[2]->show();
+                }
+            });
 }
 
 void EXChannelSliders::setCanvas(KisCanvas2 *canvas)
@@ -53,12 +59,13 @@ void EXChannelSliders::setCanvas(KisCanvas2 *canvas)
 
 ChannelValueWidget::ChannelValueWidget(int channelIndex,
                                        QButtonGroup *group,
+                                       EXColorStateSP colorState,
+                                       EXSettingsStateSP settingsState,
                                        EXColorPatchPopup *colorPatchPopup,
                                        QWidget *parent)
     : QWidget(parent)
     , m_channelIndex(channelIndex)
 {
-    auto colorState = EXColorState::instance();
     auto layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 2, 0, 2);
     auto channelNames = colorState->colorModel()->channelNames();
@@ -66,14 +73,14 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
     m_radioButton = new QRadioButton(channelNames[m_channelIndex], this);
     group->addButton(m_radioButton);
     m_spinBox = new QDoubleSpinBox(this);
-    m_bar = new ChannelValueBar(channelIndex, colorPatchPopup, this);
+    m_bar = new ChannelValueBar(channelIndex, colorState, settingsState, colorPatchPopup, this);
 
     layout->addWidget(m_bar);
     layout->addWidget(m_spinBox);
     layout->addWidget(m_radioButton);
     setLayout(layout);
 
-    connect(m_spinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [this, colorState](double value) {
+    connect(m_spinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [this, &colorState](double value) {
         auto [chmn, chmx] = colorState->colorModel()->channelRanges();
         colorState->setChannel(m_channelIndex,
                                (value - chmn[m_channelIndex]) / (chmx[m_channelIndex] - chmn[m_channelIndex]));
@@ -92,7 +99,7 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
         m_spinBox->blockSignals(false);
     });
 
-    connect(m_radioButton, &QRadioButton::clicked, this, [this, colorState](bool checked) {
+    connect(m_radioButton, &QRadioButton::clicked, this, [this, &colorState](bool checked) {
         if (checked) {
             colorState->setPrimaryChannelIndex(m_channelIndex);
         }
@@ -108,20 +115,26 @@ void ChannelValueWidget::setCanvas(KisCanvas2 *canvas)
     m_bar->setCanvas(canvas);
 }
 
-ChannelValueBar::ChannelValueBar(int channelIndex, EXColorPatchPopup *colorPatchPopup, QWidget *parent)
+ChannelValueBar::ChannelValueBar(int channelIndex,
+                                 EXColorStateSP colorState,
+                                 EXSettingsStateSP settingsState,
+                                 EXColorPatchPopup *colorPatchPopup,
+                                 QWidget *parent)
     : EXEditable(parent)
     , m_channelIndex(channelIndex)
     , m_dri(nullptr)
     , m_colorPatchPopup(colorPatchPopup)
+    , m_colorState(colorState)
+    , m_settingsState(settingsState)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    connect(EXColorState::instance(), &EXColorState::sigColorChanged, this, [this]() {
+    connect(m_colorState, &EXColorState::sigColorChanged, this, [this]() {
         updateImage();
         update();
     });
 
-    connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, this, [this]() {
+    connect(m_colorState, &EXColorState::sigColorModelChanged, this, [this]() {
         updateImage();
         update();
     });
@@ -141,23 +154,22 @@ void ChannelValueBar::updateImage()
         return;
     }
 
-    auto colorState = EXColorState::instance();
-    auto makeColorful = EXSettingsState::instance()->settings[colorState->colorModel()->id()].colorfulHueRing;
+    auto makeColorful = m_settingsState->settings[m_colorState->colorModel()->id()].colorfulHueRing;
 
-    auto pixelGet = [this, colorState, makeColorful](float x, float y) -> QVector4D {
-        QVector3D color = colorState->color();
+    auto pixelGet = [this, makeColorful](float x, float y) -> QVector4D {
+        QVector3D color = m_colorState->color();
         color[m_channelIndex] = x;
         if (makeColorful) {
-            colorState->colorModel()->makeColorful(color, m_channelIndex);
+            m_colorState->colorModel()->makeColorful(color, m_channelIndex);
         }
-        color = colorState->colorModel()->transferTo(colorState->kritaColorModel(), color, nullptr);
-        auto settings = EXSettingsState::instance()->globalSettings;
-        if (colorState->possibleOutOfSrgb() && settings.outOfGamutColorEnabled) {
+        color = m_colorState->colorModel()->transferTo(m_colorState->kritaColorModel(), color, nullptr);
+        auto settings = m_settingsState->globalSettings;
+        if (m_colorState->possibleOutOfSrgb() && settings.outOfGamutColorEnabled) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
         }
         return QVector4D(color, 1.0f);
     };
-    m_image = ExtendedUtils::generateGradient(width(), 1, false, colorState->koColorConverter(), m_dri, pixelGet);
+    m_image = ExtendedUtils::generateGradient(width(), 1, false, m_colorState->koColorConverter(), m_dri, pixelGet);
 }
 
 void ChannelValueBar::resizeEvent(QResizeEvent *event)
@@ -173,9 +185,9 @@ void ChannelValueBar::paintEvent(QPaintEvent *event)
 
     painter.drawImage(QRect(0, 0, width(), height()), m_image);
 
-    auto contrastColor = ExtendedUtils::getContrastingColor(EXColorState::instance()->qColor());
+    auto contrastColor = ExtendedUtils::getContrastingColor(m_colorState->qColor());
     painter.setPen(QPen(contrastColor, 1));
-    int x = EXColorState::instance()->color()[m_channelIndex] * width();
+    int x = m_colorState->color()[m_channelIndex] * width();
     painter.drawRect(x - 1, 0, 2, height());
 }
 
@@ -195,9 +207,9 @@ void ChannelValueBar::startEdit(QMouseEvent *event, bool isShift)
 void ChannelValueBar::mouseReleaseEvent(QMouseEvent *event)
 {
     EXEditable::mouseReleaseEvent(event);
-    EXColorState::instance()->sendToKrita();
+    m_colorState->sendToKrita();
 
-    if (m_colorPatchPopup && EXSettingsState::instance()->globalSettings.recordLastColorWhenMouseRelease) {
+    if (m_colorPatchPopup && m_settingsState->globalSettings.recordLastColorWhenMouseRelease) {
         m_colorPatchPopup->recordColor();
     }
 }
@@ -205,17 +217,17 @@ void ChannelValueBar::mouseReleaseEvent(QMouseEvent *event)
 void ChannelValueBar::edit(QMouseEvent *event)
 {
     float value = qBound(0.f, (float)event->pos().x() / width(), 1.f);
-    EXColorState::instance()->setChannel(m_channelIndex, value);
+    m_colorState->setChannel(m_channelIndex, value);
 }
 
 void ChannelValueBar::shift(QMouseEvent *event, QVector2D delta)
 {
     qreal value = (m_editStart + delta.x()) / width();
     value = value - qFloor(value);
-    EXColorState::instance()->setChannel(m_channelIndex, value);
+    m_colorState->setChannel(m_channelIndex, value);
 }
 
 float ChannelValueBar::currentWidgetCoord()
 {
-    return (float)(EXColorState::instance()->color()[m_channelIndex] * width());
+    return (float)(m_colorState->color()[m_channelIndex] * width());
 }

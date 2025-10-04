@@ -4,9 +4,12 @@
 #include <QObject>
 #include <QVector>
 
+#include <kis_shared.h>
+#include <kis_shared_ptr.h>
+
 #include "EXSettings.h"
 
-class EXSettingsState : public QObject
+class EXSettingsState : public QObject, public KisShared
 {
     Q_OBJECT
 
@@ -21,5 +24,7 @@ public:
 Q_SIGNALS:
     void sigSettingsChanged();
 };
+
+typedef KisSharedPtr<EXSettingsState> EXSettingsStateSP;
 
 #endif // EXSETTINGSSTATE_H

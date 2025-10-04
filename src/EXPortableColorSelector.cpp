@@ -3,26 +3,27 @@
 #include <kis_action_manager.h>
 
 #include "EXPortableColorSelector.h"
-#include "EXSettingsState.h"
 
 EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
     : QDialog(parent)
     , m_toggleAction(nullptr)
+    , m_colorState(EXColorState::instance())
+    , m_settingsState(EXSettingsState::instance())
 {
     setWindowFlag(Qt::WindowType::FramelessWindowHint, true);
     auto mainLayout = new QVBoxLayout(this);
 
-    m_colorPatchPopup = new EXColorPatchPopup(this);
-    m_plane = new EXChannelPlane(m_colorPatchPopup, this);
-    m_colorModelSwitchers = new EXColorModelSwitchers(this);
-    m_sliders = new EXChannelSliders(m_colorPatchPopup, this);
+    m_colorPatchPopup = new EXColorPatchPopup(m_colorState, this);
+    m_plane = new EXChannelPlane(m_colorState, m_settingsState, m_colorPatchPopup, this);
+    m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
+    m_sliders = new EXChannelSliders(m_colorState, m_settingsState, m_colorPatchPopup, this);
     mainLayout->addWidget(m_plane);
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);
 
     setLayout(mainLayout);
 
-    connect(EXSettingsState::instance(),
+    connect(m_settingsState,
             &EXSettingsState::sigSettingsChanged,
             this,
             &EXPortableColorSelector::settingsChanged);
@@ -30,7 +31,7 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
 
 void EXPortableColorSelector::settingsChanged()
 {
-    auto &settings = EXSettingsState::instance()->globalSettings;
+    auto &settings = m_settingsState->globalSettings;
     m_plane->setMinimumSize(settings.pWidth, settings.pWidth);
     if (settings.pEnableChannelPlane) {
         m_plane->show();

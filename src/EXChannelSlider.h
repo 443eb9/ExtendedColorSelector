@@ -11,14 +11,20 @@
 #include <kis_canvas2.h>
 
 #include "EXColorPatchPopup.h"
+#include "EXColorState.h"
 #include "EXEditable.h"
+#include "EXSettingsState.h"
 
 class ChannelValueBar : public EXEditable
 {
     Q_OBJECT
 
 public:
-    ChannelValueBar(int channelIndex, EXColorPatchPopup *colorPatchPopup = nullptr, QWidget *parent = nullptr);
+    ChannelValueBar(int channelIndex,
+                    EXColorStateSP colorState,
+                    EXSettingsStateSP settingsState,
+                    EXColorPatchPopup *colorPatchPopup = nullptr,
+                    QWidget *parent = nullptr);
 
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -38,6 +44,8 @@ private:
     QImage m_image;
     float m_editStart;
     EXColorPatchPopup *m_colorPatchPopup;
+    EXColorStateSP m_colorState;
+    EXSettingsStateSP m_settingsState;
 
     void updateImage();
 };
@@ -47,6 +55,8 @@ class ChannelValueWidget : public QWidget
 public:
     ChannelValueWidget(int channelIndex,
                        QButtonGroup *group,
+                       EXColorStateSP colorState,
+                       EXSettingsStateSP settingsState,
                        EXColorPatchPopup *colorPatchPopup = nullptr,
                        QWidget *parent = nullptr);
 
@@ -64,7 +74,10 @@ class EXChannelSliders : public QWidget
     Q_OBJECT
 
 public:
-    EXChannelSliders(EXColorPatchPopup *colorPatchPopup = nullptr, QWidget *parent = nullptr);
+    EXChannelSliders(EXColorStateSP colorState,
+                     EXSettingsStateSP settingsState,
+                     EXColorPatchPopup *colorPatchPopup = nullptr,
+                     QWidget *parent = nullptr);
 
     void setCanvas(KisCanvas2 *canvas);
 
