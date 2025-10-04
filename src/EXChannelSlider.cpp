@@ -80,7 +80,7 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
     layout->addWidget(m_radioButton);
     setLayout(layout);
 
-    connect(m_spinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [this, &colorState](double value) {
+    connect(m_spinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [this, colorState](double value) mutable {
         auto [chmn, chmx] = colorState->colorModel()->channelRanges();
         colorState->setChannel(m_channelIndex,
                                (value - chmn[m_channelIndex]) / (chmx[m_channelIndex] - chmn[m_channelIndex]));
@@ -99,7 +99,7 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
         m_spinBox->blockSignals(false);
     });
 
-    connect(m_radioButton, &QRadioButton::clicked, this, [this, &colorState](bool checked) {
+    connect(m_radioButton, &QRadioButton::clicked, this, [this, colorState](bool checked) mutable {
         if (checked) {
             colorState->setPrimaryChannelIndex(m_channelIndex);
         }
