@@ -199,17 +199,20 @@ void EXChannelPlane::mousePressEvent(QMouseEvent *event)
     }
 
     EXEditable::mousePressEvent(event);
-    QPointF widgetCoord = QPointF(event->pos()) / qMin(width(), height()) * 2 - QPointF(1, 1);
-    float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
+    QPointF widgetCoord = QPointF(event->pos()) / qMin(width(), height());
+    QPointF centeredCoord = widgetCoord * 2 - QPointF(1, 1);
+    float dist = qSqrt(centeredCoord.x() * centeredCoord.x() + centeredCoord.y() * centeredCoord.y());
     float size = this->size();
 
     if (m_shape->ring.thickness > 0 && dist > m_shape->ring.boundaryDiameter()) {
         m_editMode = Ring;
         m_editStart = m_shape->ring.getWidgetCoord(EXColorState::instance()->primaryChannelValue()) * size;
+        sendRingColor(widgetCoord);
     } else {
         m_editMode = Plane;
         QVector2D values = EXColorState::instance()->secondaryChannelValues();
         m_editStart = m_shape->shapeToWidget01(QPointF(values.x(), values.y())) * size;
+        sendPlaneColor(widgetCoord);
     }
 }
 
@@ -220,32 +223,7 @@ void EXChannelPlane::edit(QMouseEvent *event)
     }
 
     QPointF widgetCoord = QPointF(event->pos()) / size();
-
-    switch (m_editMode) {
-    case Ring: {
-        float ringValue = m_shape->ring.getRingValue(widgetCoord);
-        EXColorState::instance()->setPrimaryChannelValue(ringValue);
-        break;
-    }
-    case Plane: {
-        QPointF shapeCoord;
-        m_shape->widget01ToShape(widgetCoord, shapeCoord);
-        auto colorState = EXColorState::instance();
-        if (EXSettingsState::instance()->settings[colorState->colorModel()->id()].clipToSrgbGamut) {
-            QVector2D clipped = EXGamutClipping::instance()->mapAxesToLimited(colorState->colorModel()->id(),
-                                                                              colorState->primaryChannelIndex(),
-                                                                              colorState->primaryChannelValue(),
-                                                                              QVector2D(shapeCoord));
-            shapeCoord = QPointF(clipped.x(), clipped.y());
-        }
-
-        shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
-        shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
-
-        colorState->setSecondaryChannelValues(QVector2D(shapeCoord));
-        break;
-    }
-    }
+    handleCursorEdit(widgetCoord);
 }
 
 void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
@@ -255,31 +233,7 @@ void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
     }
 
     QPointF widgetCoord = (m_editStart + QPointF(delta.x(), delta.y())) / this->size();
-
-    switch (m_editMode) {
-    case Ring: {
-        float ringValue = m_shape->ring.getRingValue(widgetCoord);
-        EXColorState::instance()->setPrimaryChannelValue(ringValue);
-        break;
-    }
-    case Plane: {
-        QPointF shapeCoord;
-        m_shape->widget01ToShape(widgetCoord, shapeCoord);
-        auto colorState = EXColorState::instance();
-        if (EXSettingsState::instance()->settings[colorState->colorModel()->id()].clipToSrgbGamut) {
-            QVector2D clipped = EXGamutClipping::instance()->mapAxesToLimited(colorState->colorModel()->id(),
-                                                                              colorState->primaryChannelIndex(),
-                                                                              colorState->primaryChannelValue(),
-                                                                              QVector2D(shapeCoord));
-            shapeCoord = QPointF(clipped.x(), clipped.y());
-        }
-
-        shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
-        shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
-
-        colorState->setSecondaryChannelValues(QVector2D(shapeCoord));
-    }
-    }
+    handleCursorEdit(widgetCoord);
 }
 
 void EXChannelPlane::mouseReleaseEvent(QMouseEvent *event)
@@ -303,5 +257,56 @@ void EXChannelPlane::trySyncRingRotation()
     if (settings.planeRotateWithRing && m_shape != nullptr) {
         float value = colorState->primaryChannelValue();
         m_shape->setRotation(value * 2.0 * M_PI + settings.rotation);
+    }
+}
+
+void EXChannelPlane::sendPlaneColor(const QPointF &widgetCoord)
+{
+    if (m_shape == nullptr) {
+        return;
+    }
+
+    QPointF shapeCoord;
+    m_shape->widget01ToShape(widgetCoord, shapeCoord);
+    auto colorState = EXColorState::instance();
+    if (EXSettingsState::instance()->settings[colorState->colorModel()->id()].clipToSrgbGamut) {
+        QVector2D clipped = EXGamutClipping::instance()->mapAxesToLimited(colorState->colorModel()->id(),
+                                                                          colorState->primaryChannelIndex(),
+                                                                          colorState->primaryChannelValue(),
+                                                                          QVector2D(shapeCoord));
+        shapeCoord = QPointF(clipped.x(), clipped.y());
+    }
+
+    shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
+    shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
+
+    colorState->setSecondaryChannelValues(QVector2D(shapeCoord));
+}
+
+void EXChannelPlane::sendRingColor(const QPointF &widgetCoord)
+{
+    if (m_shape == nullptr) {
+        return;
+    }
+
+    float ringValue = m_shape->ring.getRingValue(widgetCoord);
+    EXColorState::instance()->setPrimaryChannelValue(ringValue);
+}
+
+void EXChannelPlane::handleCursorEdit(const QPointF &widgetCoord)
+{
+    if (m_shape == nullptr) {
+        return;
+    }
+
+    switch (m_editMode) {
+    case Ring: {
+        sendRingColor(widgetCoord);
+        break;
+    }
+    case Plane: {
+        sendPlaneColor(widgetCoord);
+        break;
+    }
     }
 }

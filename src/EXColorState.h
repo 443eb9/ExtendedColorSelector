@@ -25,12 +25,12 @@ public:
     EXColorState();
 
     qreal primaryChannelValue() const;
-    void setPrimaryChannelValue(qreal value);
+    void setPrimaryChannelValue(float value);
     QVector2D secondaryChannelValues() const;
     void setSecondaryChannelValues(const QVector2D &values);
     quint32 primaryChannelIndex() const;
     void setPrimaryChannelIndex(quint32 index);
-    void setChannel(quint32 index, qreal value);
+    void setChannel(quint32 index, float value);
 
     QVector3D color() const;
     void setColor(const QVector3D &color);

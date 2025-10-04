@@ -91,7 +91,7 @@ qreal EXColorState::primaryChannelValue() const
     return m_color[m_primaryChannelIndex];
 }
 
-void EXColorState::setPrimaryChannelValue(qreal value)
+void EXColorState::setPrimaryChannelValue(float value)
 {
     m_color[m_primaryChannelIndex] = value;
     Q_EMIT sigColorChanged(m_color);
@@ -142,7 +142,7 @@ void EXColorState::setSecondaryChannelValues(const QVector2D &values)
     Q_EMIT sigColorChanged(m_color);
 }
 
-void EXColorState::setChannel(quint32 index, qreal value)
+void EXColorState::setChannel(quint32 index, float value)
 {
     Q_ASSERT(index < 3);
     m_color[index] = value;

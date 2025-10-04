@@ -43,6 +43,9 @@ private:
 
     void updateImage();
     void trySyncRingRotation();
+    void handleCursorEdit(const QPointF &widgetCoord);
+    void sendPlaneColor(const QPointF& widgetCoord);
+    void sendRingColor(const QPointF& widgetCoord);
 
 private Q_SLOTS:
     void settingsChanged();

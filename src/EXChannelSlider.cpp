@@ -172,6 +172,7 @@ void ChannelValueBar::mousePressEvent(QMouseEvent *event)
 {
     EXEditable::mousePressEvent(event);
     m_editStart = currentWidgetCoord();
+    EXColorState::instance()->setChannel(m_channelIndex, (event->pos().x() / width()));
 }
 
 void ChannelValueBar::mouseReleaseEvent(QMouseEvent *event)
@@ -181,7 +182,7 @@ void ChannelValueBar::mouseReleaseEvent(QMouseEvent *event)
 
 void ChannelValueBar::edit(QMouseEvent *event)
 {
-    qreal value = qBound((qreal)0, (qreal)event->pos().x() / width(), (qreal)1);
+    float value = qBound(0.f, (float)event->pos().x() / width(), 1.f);
     EXColorState::instance()->setChannel(m_channelIndex, value);
 }
 
