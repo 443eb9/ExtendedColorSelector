@@ -5,12 +5,13 @@
 #include <QDialog>
 
 #include <KisViewManager.h>
-#include <kis_canvas2.h>
 #include <kis_action.h>
+#include <kis_canvas2.h>
 
 #include "EXChannelPlane.h"
 #include "EXChannelSlider.h"
 #include "EXColorModelSwitchers.h"
+#include "EXColorPatchPopup.h"
 
 class EXPortableColorSelector : public QDialog
 {
@@ -32,6 +33,7 @@ private:
     EXChannelSliders *m_sliders;
     EXColorModelSwitchers *m_colorModelSwitchers;
     KisAction *m_toggleAction;
+    EXColorPatchPopup *m_colorPatchPopup;
 };
 
 #endif

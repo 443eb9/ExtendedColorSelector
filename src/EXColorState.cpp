@@ -1,3 +1,6 @@
+#include <kis_canvas2.h>
+#include <kis_display_color_converter.h>
+
 #include "EXColorState.h"
 #include "EXUtils.h"
 
@@ -31,12 +34,9 @@ void EXColorState::setColorModel(ColorModelId model)
 
     auto newModel = ColorModelFactory::fromId(model);
 
-    qDebug() << "old color: " << m_color;
     m_color = m_colorModel->transferTo(newModel, m_color, nullptr);
-    qDebug() << "old from new: " << newModel->transferTo(m_colorModel, m_color, nullptr);
     ExtendedUtils::saturateColor(m_color);
     m_colorModel = newModel;
-    qDebug() << "new color: " << m_color;
     Q_EMIT sigColorModelChanged(model);
     Q_EMIT sigColorChanged(m_color);
 }
@@ -76,6 +76,7 @@ void EXColorState::setCanvas(KisCanvas2 *canvas)
     if (canvas) {
         setColorSpace(canvas->image()->colorSpace());
         m_resourceProvider = canvas->imageView()->resourceProvider();
+        m_dri = canvas->displayColorConverter()->displayRendererInterface();
 
         connect(m_resourceProvider, &KisCanvasResourceProvider::sigFGColorChanged, this, &EXColorState::syncFromKrita);
         connect(canvas->image(), &KisImage::sigColorSpaceChanged, this, [this, canvas]() {
@@ -96,7 +97,6 @@ qreal EXColorState::primaryChannelValue() const
 
 void EXColorState::setPrimaryChannelValue(float value)
 {
-    qDebug() << "setPrimaryChannelValue: " << value;
     m_color[m_primaryChannelIndex] = value;
     Q_EMIT sigColorChanged(m_color);
 }
@@ -129,7 +129,6 @@ QVector2D EXColorState::secondaryChannelValues() const
 
 void EXColorState::setSecondaryChannelValues(const QVector2D &values)
 {
-    qDebug() << "setSecondaryChannelValues: " << values;
     switch (m_primaryChannelIndex) {
     case 0:
         m_color[1] = values.x();
@@ -149,7 +148,6 @@ void EXColorState::setSecondaryChannelValues(const QVector2D &values)
 
 void EXColorState::setChannel(quint32 index, float value)
 {
-    qDebug() << "setChannel: " << index << ", " << value;
     Q_ASSERT(index < 3);
     m_color[index] = value;
     Q_EMIT sigColorChanged(m_color);
@@ -160,9 +158,20 @@ QVector3D EXColorState::color() const
     return m_color;
 }
 
+KoColor EXColorState::koColor() const
+{
+    auto kritaColor = m_colorModel->transferTo(m_kritaColorModel, m_color, nullptr);
+    auto channels = QVector<float>{kritaColor.x(), kritaColor.y(), kritaColor.z(), 1.0f};
+    return m_koColorConverter->displayChannelsToKoColor(channels);
+}
+
+QColor EXColorState::qColor() const
+{
+    return m_dri->toQColor(koColor());
+}
+
 void EXColorState::setColor(const QVector3D &color)
 {
-    qDebug() << "setColor: " << color;
     m_color = color;
     Q_EMIT sigColorChanged(m_color);
 }

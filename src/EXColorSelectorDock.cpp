@@ -17,9 +17,10 @@ EXColorSelectorDock::EXColorSelectorDock()
     m_canvas = nullptr;
     auto mainLayout = new QVBoxLayout();
 
-    m_plane = new EXChannelPlane(this);
+    m_colorPatchPopup = new EXColorPatchPopup(this);
+    m_plane = new EXChannelPlane(m_colorPatchPopup, this);
     m_colorModelSwitchers = new EXColorModelSwitchers(this);
-    m_sliders = new EXChannelSliders(this);
+    m_sliders = new EXChannelSliders(m_colorPatchPopup, this);
     mainLayout->addWidget(m_plane);
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);
@@ -76,4 +77,10 @@ void EXColorSelectorDock::unsetCanvas()
     m_sliders->setCanvas(nullptr);
     EXColorState::instance()->setCanvas(nullptr);
     m_portableSelector->setCanvas(nullptr);
+}
+
+void EXColorSelectorDock::leaveEvent(QEvent *event)
+{
+    QDockWidget::leaveEvent(event);
+    m_colorPatchPopup->hide();
 }

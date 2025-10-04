@@ -12,9 +12,10 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
     setWindowFlag(Qt::WindowType::FramelessWindowHint, true);
     auto mainLayout = new QVBoxLayout(this);
 
-    m_plane = new EXChannelPlane(this);
+    m_colorPatchPopup = new EXColorPatchPopup(this);
+    m_plane = new EXChannelPlane(m_colorPatchPopup, this);
     m_colorModelSwitchers = new EXColorModelSwitchers(this);
-    m_sliders = new EXChannelSliders(this);
+    m_sliders = new EXChannelSliders(m_colorPatchPopup, this);
     mainLayout->addWidget(m_plane);
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);

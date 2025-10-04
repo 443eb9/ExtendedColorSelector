@@ -12,7 +12,7 @@
 #include "EXSettingsState.h"
 #include "EXUtils.h"
 
-EXChannelSliders::EXChannelSliders(QWidget *parent)
+EXChannelSliders::EXChannelSliders(EXColorPatchPopup *colorPatchPopup, QWidget *parent)
     : QWidget(parent)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -21,7 +21,7 @@ EXChannelSliders::EXChannelSliders(QWidget *parent)
     auto group = new QButtonGroup(this);
     group->setExclusive(true);
     for (int i = 0; i < 3; ++i) {
-        m_channelWidgets[i] = new ChannelValueWidget(i, group, this);
+        m_channelWidgets[i] = new ChannelValueWidget(i, group, colorPatchPopup, this);
         layout->addWidget(m_channelWidgets[i]);
     }
     setLayout(layout);
@@ -43,7 +43,10 @@ void EXChannelSliders::setCanvas(KisCanvas2 *canvas)
     }
 }
 
-ChannelValueWidget::ChannelValueWidget(int channelIndex, QButtonGroup *group, QWidget *parent)
+ChannelValueWidget::ChannelValueWidget(int channelIndex,
+                                       QButtonGroup *group,
+                                       EXColorPatchPopup *colorPatchPopup,
+                                       QWidget *parent)
     : QWidget(parent)
     , m_channelIndex(channelIndex)
 {
@@ -55,7 +58,7 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QButtonGroup *group, QW
     m_radioButton = new QRadioButton(channelNames[m_channelIndex], this);
     group->addButton(m_radioButton);
     m_spinBox = new QDoubleSpinBox(this);
-    m_bar = new ChannelValueBar(channelIndex, this);
+    m_bar = new ChannelValueBar(channelIndex, colorPatchPopup, this);
 
     layout->addWidget(m_bar);
     layout->addWidget(m_spinBox);
@@ -66,7 +69,6 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QButtonGroup *group, QW
         auto [chmn, chmx] = colorState->colorModel()->channelRanges();
         colorState->setChannel(m_channelIndex,
                                (value - chmn[m_channelIndex]) / (chmx[m_channelIndex] - chmn[m_channelIndex]));
-        qDebug() << "spinBox valueChanged: " << value;
     });
 
     connect(colorState, &EXColorState::sigPrimaryChannelIndexChanged, this, [this, colorState]() {
@@ -74,7 +76,6 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QButtonGroup *group, QW
     });
 
     connect(colorState, &EXColorState::sigColorChanged, this, [this, colorState]() {
-        qDebug() << colorState->color();
         auto [chmn, chmx] = colorState->colorModel()->channelRanges();
         m_spinBox->blockSignals(true);
         m_spinBox->setRange(chmn[m_channelIndex], chmx[m_channelIndex]);
@@ -99,10 +100,11 @@ void ChannelValueWidget::setCanvas(KisCanvas2 *canvas)
     m_bar->setCanvas(canvas);
 }
 
-ChannelValueBar::ChannelValueBar(int channelIndex, QWidget *parent)
+ChannelValueBar::ChannelValueBar(int channelIndex, EXColorPatchPopup *colorPatchPopup, QWidget *parent)
     : EXEditable(parent)
     , m_channelIndex(channelIndex)
     , m_dri(nullptr)
+    , m_colorPatchPopup(colorPatchPopup)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -175,12 +177,20 @@ void ChannelValueBar::mousePressEvent(QMouseEvent *event)
     EXEditable::mousePressEvent(event);
     m_editStart = currentWidgetCoord();
     EXColorState::instance()->setChannel(m_channelIndex, (event->pos().x() / width()));
-    qDebug() << "mousePressEvent: " << event->pos().x() / width();
+
+    if (m_colorPatchPopup) {
+        m_colorPatchPopup->popupAt(mapToGlobal(QPoint()) - QPoint(m_colorPatchPopup->width(), 0));
+    }
 }
 
 void ChannelValueBar::mouseReleaseEvent(QMouseEvent *event)
 {
+    EXEditable::mouseReleaseEvent(event);
     EXColorState::instance()->sendToKrita();
+
+    if (m_colorPatchPopup) {
+        m_colorPatchPopup->recordColor();
+    }
 }
 
 void ChannelValueBar::edit(QMouseEvent *event)

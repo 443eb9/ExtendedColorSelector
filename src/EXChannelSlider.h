@@ -10,6 +10,7 @@
 #include <KoColorDisplayRendererInterface.h>
 #include <kis_canvas2.h>
 
+#include "EXColorPatchPopup.h"
 #include "EXEditable.h"
 
 class ChannelValueBar : public EXEditable
@@ -17,7 +18,7 @@ class ChannelValueBar : public EXEditable
     Q_OBJECT
 
 public:
-    ChannelValueBar(int channelIndex, QWidget *parent);
+    ChannelValueBar(int channelIndex, EXColorPatchPopup *colorPatchPopup = nullptr, QWidget *parent = nullptr);
 
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -36,6 +37,7 @@ private:
     KoColorDisplayRendererInterface *m_dri;
     QImage m_image;
     float m_editStart;
+    EXColorPatchPopup *m_colorPatchPopup;
 
     void updateImage();
 };
@@ -43,7 +45,10 @@ private:
 class ChannelValueWidget : public QWidget
 {
 public:
-    ChannelValueWidget(int channelIndex, QButtonGroup *group, QWidget *parent = nullptr);
+    ChannelValueWidget(int channelIndex,
+                       QButtonGroup *group,
+                       EXColorPatchPopup *colorPatchPopup = nullptr,
+                       QWidget *parent = nullptr);
 
     void setCanvas(KisCanvas2 *canvas);
 
@@ -59,7 +64,7 @@ class EXChannelSliders : public QWidget
     Q_OBJECT
 
 public:
-    EXChannelSliders(QWidget *parent);
+    EXChannelSliders(EXColorPatchPopup *colorPatchPopup = nullptr, QWidget *parent = nullptr);
 
     void setCanvas(KisCanvas2 *canvas);
 

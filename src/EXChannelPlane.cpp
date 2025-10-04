@@ -15,10 +15,11 @@
 #include "EXSettingsState.h"
 #include "EXUtils.h"
 
-EXChannelPlane::EXChannelPlane(QWidget *parent)
+EXChannelPlane::EXChannelPlane(EXColorPatchPopup *colorPatchPopup, QWidget *parent)
     : EXEditable(parent)
     , m_dri(nullptr)
     , m_shape(nullptr)
+    , m_colorPatchPopup(colorPatchPopup)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);
@@ -214,6 +215,10 @@ void EXChannelPlane::mousePressEvent(QMouseEvent *event)
         m_editStart = m_shape->shapeToWidget01(QPointF(values.x(), values.y())) * size;
         sendPlaneColor(widgetCoord);
     }
+
+    if (m_colorPatchPopup) {
+        m_colorPatchPopup->popupAt(mapToGlobal(QPoint()) - QPoint(m_colorPatchPopup->width(), 0));
+    }
 }
 
 void EXChannelPlane::edit(QMouseEvent *event)
@@ -239,6 +244,10 @@ void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
 void EXChannelPlane::mouseReleaseEvent(QMouseEvent *event)
 {
     EXColorState::instance()->sendToKrita();
+
+    if (m_colorPatchPopup) {
+        m_colorPatchPopup->recordColor();
+    }
 }
 
 float EXChannelPlane::size() const

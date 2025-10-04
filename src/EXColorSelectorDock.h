@@ -10,8 +10,9 @@
 #include "EXChannelPlane.h"
 #include "EXChannelSlider.h"
 #include "EXColorModelSwitchers.h"
-#include "EXSettingsDialog.h"
+#include "EXColorPatchPopup.h"
 #include "EXPortableColorSelector.h"
+#include "EXSettingsDialog.h"
 
 class EXColorSelectorDock : public QDockWidget, public KisMainwindowObserver
 {
@@ -21,15 +22,17 @@ public:
     void setViewManager(KisViewManager *kisview) override;
     void setCanvas(KoCanvasBase *canvas) override;
     void unsetCanvas() override;
+    void leaveEvent(QEvent *event) override;
 
 private:
     KisCanvas2 *m_canvas;
     EXChannelPlane *m_plane;
     EXChannelSliders *m_sliders;
     EXColorModelSwitchers *m_colorModelSwitchers;
-    EXGlobalSettingsDialog* m_globalSettings;
-    EXPerColorModelSettingsDialog* m_settings;
-    EXPortableColorSelector* m_portableSelector;
+    EXGlobalSettingsDialog *m_globalSettings;
+    EXPerColorModelSettingsDialog *m_settings;
+    EXPortableColorSelector *m_portableSelector;
+    EXColorPatchPopup *m_colorPatchPopup;
 };
 
 #endif // EXTENDEDCOLORSELECTORDOCK_H

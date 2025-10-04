@@ -13,12 +13,12 @@ EXColorConverter::EXColorConverter(const KoColorSpace *colorSpace)
     }
 }
 
-int *EXColorConverter::displayToMemoryPositionMapper()
+const int *EXColorConverter::displayToMemoryPositionMapper() const
 {
     return m_displayToMemoryPosition;
 }
 
-KoColor EXColorConverter::displayChannelsToKoColor(const QVector<float> &channels)
+KoColor EXColorConverter::displayChannelsToKoColor(const QVector<float> &channels) const
 {
     QVector<float> rearranged(channels.size());
     for (int i = 0; i < (int)m_colorSpace->channelCount(); i++) {
@@ -29,7 +29,7 @@ KoColor EXColorConverter::displayChannelsToKoColor(const QVector<float> &channel
     return koColor;
 }
 
-QVector<float> EXColorConverter::koColorToDisplayChannels(const KoColor &color)
+QVector<float> EXColorConverter::koColorToDisplayChannels(const KoColor &color) const
 {
     QVector<float> memory(m_colorSpace->channelCount());
     m_colorSpace->normalisedChannelsValue(color.data(), memory);

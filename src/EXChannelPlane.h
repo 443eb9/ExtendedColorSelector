@@ -6,6 +6,7 @@
 #include <KoColorDisplayRendererInterface.h>
 #include <kis_canvas2.h>
 
+#include "EXColorPatchPopup.h"
 #include "EXEditable.h"
 #include "EXShape.h"
 
@@ -14,7 +15,7 @@ class EXChannelPlane : public EXEditable
     Q_OBJECT
 
 public:
-    explicit EXChannelPlane(QWidget *parent);
+    explicit EXChannelPlane(EXColorPatchPopup *colorPatchPopup = nullptr, QWidget *parent = nullptr);
 
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
@@ -40,12 +41,13 @@ private:
     EXChannelPlaneShape *m_shape;
     QImage m_image;
     KoColorDisplayRendererInterface *m_dri;
+    EXColorPatchPopup *m_colorPatchPopup;
 
     void updateImage();
     void trySyncRingRotation();
     void handleCursorEdit(const QPointF &widgetCoord);
-    void sendPlaneColor(const QPointF& widgetCoord);
-    void sendRingColor(const QPointF& widgetCoord);
+    void sendPlaneColor(const QPointF &widgetCoord);
+    void sendRingColor(const QPointF &widgetCoord);
 
 private Q_SLOTS:
     void settingsChanged();

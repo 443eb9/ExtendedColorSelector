@@ -33,6 +33,8 @@ public:
     void setChannel(quint32 index, float value);
 
     QVector3D color() const;
+    QColor qColor() const;
+    KoColor koColor() const;
     void setColor(const QVector3D &color);
     const KoColorSpace *colorSpace() const;
     const ColorModelSP kritaColorModel() const;
@@ -59,6 +61,7 @@ private:
     ColorModelSP m_kritaColorModel;
     const KoColorSpace *m_currentColorSpace;
     KisCanvasResourceProvider *m_resourceProvider;
+    KoColorDisplayRendererInterface *m_dri;
     EXColorConverterSP m_koColorConverter;
     bool m_blockSync;
 };

@@ -4,6 +4,7 @@ set(
     EXChannelSlider.cpp
     EXColorModel.cpp
     EXColorModelSwitchers.cpp
+    EXColorPatchPopup.cpp
     EXColorSelectorDock.cpp
     EXColorSelectorPlugin.cpp
     EXColorState.cpp

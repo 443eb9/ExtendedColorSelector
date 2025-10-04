@@ -12,9 +12,9 @@ class EXColorConverter : public KisShared
 {
 public:
     EXColorConverter(const KoColorSpace *colorSpace);
-    int *displayToMemoryPositionMapper();
-    KoColor displayChannelsToKoColor(const QVector<float> &channels);
-    QVector<float> koColorToDisplayChannels(const KoColor &color);
+    const int *displayToMemoryPositionMapper() const;
+    KoColor displayChannelsToKoColor(const QVector<float> &channels) const;
+    QVector<float> koColorToDisplayChannels(const KoColor &color) const;
 
 private:
     int m_displayToMemoryPosition[8];
