@@ -2,6 +2,7 @@
 #include <kis_display_color_converter.h>
 
 #include "EXColorState.h"
+#include "EXSettingsState.h"
 #include "EXUtils.h"
 
 static EXColorState *s_instance = nullptr;
@@ -17,13 +18,13 @@ EXColorState *EXColorState::instance()
 EXColorState::EXColorState()
     : m_color(1, 1, 1)
     , m_primaryChannelIndex(0)
-    , m_colorModel(new RGBModel())
+    , m_colorModel(
+          ColorModelFactory::fromId((ColorModelId)EXSettingsState::instance()->globalSettings.currentColorModel))
     , m_currentColorSpace(nullptr)
     , m_resourceProvider(nullptr)
     , m_koColorConverter(nullptr)
     , m_blockSync(false)
 {
-    // TODO load from settings
 }
 
 void EXColorState::setColorModel(ColorModelId model)
@@ -31,6 +32,13 @@ void EXColorState::setColorModel(ColorModelId model)
     if (m_colorModel->id() == model) {
         return;
     }
+
+    auto &settings = EXSettingsState::instance()->globalSettings;
+    settings.currentColorModel = model;
+    settings.writeAll();
+
+    m_primaryChannelIndex = EXSettingsState::instance()->settings[model].primaryIndex;
+    Q_EMIT sigPrimaryChannelIndexChanged(m_primaryChannelIndex);
 
     auto newModel = ColorModelFactory::fromId(model);
 
@@ -109,6 +117,11 @@ quint32 EXColorState::primaryChannelIndex() const
 void EXColorState::setPrimaryChannelIndex(quint32 index)
 {
     Q_ASSERT(index < 3);
+
+    auto &settings = EXSettingsState::instance()->settings[m_colorModel->id()];
+    settings.primaryIndex = index;
+    settings.writeAll();
+
     m_primaryChannelIndex = index;
     Q_EMIT sigPrimaryChannelIndexChanged(index);
 }
