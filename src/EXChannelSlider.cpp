@@ -168,6 +168,8 @@ void ChannelValueBar::paintEvent(QPaintEvent *event)
 
     painter.drawImage(QRect(0, 0, width(), height()), m_image);
 
+    auto contrastColor = ExtendedUtils::getContrastingColor(EXColorState::instance()->qColor());
+    painter.setPen(QPen(contrastColor, 1));
     int x = EXColorState::instance()->color()[m_channelIndex] * width();
     painter.drawRect(x - 1, 0, 2, height());
 }

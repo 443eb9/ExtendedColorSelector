@@ -84,4 +84,10 @@ QVector3D stringToColor(const QString &str)
     }
     return QVector3D(r, g, b);
 }
+
+QColor getContrastingColor(const QColor &color)
+{
+    double luminance = 0.2126 * color.redF() + 0.7152 * color.greenF() + 0.0722 * color.blueF();
+    return luminance > 0.5 ? QColor(Qt::black) : QColor(Qt::white);
+}
 } // namespace ExtendedUtils

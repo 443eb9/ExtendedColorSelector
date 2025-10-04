@@ -100,6 +100,8 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
     int size = this->size();
     auto colorState = EXColorState::instance();
     auto settings = EXSettingsState::instance()->settings[colorState->colorModel()->id()];
+    auto contrastColor = ExtendedUtils::getContrastingColor(colorState->qColor());
+    painter.setPen(QPen(contrastColor, 1));
 
     if (settings.clipToSrgbGamut) {
         planeValues = EXGamutClipping::instance()->unmapAxesFromLimited(colorState->colorModel()->id(),

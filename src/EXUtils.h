@@ -42,6 +42,7 @@ QVector<T> stringToVector(const QString &str, std::function<T(const QString &)> 
     }
     return vec;
 }
+QColor getContrastingColor(const QColor &color);
 } // namespace ExtendedUtils
 
 #endif // EXTENDEDUTILS_H
