@@ -2,6 +2,7 @@
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QVBoxLayout>
+#include <QVector4D>
 #include <qmath.h>
 
 #include <kis_display_color_converter.h>
@@ -138,7 +139,7 @@ void ChannelValueBar::updateImage()
     auto mapper = converter.displayToMemoryPositionMapper();
     auto makeColorful = EXSettingsState::instance()->settings[colorState->colorModel()->id()].colorfulHueRing;
 
-    auto pixelGet = [this, colorState, mapper, makeColorful](float x, float y, QVector<float> &channels) {
+    auto pixelGet = [this, colorState, mapper, makeColorful](float x, float y) -> QVector4D {
         QVector3D color = colorState->color();
         color[m_channelIndex] = x;
         if (makeColorful) {
@@ -149,8 +150,7 @@ void ChannelValueBar::updateImage()
         if (!colorState->colorModel()->isSrgbBased() && settings.outOfGamutColorEnabled) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
         }
-        channels[mapper[0]] = color.x(), channels[mapper[1]] = color.y(), channels[mapper[2]] = color.z();
-        channels[mapper[3]] = 1;
+        return QVector4D(color, 1.0f);
     };
     m_image = ExtendedUtils::generateGradient(width(), 1, false, colorState->colorSpace(), m_dri, pixelGet);
 }

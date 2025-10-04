@@ -50,11 +50,9 @@ void EXColorState::sendToKrita()
 {
     RGBModel rgbConverter;
     QVector3D currentRgb = m_colorModel->transferTo(&rgbConverter, m_color, nullptr);
-    QVector<float> channels(4, 1);
-    channels[0] = currentRgb.x(), channels[1] = currentRgb.y(), channels[2] = currentRgb.z();
 
     m_blockSync = true;
-    m_resourceProvider->setFGColor(m_koColorConverter->displayChannelsToKoColor(channels));
+    m_resourceProvider->setFGColor(m_koColorConverter->displayChannelsToKoColor(QVector4D(currentRgb, 1.0f)));
     m_blockSync = false;
 }
 
@@ -161,8 +159,7 @@ QVector3D EXColorState::color() const
 KoColor EXColorState::koColor() const
 {
     auto kritaColor = m_colorModel->transferTo(m_kritaColorModel, m_color, nullptr);
-    auto channels = QVector<float>{kritaColor.x(), kritaColor.y(), kritaColor.z(), 1.0f};
-    return m_koColorConverter->displayChannelsToKoColor(channels);
+    return m_koColorConverter->displayChannelsToKoColor(QVector4D(kritaColor, 1.0f));
 }
 
 QColor EXColorState::qColor() const

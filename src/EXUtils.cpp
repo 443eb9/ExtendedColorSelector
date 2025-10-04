@@ -2,6 +2,7 @@
 #include <qmath.h>
 
 #include "EXColorModel.h"
+#include "EXKoColorConverter.h"
 #include "EXUtils.h"
 
 namespace ExtendedUtils
@@ -11,7 +12,7 @@ QImage generateGradient(int width,
                         bool useParallel,
                         const KoColorSpace *colorSpace,
                         const KoColorDisplayRendererInterface *dri,
-                        std::function<void(float, float, QVector<float> &)> pixelGet)
+                        std::function<QVector4D(float, float)> pixelGet)
 {
     const int deviceWidth = qCeil(width);
     const int deviceHeight = qCeil(height);
@@ -19,20 +20,20 @@ QImage generateGradient(int width,
     quint32 imageSize = deviceWidth * deviceHeight * pixelSize;
     QScopedArrayPointer<quint8> raw(new quint8[imageSize]{});
     quint8 *dataPtr = raw.data();
+    auto converter = EXColorConverter(colorSpace);
 
     auto processRow = [&](int y) {
-        QVector<float> channels(4, 1);
-        KoColor color(colorSpace);
         quint8 *rowPtr = dataPtr + y * deviceWidth * pixelSize;
-        
+
         for (int x = 0; x < deviceWidth; x++) {
-            pixelGet((float)x / (width - 1), (float)y / (height - 1), channels);
-            colorSpace->fromNormalisedChannelsValue(color.data(), channels);
-            memcpy(rowPtr, color.data(), pixelSize);
+            auto channels = pixelGet((float)x / (width - 1), (float)y / (height - 1));
+            auto koColor = converter.displayChannelsToKoColor(channels);
+            // colorSpace->fromNormalisedChannelsValue(color.data(), channels);
+            memcpy(rowPtr, koColor.data(), pixelSize);
             rowPtr += pixelSize;
         }
     };
-    
+
     if (useParallel) {
         QVector<int> rows(deviceHeight);
         std::iota(rows.begin(), rows.end(), 0);

@@ -1,45 +1,105 @@
+#include <KoColorModelStandardIds.h>
+#include <KoColorProfile.h>
+
 #include "EXKoColorConverter.h"
 
-EXColorConverter::EXColorConverter(const KoColorSpace *colorSpace)
-    : m_colorSpace(colorSpace)
+EXColorConverter::EXColorConverter(const KoColorSpace *cs)
+    : m_colorSpace(cs)
 {
-    Q_ASSERT(colorSpace->channelCount() < 8);
+    const QList<KoChannelInfo *> channelList = cs->channels();
 
-    const QList<KoChannelInfo *> channelList = colorSpace->channels();
     for (int i = 0; i < channelList.size(); i++) {
         const KoChannelInfo *channel = channelList.at(i);
         quint32 logical = channel->displayPosition();
-        m_displayToMemoryPosition[logical] = i;
+        m_logicalToMemoryPosition[logical] = i;
+    }
+
+    if ((cs->colorDepthId() == Float16BitsColorDepthID || cs->colorDepthId() == Float32BitsColorDepthID
+         || cs->colorDepthId() == Float64BitsColorDepthID)
+        && cs->colorModelId() != LABAColorModelID && cs->colorModelId() != CMYKAColorModelID) {
+        m_exposureSupported = true;
+    } else {
+        m_exposureSupported = false;
+    }
+    m_isRGBA = (cs->colorModelId() == RGBAColorModelID);
+
+    const KoColorProfile *profile = cs->profile();
+    m_isLinear = (profile && profile->isLinear());
+
+    if (m_isRGBA) {
+        m_applyGamma = m_isLinear;
     }
 }
 
 const int *EXColorConverter::displayToMemoryPositionMapper() const
 {
-    return m_displayToMemoryPosition;
+    return m_logicalToMemoryPosition;
 }
 
-KoColor EXColorConverter::displayChannelsToKoColor(const QVector<float> &channels) const
+KoColor EXColorConverter::displayChannelsToKoColor(const QVector4D &channels) const
 {
-    QVector<float> rearranged(channels.size());
-    for (int i = 0; i < (int)m_colorSpace->channelCount(); i++) {
-        rearranged[m_displayToMemoryPosition[i]] = channels[i];
+    KoColor c(m_colorSpace);
+    QVector4D baseValues(channels);
+    QVector<float> channelVec(c.colorSpace()->channelCount());
+
+    if (m_isRGBA) {
+        if (!m_isLinear) {
+            // Note: not all profiles define a TRC necessary for (de-)linearization,
+            // substituting with a linear profiles would be better
+            QVector<qreal> tempVec({baseValues[0], baseValues[1], baseValues[2]});
+            if (m_exposureSupported) {
+                m_colorSpace->profile()->delinearizeFloatValue(tempVec);
+            } else {
+                m_colorSpace->profile()->delinearizeFloatValueFast(tempVec);
+            }
+            baseValues = QVector4D(tempVec[0], tempVec[1], tempVec[2], channels[3]);
+        }
+
+        if (m_applyGamma) {
+            for (int i = 0; i < 3; i++) {
+                baseValues[i] = pow(baseValues[i], 2.2);
+            }
+        }
     }
-    KoColor koColor(m_colorSpace);
-    m_colorSpace->fromNormalisedChannelsValue(koColor.data(), rearranged);
-    return koColor;
+
+    // if (m_exposureSupported) {
+    //     baseValues *= m_d->channelMaxValues;
+    // }
+
+    for (int i = 0; i < 4; i++) {
+        channelVec[m_logicalToMemoryPosition[i]] = baseValues[i];
+    }
+
+    c.colorSpace()->fromNormalisedChannelsValue(c.data(), channelVec);
+
+    return c;
 }
 
-QVector<float> EXColorConverter::koColorToDisplayChannels(const KoColor &color) const
+QVector4D EXColorConverter::koColorToDisplayChannels(const KoColor &c) const
 {
-    QVector<float> memory(m_colorSpace->channelCount());
-    m_colorSpace->normalisedChannelsValue(color.data(), memory);
-    QVector<float> displayed(m_colorSpace->channelCount());
-    const QList<KoChannelInfo *> channelList = m_colorSpace->channels();
-    for (int i = 0; i < channelList.size(); i++) {
-        const KoChannelInfo *channel = channelList.at(i);
-        quint32 logical = channel->displayPosition();
-        displayed[logical] = memory[i];
+    QVector<float> channelVec(c.colorSpace()->channelCount());
+    m_colorSpace->normalisedChannelsValue(c.data(), channelVec);
+    QVector4D channelValuesDisplay(0, 0, 0, 0), coordinates(0, 0, 0, 0);
+
+    for (int i = 0; i < 4; i++) {
+        channelValuesDisplay[i] = channelVec[m_logicalToMemoryPosition[i]];
     }
 
-    return displayed;
+    if (m_isRGBA) {
+        if (m_applyGamma) {
+            for (int i = 0; i < 3; i++) {
+                channelValuesDisplay[i] = pow(channelValuesDisplay[i], 1 / 2.2);
+            }
+        }
+        if (!m_isLinear) {
+            QVector<qreal> temp({channelValuesDisplay[0], channelValuesDisplay[1], channelValuesDisplay[2]});
+            m_colorSpace->profile()->linearizeFloatValue(temp);
+            channelValuesDisplay = QVector4D(temp[0], temp[1], temp[2], channelValuesDisplay[3]);
+        }
+    } else {
+        for (int i = 0; i < 4; i++) {
+            coordinates[i] = channelValuesDisplay[i];
+        }
+    }
+    return coordinates;
 }

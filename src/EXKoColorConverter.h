@@ -3,6 +3,8 @@
 
 #include <array>
 
+#include <QVector4D>
+
 #include <KoColor.h>
 #include <KoColorSpace.h>
 #include <kis_shared.h>
@@ -13,12 +15,16 @@ class EXColorConverter : public KisShared
 public:
     EXColorConverter(const KoColorSpace *colorSpace);
     const int *displayToMemoryPositionMapper() const;
-    KoColor displayChannelsToKoColor(const QVector<float> &channels) const;
-    QVector<float> koColorToDisplayChannels(const KoColor &color) const;
+    KoColor displayChannelsToKoColor(const QVector4D &channels) const;
+    QVector4D koColorToDisplayChannels(const KoColor &color) const;
 
 private:
-    int m_displayToMemoryPosition[8];
     const KoColorSpace *m_colorSpace;
+    int m_logicalToMemoryPosition[4];
+    bool m_isRGBA;
+    bool m_isLinear;
+    bool m_applyGamma;
+    bool m_exposureSupported;
 };
 
 typedef KisSharedPtr<EXColorConverter> EXColorConverterSP;
