@@ -66,6 +66,7 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QButtonGroup *group, QW
         auto [chmn, chmx] = colorState->colorModel()->channelRanges();
         colorState->setChannel(m_channelIndex,
                                (value - chmn[m_channelIndex]) / (chmx[m_channelIndex] - chmn[m_channelIndex]));
+        qDebug() << "spinBox valueChanged: " << value;
     });
 
     connect(colorState, &EXColorState::sigPrimaryChannelIndexChanged, this, [this, colorState]() {
@@ -73,9 +74,10 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex, QButtonGroup *group, QW
     });
 
     connect(colorState, &EXColorState::sigColorChanged, this, [this, colorState]() {
+        qDebug() << colorState->color();
         auto [chmn, chmx] = colorState->colorModel()->channelRanges();
-        m_spinBox->setRange(chmn[m_channelIndex], chmx[m_channelIndex]);
         m_spinBox->blockSignals(true);
+        m_spinBox->setRange(chmn[m_channelIndex], chmx[m_channelIndex]);
         m_spinBox->setValue(colorState->color()[m_channelIndex] * (chmx[m_channelIndex] - chmn[m_channelIndex])
                             + chmn[m_channelIndex]);
         m_spinBox->blockSignals(false);
@@ -173,6 +175,7 @@ void ChannelValueBar::mousePressEvent(QMouseEvent *event)
     EXEditable::mousePressEvent(event);
     m_editStart = currentWidgetCoord();
     EXColorState::instance()->setChannel(m_channelIndex, (event->pos().x() / width()));
+    qDebug() << "mousePressEvent: " << event->pos().x() / width();
 }
 
 void ChannelValueBar::mouseReleaseEvent(QMouseEvent *event)

@@ -36,6 +36,7 @@ void EXColorState::setColorModel(ColorModelId model)
     qDebug() << "old from new: " << newModel->transferTo(m_colorModel, m_color, nullptr);
     ExtendedUtils::saturateColor(m_color);
     m_colorModel = newModel;
+    qDebug() << "new color: " << m_color;
     Q_EMIT sigColorModelChanged(model);
     Q_EMIT sigColorChanged(m_color);
 }
@@ -95,6 +96,7 @@ qreal EXColorState::primaryChannelValue() const
 
 void EXColorState::setPrimaryChannelValue(float value)
 {
+    qDebug() << "setPrimaryChannelValue: " << value;
     m_color[m_primaryChannelIndex] = value;
     Q_EMIT sigColorChanged(m_color);
 }
@@ -127,6 +129,7 @@ QVector2D EXColorState::secondaryChannelValues() const
 
 void EXColorState::setSecondaryChannelValues(const QVector2D &values)
 {
+    qDebug() << "setSecondaryChannelValues: " << values;
     switch (m_primaryChannelIndex) {
     case 0:
         m_color[1] = values.x();
@@ -146,6 +149,7 @@ void EXColorState::setSecondaryChannelValues(const QVector2D &values)
 
 void EXColorState::setChannel(quint32 index, float value)
 {
+    qDebug() << "setChannel: " << index << ", " << value;
     Q_ASSERT(index < 3);
     m_color[index] = value;
     Q_EMIT sigColorChanged(m_color);
@@ -158,6 +162,7 @@ QVector3D EXColorState::color() const
 
 void EXColorState::setColor(const QVector3D &color)
 {
+    qDebug() << "setColor: " << color;
     m_color = color;
     Q_EMIT sigColorChanged(m_color);
 }
