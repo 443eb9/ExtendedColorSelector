@@ -102,7 +102,7 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
     auto contrastColor = ExtendedUtils::getContrastingColor(colorState->qColor());
     painter.setPen(QPen(contrastColor, 1));
 
-    if (settings.clipToSrgbGamut) {
+    if (colorState->possibleOutOfSrgb() && settings.clipToSrgbGamut) {
         planeValues = EXGamutClipping::instance()->unmapAxesFromLimited(colorState->colorModel()->id(),
                                                                         colorState->primaryChannelIndex(),
                                                                         colorState->primaryChannelValue(),
@@ -128,7 +128,7 @@ void EXChannelPlane::updateImage()
     auto colorState = EXColorState::instance();
     auto &settings = EXSettingsState::instance()->settings[colorState->colorModel()->id()];
     auto makeColorful = settings.colorfulHueRing;
-    auto clipToSrgbGamut = settings.clipToSrgbGamut;
+    auto clipToSrgbGamut = settings.clipToSrgbGamut && colorState->possibleOutOfSrgb();
 
     auto pixelGet = [this, colorState, makeColorful, clipToSrgbGamut](float x, float y) -> QVector4D {
         QVector3D color;
@@ -177,7 +177,7 @@ void EXChannelPlane::updateImage()
 
         color = colorState->colorModel()->transferTo(colorState->kritaColorModel(), color, nullptr);
         auto &settings = EXSettingsState::instance()->globalSettings;
-        if (colorState->possibleOutOfGamut() && settings.outOfGamutColorEnabled) {
+        if (colorState->possibleOutOfSrgb() && settings.outOfGamutColorEnabled) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
         }
 
@@ -277,7 +277,8 @@ void EXChannelPlane::sendPlaneColor(const QPointF &widgetCoord)
     QPointF shapeCoord;
     m_shape->widget01ToShape(widgetCoord, shapeCoord);
     auto colorState = EXColorState::instance();
-    if (EXSettingsState::instance()->settings[colorState->colorModel()->id()].clipToSrgbGamut) {
+    if (EXSettingsState::instance()->settings[colorState->colorModel()->id()].clipToSrgbGamut
+        && colorState->possibleOutOfSrgb()) {
         QVector2D clipped = EXGamutClipping::instance()->mapAxesToLimited(colorState->colorModel()->id(),
                                                                           colorState->primaryChannelIndex(),
                                                                           colorState->primaryChannelValue(),

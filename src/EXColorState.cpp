@@ -198,7 +198,7 @@ const ColorModelSP EXColorState::kritaColorModel() const
     return m_kritaColorModel;
 }
 
-bool EXColorState::possibleOutOfGamut() const
+bool EXColorState::possibleOutOfSrgb() const
 {
     return m_kritaColorModel->isSrgbBased() && !m_colorModel->isSrgbBased();
 }
