@@ -4,10 +4,10 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 
 ## Features
 
-- Supports color picking in 9 color models. (`RGB`, `HSV`, `HSL`, `OkLab`, `XYZ`, `Lab`, `OkLch`, `OkHsv`, `OkHsl`)
+- Supports color picking in 10 color models. (`Gray`, `RGB`, `HSV`, `HSL`, `XYZ`, `Lab`, `OkLab`, `OkLch`, `OkHsv`, `OkHsl`)
 - Fully modular, and highly customizable.
   - Three wheel shapes: square, triangle, and circle.
-  - Horizontal bar and ring to modify the third channel.
+  - Channel sliders and ring to modify the third channel.
   - Swappable and revertable axes.
   - Color picker rotate with ring.
   - Scale to fit SRGB gamut for color models in CIE color space.
@@ -15,10 +15,11 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 - Portable color selector. Open the selector at anywhere on canvas using shortcut.
 - `Shift` and `Alt` modifiers to shift slowly.
 - Out of gamut hinting.
+- Integrated with color management from Krita. Display the correct color under specific color profile.
 
 ## Known Issues
 
-- Tested on Ubuntu 24.04.3(GNOME) and KUbuntu 24.04.0(KDE) in VMWare Workstation Pro 17, not working if using `OpenGL` for canvas acceleration. `OpenGL ES` or with canvas acceleration disabled works.
+Extremely lag when the dock is too large.
 
 ## How to use
 
@@ -40,21 +41,12 @@ Go to `Settings -> Configure Krita -> Python Plugin Manager`, find `Extended Col
 
 To make it looks/sounds like a native Krita docker, just like wide-gamut color selector and advanced color selector.
 
-## Baking the axes limit file
-
-Go to release page, download the corresponding `axes_limits_compute` executable according to your operating system.
-
-Put that executable inside `pykrita`, then run it.
-
 ## Screenshots
 
-![](./images/screenshot_0.png)
-![](./images/screenshot_1.png)
-![](./images/screenshot_2.png)
-![](./images/screenshot_3.png)
+// TODO
 
 ## Credits
 
 Most color model conversion functions are translated from [`Bevy`](https://bevy.org/) project, in `bevy_color` rust crate, and under `MIT` license. It's a very nice open-source game engine written in rust.
 
-`OkHsv` and `OkHsl` color model, and `toe` functions are translated in [this article](https://bottosson.github.io/posts/colorpicker/) from Björn Ottosson's blog.
+`ok_color.h` downloaded from [Björn Ottosson's Blog](https://bottosson.github.io/misc/ok_color.h) , and tuned a bit for the project, under `MIT` license.
