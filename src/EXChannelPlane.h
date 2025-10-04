@@ -55,6 +55,8 @@ private:
     void handleCursorEdit(const QPointF &widgetCoord);
     void sendPlaneColor(const QPointF &widgetCoord);
     void sendRingColor(const QPointF &widgetCoord);
+    void offsetWidgetCoord(QPointF &widgetCoord);
+    void unoffsetWidgetCoord(QPointF &widgetCoord);
 
 private Q_SLOTS:
     void settingsChanged();

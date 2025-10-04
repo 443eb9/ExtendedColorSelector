@@ -103,7 +103,8 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
     QWidget::paintEvent(event);
     QPainter painter(this);
 
-    painter.drawImage(0, 0, m_image);
+    auto offset = (QSize(width(), height()) - m_image.size()) * 0.5;
+    painter.drawImage(offset.width(), offset.height(), m_image);
 
     QVector2D planeValues = m_colorState->secondaryChannelValues();
     int size = this->size();
@@ -119,10 +120,12 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
     }
 
     QPointF widgetCoord = m_shape->shapeToWidget01(QPointF(planeValues.x(), planeValues.y()));
+    offsetWidgetCoord(widgetCoord);
     painter.drawArc(QRectF(widgetCoord.x() * size - 4, widgetCoord.y() * size - 4, 8, 8), 0, 360 * 16);
 
     if (m_shape->ring.thickness > 0) {
         QPointF ringWidgetCoord = m_shape->ring.getWidgetCoord(m_colorState->primaryChannelValue());
+        offsetWidgetCoord(ringWidgetCoord);
         painter.drawArc(QRectF(ringWidgetCoord.x() * size - 4, ringWidgetCoord.y() * size - 4, 8, 8), 0, 360 * 16);
     }
 }
@@ -205,7 +208,8 @@ void EXChannelPlane::startEdit(QMouseEvent *event, bool isShift)
         return;
     }
 
-    QPointF widgetCoord = QPointF(event->pos()) / qMin(width(), height());
+    QPointF widgetCoord = QPointF(event->pos()) / size();
+    unoffsetWidgetCoord(widgetCoord);
     QPointF centeredCoord = widgetCoord * 2 - QPointF(1, 1);
     float dist = qSqrt(centeredCoord.x() * centeredCoord.x() + centeredCoord.y() * centeredCoord.y());
     float size = this->size();
@@ -235,6 +239,7 @@ void EXChannelPlane::edit(QMouseEvent *event)
     }
 
     QPointF widgetCoord = QPointF(event->pos()) / size();
+    unoffsetWidgetCoord(widgetCoord);
     handleCursorEdit(widgetCoord);
 }
 
@@ -245,6 +250,7 @@ void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
     }
 
     QPointF widgetCoord = (m_editStart + QPointF(delta.x(), delta.y())) / this->size();
+    unoffsetWidgetCoord(widgetCoord);
     handleCursorEdit(widgetCoord);
 }
 
@@ -326,4 +332,16 @@ void EXChannelPlane::handleCursorEdit(const QPointF &widgetCoord)
         break;
     }
     }
+}
+
+void EXChannelPlane::offsetWidgetCoord(QPointF &widgetCoord)
+{
+    auto offset = (QSize(width(), height()) - m_image.size()) * 0.5;
+    widgetCoord += QPointF(offset.width(), offset.height()) / size();
+}
+
+void EXChannelPlane::unoffsetWidgetCoord(QPointF &widgetCoord)
+{
+    auto offset = (QSize(width(), height()) - m_image.size()) * 0.5;
+    widgetCoord -= QPointF(offset.width(), offset.height()) / size();
 }
