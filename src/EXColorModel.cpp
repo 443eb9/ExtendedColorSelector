@@ -221,7 +221,7 @@ QVector3D LABModel::toXyz(const QVector3D &color) const
 QVector3D LCHModel::fromXyz(const QVector3D &color) const
 {
     auto lab = LABModel().fromXyz(color);
-    float a = lab[1] * 2 - 1, b = lab[2] * 2 - 1;
+    float a = lab[1] * 3 - 1.5, b = lab[2] * 3 - 1.5;
     float c = hypotf(a, b);
     float h = qRadiansToDegrees(atan2f(b, a));
     if (h < 0.0) {
@@ -229,17 +229,17 @@ QVector3D LCHModel::fromXyz(const QVector3D &color) const
     }
     float chroma = qBound(0.0f, c, 1.5f);
 
-    return QVector3D(lab[0], c / 1.5, h / 360);
+    return QVector3D(lab[0] / 1.5, c / 1.5, h / 360);
 }
 
 QVector3D LCHModel::toXyz(const QVector3D &color) const
 {
     float sin, cos;
-    sincosf(qDegreesToRadians(color[2] * 360), &sin, &cos);
+    sincosf(color[2] * 2 * M_PI, &sin, &cos);
     float a = color[1] * cos;
     float b = color[1] * sin;
 
-    return LABModel().toXyz(QVector3D(color[0], a * 0.5 + 0.5, b * 0.5 + 0.5));
+    return LABModel().toXyz(QVector3D(color[0] * 1.5, a / 3 + 0.5, b / 3 + 0.5));
 }
 
 // https:#bottosson.github.io/posts/oklab/#converting-from-xyz-to-oklab
