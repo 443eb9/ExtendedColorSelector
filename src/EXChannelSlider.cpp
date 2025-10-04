@@ -33,6 +33,13 @@ EXChannelSliders::EXChannelSliders(EXColorPatchPopup *colorPatchPopup, QWidget *
 
     connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, this, [this](ColorModelId) {
         setVisible(EXSettingsState::instance()->settings[EXColorState::instance()->colorModel()->id()].slidersEnabled);
+        if (EXColorState::instance()->colorModel()->isOneDimensional()) {
+            m_channelWidgets[1]->hide();
+            m_channelWidgets[2]->hide();
+        } else {
+            m_channelWidgets[1]->show();
+            m_channelWidgets[2]->show();
+        }
     });
 }
 

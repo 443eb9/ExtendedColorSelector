@@ -13,16 +13,17 @@
 typedef KisSharedPtr<class ColorModel> ColorModelSP;
 
 enum ColorModelId {
-    Rgb = 0,
-    Hsv = 1,
-    Hsl = 2,
-    Xyz = 3,
-    Lab = 4,
-    Lch = 5,
-    Oklab = 6,
-    Oklch = 7,
-    Okhsv = 8,
-    Okhsl = 9,
+    Gray = 0,
+    Rgb = 1,
+    Hsv = 2,
+    Hsl = 3,
+    Xyz = 4,
+    Lab = 5,
+    Lch = 6,
+    Oklab = 7,
+    Oklch = 8,
+    Okhsv = 9,
+    Okhsl = 10,
 };
 
 class ColorModel : public KisShared
@@ -36,6 +37,7 @@ public:
 
     virtual ColorModelId id() const = 0;
     virtual QString displayName() const = 0;
+    virtual bool isOneDimensional() const;
     virtual std::array<QString, 3> channelNames() const = 0;
     virtual std::array<QVector3D, 2> channelRanges() const;
     virtual bool isSrgbBased() const;
@@ -57,6 +59,53 @@ public:
     QVector3D transferTo(const ColorModel *toModel, const QVector3D &color, const QVector3D *reference = nullptr) const;
 };
 
+class GrayModel : public ColorModel
+{
+public:
+    QVector3D toXyz(const QVector3D &color) const override;
+    QVector3D fromXyz(const QVector3D &color) const override;
+
+    ColorModelId id() const override
+    {
+        return ColorModelId::Gray;
+    }
+
+    QString displayName() const override
+    {
+        return "GRAY";
+    }
+
+    bool isOneDimensional() const override
+    {
+        return true;
+    }
+
+    std::array<QString, 3> channelNames() const override
+    {
+        return {"V", "V", "V"};
+    }
+
+    std::array<QVector3D, 2> channelRanges() const override
+    {
+        return {QVector3D(0, 0, 0), QVector3D(100, 100, 100)};
+    }
+
+    bool isSrgbBased() const override
+    {
+        return true;
+    }
+
+    bool parallelGradientGen() const override
+    {
+        return false;
+    }
+
+    bool requiresLinearization() const override
+    {
+        return false;
+    }
+};
+
 class RGBModel : public ColorModel
 {
 public:
@@ -71,6 +120,11 @@ public:
     QString displayName() const override
     {
         return "RGB";
+    }
+
+    bool isOneDimensional() const override
+    {
+        return false;
     }
 
     std::array<QString, 3> channelNames() const override
@@ -116,6 +170,11 @@ public:
         return "HSV";
     }
 
+    bool isOneDimensional() const override
+    {
+        return false;
+    }
+
     std::array<QString, 3> channelNames() const override
     {
         return {"H", "S", "V"};
@@ -157,6 +216,11 @@ public:
     QString displayName() const override
     {
         return "HSL";
+    }
+
+    bool isOneDimensional() const override
+    {
+        return false;
     }
 
     std::array<QString, 3> channelNames() const override
@@ -201,6 +265,11 @@ public:
         return "XYZ";
     }
 
+    bool isOneDimensional() const override
+    {
+        return false;
+    }
+
     std::array<QString, 3> channelNames() const override
     {
         return {"X", "Y", "Z"};
@@ -241,6 +310,11 @@ public:
     QString displayName() const override
     {
         return "LAB";
+    }
+
+    bool isOneDimensional() const override
+    {
+        return false;
     }
 
     std::array<QString, 3> channelNames() const override
@@ -285,6 +359,11 @@ public:
         return "LCH";
     }
 
+    bool isOneDimensional() const override
+    {
+        return false;
+    }
+
     std::array<QString, 3> channelNames() const override
     {
         return {"L", "C", "H"};
@@ -327,6 +406,11 @@ public:
         return "OkLAB";
     }
 
+    bool isOneDimensional() const override
+    {
+        return false;
+    }
+
     std::array<QString, 3> channelNames() const override
     {
         return {"L", "A", "B"};
@@ -367,6 +451,11 @@ public:
     QString displayName() const override
     {
         return "OkLCH";
+    }
+
+    bool isOneDimensional() const override
+    {
+        return false;
     }
 
     std::array<QString, 3> channelNames() const override
@@ -412,6 +501,11 @@ public:
         return "OkHSV";
     }
 
+    bool isOneDimensional() const override
+    {
+        return false;
+    }
+
     std::array<QString, 3> channelNames() const override
     {
         return {"H", "S", "V"};
@@ -454,6 +548,11 @@ public:
         return "OkHSL";
     }
 
+    bool isOneDimensional() const override
+    {
+        return false;
+    }
+
     std::array<QString, 3> channelNames() const override
     {
         return {"H", "S", "L"};
@@ -486,6 +585,8 @@ public:
     static ColorModel *fromId(ColorModelId id)
     {
         switch (id) {
+        case ColorModelId::Gray:
+            return new GrayModel();
         case ColorModelId::Rgb:
             return new RGBModel();
         case ColorModelId::Hsv:
@@ -532,6 +633,8 @@ public:
             return new LABModel();
         } else if (id == XYZAColorModelID) {
             return new XYZModel();
+        } else if (id == GrayAColorModelID) {
+            return new GrayModel();
         } else {
             return nullptr;
         }

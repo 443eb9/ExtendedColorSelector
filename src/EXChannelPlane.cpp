@@ -36,6 +36,12 @@ EXChannelPlane::EXChannelPlane(EXColorPatchPopup *colorPatchPopup, QWidget *pare
     });
 
     connect(EXColorState::instance(), &EXColorState::sigColorModelChanged, this, [this]() {
+        if (EXColorState::instance()->colorModel()->isOneDimensional()) {
+            hide();
+        } else {
+            show();
+        }
+
         settingsChanged();
         updateImage();
         update();

@@ -4,7 +4,8 @@
 #include "EXColorModel.h"
 #include "ok_color.h"
 
-const QVector<ColorModelId> ColorModelFactory::AllModels = {ColorModelId::Rgb,
+const QVector<ColorModelId> ColorModelFactory::AllModels = {ColorModelId::Gray,
+                                                            ColorModelId::Rgb,
                                                             ColorModelId::Hsv,
                                                             ColorModelId::Hsl,
                                                             ColorModelId::Xyz,
@@ -30,6 +31,17 @@ QVector3D ColorModel::transferTo(const ColorModel *toModel, const QVector3D &col
 const float D65_WHITE_XYZ[3]{0.95047, 1.0, 1.08883};
 const float CIE_EPSILON = 216.0 / 24389.0;
 const float CIE_KAPPA = 24389.0 / 27.0;
+
+QVector3D GrayModel::toXyz(const QVector3D &color) const
+{
+    return RGBModel().toXyz(QVector3D(color[0], color[0], color[0]));
+}
+
+QVector3D GrayModel::fromXyz(const QVector3D &color) const
+{
+    auto rgb = RGBModel().fromXyz(color);
+    return QVector3D(rgb[0], rgb[0], rgb[0]);
+}
 
 QVector3D RGBModel::toXyz(const QVector3D &color) const
 {
