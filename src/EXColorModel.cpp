@@ -333,12 +333,14 @@ QVector3D OKHSVModel::fromXyz(const QVector3D &color) const
 {
     auto rgb = RGBModel().fromXyz(color);
     auto okhsv = ok_color::linear_rgb_to_okhsv(ok_color::RGB{rgb[0], rgb[1], rgb[2]});
+    // Avoid singularity
+    okhsv.s = qBound(0.0f, okhsv.s, 1.0f - 1e-3f);
     return QVector3D(okhsv.h, okhsv.s, okhsv.v);
 }
 
 QVector3D OKHSVModel::toXyz(const QVector3D &color) const
 {
-    auto rgb = ok_color::okhsv_to_linear_rgb(ok_color::HSV{color[0], color[1], color[2]});
+    auto rgb = ok_color::okhsv_to_linear_rgb(ok_color::HSV{color[0], qBound(0.0f, color[1], 1.0f - 1e-3f), color[2]});
     auto xyz = RGBModel().toXyz(QVector3D(rgb.r, rgb.g, rgb.b));
     return QVector3D(xyz[0], xyz[1], xyz[2]);
 }
