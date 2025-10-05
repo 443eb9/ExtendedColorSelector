@@ -75,7 +75,8 @@ EXChannelPlane::EXChannelPlane(EXColorStateSP colorState,
         } else {
             show();
         }
-
+        
+        settingsChanged();
         updateImage();
         update();
     });

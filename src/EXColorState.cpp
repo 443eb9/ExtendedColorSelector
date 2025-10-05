@@ -87,6 +87,7 @@ void EXColorState::setCanvas(KisCanvas2 *canvas)
 
         connect(m_resourceProvider, &KisCanvasResourceProvider::sigFGColorChanged, this, &EXColorState::syncFromKrita);
         connect(canvas->image(), &KisImage::sigColorSpaceChanged, this, [this, canvas]() {
+            // TODO use per layer color space
             setColorSpace(canvas->image()->colorSpace());
             syncFromKrita();
         });
