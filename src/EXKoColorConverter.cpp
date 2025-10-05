@@ -74,29 +74,26 @@ QVector4D EXColorConverter::koColorToDisplayChannels(const KoColor &c) const
 {
     QVector<float> channelVec(c.colorSpace()->channelCount());
     m_colorSpace->normalisedChannelsValue(c.data(), channelVec);
-    QVector4D channelValuesDisplay(0, 0, 0, 0), coordinates(0, 0, 0, 0);
+    QVector4D channels(0, 0, 0, 0);
 
     for (int i = 0; i < 4; i++) {
-        channelValuesDisplay[i] = channelVec[m_logicalToMemoryPosition[i]];
+        channels[i] = channelVec[m_logicalToMemoryPosition[i]];
     }
 
     if (m_isRGBA) {
         if (m_applyGamma) {
             for (int i = 0; i < 3; i++) {
-                channelValuesDisplay[i] = pow(channelValuesDisplay[i], 1 / 2.2);
+                channels[i] = pow(channels[i], 1 / 2.2);
             }
         }
         if (!m_isLinear && m_requiresLinearization) {
-            QVector<qreal> temp({channelValuesDisplay[0], channelValuesDisplay[1], channelValuesDisplay[2]});
+            QVector<qreal> temp({channels[0], channels[1], channels[2]});
             m_colorSpace->profile()->linearizeFloatValue(temp);
-            channelValuesDisplay = QVector4D(temp[0], temp[1], temp[2], channelValuesDisplay[3]);
-        }
-    } else {
-        for (int i = 0; i < 4; i++) {
-            coordinates[i] = channelValuesDisplay[i];
+            channels = QVector4D(temp[0], temp[1], temp[2], channels[3]);
         }
     }
-    return coordinates;
+
+    return channels;
 }
 
 const KoColorSpace *EXColorConverter::colorSpace() const
