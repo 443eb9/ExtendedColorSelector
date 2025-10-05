@@ -24,18 +24,48 @@ EXChannelPlane::EXChannelPlane(EXColorStateSP colorState,
     , m_colorPatchPopup(colorPatchPopup)
     , m_colorState(colorState)
     , m_settingsState(settingsState)
+    , m_lastPrimaryChannelValue(1e10f)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);
 
-    connect(m_colorState.data(), &EXColorState::sigColorChanged, this, [this]() {
-        trySyncRingRotation();
+    connect(m_colorState.data(), &EXColorState::sigPrimaryChannelIndexChanged, this, [this]() {
         updateImage();
         update();
     });
 
-    connect(m_colorState.data(), &EXColorState::sigPrimaryChannelIndexChanged, this, [this]() {
-        updateImage();
+    connect(m_colorState.data(), &EXColorState::sigColorChanged, this, [this]() {
+        trySyncRingRotation();
+
+        const auto &settings = m_settingsState->settings[m_colorState->colorModel()->id()];
+
+        bool updateImageNeeded = false;
+        // Consider update caused by ring.
+        if (settings.ringEnabled) {
+            if (settings.colorfulHueRing) {
+                if (!ExtendedUtils::testFlag(m_colorState->colorModel()->colorfulableChannelIndexBits(),
+                                             m_colorState->primaryChannelIndex())) {
+                    updateImageNeeded = true;
+                }
+            }
+            // Already handled by plane update.
+            // else {
+            //     if (m_lastPrimaryChannelValue != m_colorState->primaryChannelValue()) {
+            //         updateImageNeeded = true;
+            //     }
+            // }
+        }
+
+        // Consider update caused by plane.
+        if (m_lastPrimaryChannelValue != m_colorState->primaryChannelValue()) {
+            updateImageNeeded = true;
+        }
+
+        if (updateImageNeeded) {
+            m_lastPrimaryChannelValue = m_colorState->primaryChannelValue();
+            updateImage();
+        }
+
         update();
     });
 
@@ -46,7 +76,6 @@ EXChannelPlane::EXChannelPlane(EXColorStateSP colorState,
             show();
         }
 
-        settingsChanged();
         updateImage();
         update();
     });

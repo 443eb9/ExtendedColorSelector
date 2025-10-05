@@ -34,15 +34,19 @@ public:
     virtual void makeColorful(QVector3D &color, int channelIndex) const
     {
     }
+    virtual int colorfulableChannelIndexBits() const
+    {
+        return 0;
+    }
 
     virtual ColorModelId id() const = 0;
     virtual QString displayName() const = 0;
     virtual bool isOneDimensional() const;
     virtual std::array<QString, 3> channelNames() const = 0;
-    virtual std::array<QVector3D, 2> channelRanges() const;
-    virtual bool isSrgbBased() const;
-    virtual bool parallelGradientGen() const;
-    virtual bool requiresLinearization() const;
+    virtual std::array<QVector3D, 2> channelRanges() const = 0;
+    virtual bool isSrgbBased() const = 0;
+    virtual bool parallelGradientGen() const = 0;
+    virtual bool requiresLinearization() const = 0;
 
     virtual QVector3D unnormalize(const QVector3D &normalized)
     {
@@ -159,6 +163,7 @@ public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
     void makeColorful(QVector3D &color, int channelIndex) const override;
+    int colorfulableChannelIndexBits() const override;
 
     ColorModelId id() const override
     {
@@ -207,6 +212,7 @@ public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
     void makeColorful(QVector3D &color, int channelIndex) const override;
+    int colorfulableChannelIndexBits() const override;
 
     ColorModelId id() const override
     {
@@ -490,6 +496,7 @@ public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
     void makeColorful(QVector3D &color, int channelIndex) const override;
+    int colorfulableChannelIndexBits() const override;
 
     ColorModelId id() const override
     {

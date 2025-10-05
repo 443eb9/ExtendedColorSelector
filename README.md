@@ -17,10 +17,6 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 - Out of gamut hinting.
 - Integrated with color management from Krita. Display the correct color under specific color profile.
 
-## Known Issues
-
-Extremely lag when the dock is too large.
-
 ## How to use
 
 Go to Releases, download the latest package.

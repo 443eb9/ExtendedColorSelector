@@ -33,7 +33,7 @@ public:
     float size() const;
 
     void setCanvas(KisCanvas2 *canvas);
-    
+
     bool hasHeightForWidth() const override
     {
         return true;
@@ -60,6 +60,8 @@ private:
     EXColorStateSP m_colorState;
     EXSettingsStateSP m_settingsState;
 
+    float m_lastPrimaryChannelValue;
+
     void updateImage();
     void trySyncRingRotation();
     void handleCursorEdit(const QPointF &widgetCoord);
@@ -67,6 +69,7 @@ private:
     void sendRingColor(const QPointF &widgetCoord);
     void offsetWidgetCoord(QPointF &widgetCoord);
     void unoffsetWidgetCoord(QPointF &widgetCoord);
+    bool requiresImageUpdate() const;
 
 private Q_SLOTS:
     void settingsChanged();
