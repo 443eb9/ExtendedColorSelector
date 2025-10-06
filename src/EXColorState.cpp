@@ -75,6 +75,7 @@ void EXColorState::syncFromKrita()
     }
 
     KoColor koColor = m_resourceProvider->fgColor();
+    koColor.convertTo(m_currentColorSpace);
     QVector3D newColor = m_koColorConverter->koColorToDisplayChannels(koColor).toVector3D();
     m_color = m_kritaColorModel->transferTo(m_colorModel, newColor, m_color);
     Q_EMIT sigColorChanged(m_color);
