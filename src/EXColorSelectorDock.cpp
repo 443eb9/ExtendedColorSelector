@@ -1,4 +1,3 @@
-#include <QPushButton>
 #include <QVBoxLayout>
 
 #include <KisViewManager.h>
@@ -19,6 +18,57 @@ EXColorSelectorDock::EXColorSelectorDock()
     auto mainLayout = new QVBoxLayout();
 
     m_colorPatchPopup = new EXColorPatchPopup(m_colorState, this);
+
+    auto colorSpaceLayout = new QHBoxLayout(this);
+    m_colorSpaceSelectorButton = new KisPopupButton(this);
+    m_colorSpaceSelector = new KisColorSpaceSelector(this);
+    m_colorSpaceSelector->showColorBrowserButton(false);
+    m_useLayerColorSpaceButton = new QPushButton(this);
+    m_useLayerColorSpaceButton->setCheckable(true);
+    m_colorSpaceSelectorButton->setPopupWidget(m_colorSpaceSelector);
+    m_colorSpaceSelectorButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    colorSpaceLayout->addWidget(m_colorSpaceSelectorButton);
+    colorSpaceLayout->addWidget(m_useLayerColorSpaceButton);
+    mainLayout->addLayout(colorSpaceLayout);
+
+    connect(m_colorState.data(), &EXColorState::sigColorSpaceChanged, this, [this](const KoColorSpace *colorSpace) {
+        m_colorSpaceSelectorButton->setText(colorSpace->name());
+        if (m_useLayerColorSpaceButton->isChecked()) {
+            // Changed by layer change.
+            m_colorSpaceSelector->setCurrentColorSpace(colorSpace);
+        }
+        m_colorSpaceSelectorButton->setText(colorSpace->name());
+    });
+    connect(m_useLayerColorSpaceButton, &QPushButton::toggled, this, [this](bool checked) {
+        auto &settings = m_settingsState->globalSettings;
+        settings.useLayerColorSpace = checked;
+        m_colorState->setUseLayerColorSpace(checked);
+        m_colorSpaceSelectorButton->setEnabled(!checked);
+        if (!checked) {
+            settings.customColorSpace = m_colorSpaceSelector->currentColorSpace();
+        }
+        m_useLayerColorSpaceButton->setIcon(checked ? KisIconUtils::loadIcon("chain-icon")
+                                                    : KisIconUtils::loadIcon("chain-broken-icon"));
+        settings.writeAll();
+    });
+    connect(m_colorSpaceSelector,
+            SIGNAL(colorSpaceSelected(const KoColorSpace *)),
+            this,
+            SLOT([this](const KoColorSpace *colorSpace) {
+                m_colorState->setColorSpace(colorSpace);
+                m_settingsState->globalSettings.customColorSpace = colorSpace;
+                m_settingsState->globalSettings.writeAll();
+            }));
+    // Initial sync.
+    m_useLayerColorSpaceButton->setChecked(m_settingsState->globalSettings.useLayerColorSpace);
+    if (m_settingsState->globalSettings.useLayerColorSpace) {
+        m_useLayerColorSpaceButton->setIcon(KisIconUtils::loadIcon("chain-icon"));
+    } else {
+        auto customColorSpace = m_settingsState->globalSettings.customColorSpace;
+        m_colorSpaceSelector->setCurrentColorSpace(customColorSpace);
+        m_colorState->setColorSpace(customColorSpace);
+    }
+
     m_plane = new EXChannelPlane(m_colorState, m_settingsState, m_colorPatchPopup, this);
     m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
     m_sliders = new EXChannelSliders(m_colorState, m_settingsState, m_colorPatchPopup, this);
@@ -86,4 +136,24 @@ void EXColorSelectorDock::leaveEvent(QEvent *event)
     QDockWidget::leaveEvent(event);
     m_colorPatchPopup->recordColor();
     m_colorPatchPopup->hide();
+}
+
+void EXColorSelectorDock::colorSpaceSettingsChanged()
+{
+    auto &settings = m_settingsState->globalSettings;
+    auto useLayerColorSpace = settings.useLayerColorSpace;
+    m_useLayerColorSpaceButton->setChecked(useLayerColorSpace);
+    m_useLayerColorSpaceButton->setIcon(useLayerColorSpace ? KisIconUtils::loadIcon("chain-icon")
+                                                           : KisIconUtils::loadIcon("chain-broken-icon"));
+    m_colorState->setUseLayerColorSpace(useLayerColorSpace);
+    auto layerColorSpace = m_canvas ? m_canvas->displayColorConverter()->paintingColorSpace() : nullptr;
+    if (useLayerColorSpace) {
+        m_colorSpaceSelector->setCurrentColorSpace(layerColorSpace);
+    } else {
+        if (settings.customColorSpace) {
+            m_colorSpaceSelector->setCurrentColorSpace(settings.customColorSpace);
+        } else if (layerColorSpace) {
+            m_colorSpaceSelector->setCurrentColorSpace(layerColorSpace);
+        }
+    }
 }

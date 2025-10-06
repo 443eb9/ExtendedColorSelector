@@ -133,7 +133,7 @@ void EXChannelPlane::resizeEvent(QResizeEvent *event)
 
 void EXChannelPlane::paintEvent(QPaintEvent *event)
 {
-    if (m_image.isNull() || m_shape == nullptr) {
+    if (m_image.isNull() || !m_shape) {
         return;
     }
 
@@ -169,7 +169,7 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
 
 void EXChannelPlane::updateImage()
 {
-    if (m_dri == nullptr || m_shape == nullptr) {
+    if (!m_dri || !m_shape || !m_colorState->colorSpace()) {
         m_image = QImage();
         return;
     }
@@ -241,7 +241,7 @@ void EXChannelPlane::updateImage()
 
 void EXChannelPlane::startEdit(QMouseEvent *event, bool isShift)
 {
-    if (m_shape == nullptr) {
+    if (!m_shape) {
         return;
     }
 
@@ -271,7 +271,7 @@ void EXChannelPlane::startEdit(QMouseEvent *event, bool isShift)
 
 void EXChannelPlane::edit(QMouseEvent *event)
 {
-    if (m_shape == nullptr) {
+    if (!m_shape) {
         return;
     }
 
@@ -282,7 +282,7 @@ void EXChannelPlane::edit(QMouseEvent *event)
 
 void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
 {
-    if (m_shape == nullptr) {
+    if (!m_shape) {
         return;
     }
 
@@ -307,7 +307,7 @@ float EXChannelPlane::size() const
 
 void EXChannelPlane::trySyncRingRotation()
 {
-    if (m_shape == nullptr) {
+    if (!m_shape) {
         return;
     }
 
@@ -321,7 +321,7 @@ void EXChannelPlane::trySyncRingRotation()
 
 void EXChannelPlane::sendPlaneColor(const QPointF &widgetCoord)
 {
-    if (m_shape == nullptr) {
+    if (!m_shape) {
         return;
     }
 
@@ -345,7 +345,7 @@ void EXChannelPlane::sendPlaneColor(const QPointF &widgetCoord)
 
 void EXChannelPlane::sendRingColor(const QPointF &widgetCoord)
 {
-    if (m_shape == nullptr) {
+    if (!m_shape) {
         return;
     }
 
@@ -355,7 +355,7 @@ void EXChannelPlane::sendRingColor(const QPointF &widgetCoord)
 
 void EXChannelPlane::handleCursorEdit(const QPointF &widgetCoord)
 {
-    if (m_shape == nullptr) {
+    if (!m_shape) {
         return;
     }
 

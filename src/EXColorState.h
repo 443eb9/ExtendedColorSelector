@@ -11,6 +11,7 @@
 #include <KoColorSpace.h>
 #include <kis_canvas2.h>
 #include <kis_canvas_resource_provider.h>
+#include <kis_display_color_converter.h>
 #include <kis_shared.h>
 #include <kis_shared_ptr.h>
 
@@ -44,6 +45,7 @@ public:
     void setColorModel(ColorModelId model);
     const ColorModelSP colorModel() const;
     bool possibleOutOfSrgb() const;
+    void setUseLayerColorSpace(bool use);
 
     void sendToKrita();
     void syncFromKrita();
@@ -65,8 +67,10 @@ private:
     const KoColorSpace *m_currentColorSpace;
     KisCanvasResourceProvider *m_resourceProvider;
     KoColorDisplayRendererInterface *m_dri;
+    KisDisplayColorConverter *m_dcc;
     EXColorConverterSP m_koColorConverter;
-    bool m_blockSync;
+    bool m_blockColorSync;
+    bool m_useLayerColorSpace;
 };
 
 typedef KisSharedPtr<EXColorState> EXColorStateSP;

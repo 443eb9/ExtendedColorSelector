@@ -157,7 +157,7 @@ void ChannelValueBar::setCanvas(KisCanvas2 *canvas)
 
 void ChannelValueBar::updateImage()
 {
-    if (m_dri == nullptr) {
+    if (!m_dri || !m_colorState->colorSpace()) {
         m_image = QImage();
         return;
     }

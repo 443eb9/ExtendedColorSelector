@@ -23,7 +23,10 @@ EXColorState::EXColorState()
     , m_currentColorSpace(nullptr)
     , m_resourceProvider(nullptr)
     , m_koColorConverter(nullptr)
-    , m_blockSync(false)
+    , m_blockColorSync(false)
+    , m_dcc(nullptr)
+    , m_dri(nullptr)
+    , m_useLayerColorSpace(false)
 {
 }
 
@@ -60,14 +63,14 @@ void EXColorState::sendToKrita()
     QVector3D currentColor = m_colorModel->transferTo(m_kritaColorModel, m_color);
     ExtendedUtils::saturateColor(currentColor);
 
-    m_blockSync = true;
+    m_blockColorSync = true;
     m_resourceProvider->setFGColor(m_koColorConverter->displayChannelsToKoColor(QVector4D(currentColor, 1.0f)));
-    m_blockSync = false;
+    m_blockColorSync = false;
 }
 
 void EXColorState::syncFromKrita()
 {
-    if (m_blockSync) {
+    if (m_blockColorSync) {
         return;
     }
 
@@ -80,20 +83,24 @@ void EXColorState::syncFromKrita()
 void EXColorState::setCanvas(KisCanvas2 *canvas)
 {
     if (canvas) {
-        auto dcc = canvas->displayColorConverter();
-        setColorSpace(dcc->paintingColorSpace());
         m_resourceProvider = canvas->imageView()->resourceProvider();
+        m_dcc = canvas->displayColorConverter();
         m_dri = canvas->displayColorConverter()->displayRendererInterface();
 
         connect(m_resourceProvider, &KisCanvasResourceProvider::sigFGColorChanged, this, &EXColorState::syncFromKrita);
-        connect(dcc, &KisDisplayColorConverter::displayConfigurationChanged, this, [this, dcc]() {
-            setColorSpace(dcc->paintingColorSpace());
-            Q_EMIT sigColorSpaceChanged(m_currentColorSpace);
-        });
 
-        syncFromKrita();
-        Q_EMIT sigPrimaryChannelIndexChanged(m_primaryChannelIndex);
-        Q_EMIT sigColorModelChanged(m_colorModel->id());
+        if (m_useLayerColorSpace) {
+            setColorSpace(m_dcc->paintingColorSpace());
+            connect(
+                m_dcc,
+                &KisDisplayColorConverter::displayConfigurationChanged,
+                this,
+                [this]() {
+                    setColorSpace(m_dcc->paintingColorSpace());
+                },
+                Qt::UniqueConnection);
+            syncFromKrita();
+        }
     }
 }
 
@@ -207,9 +214,32 @@ const EXColorConverterSP EXColorState::koColorConverter() const
     return m_koColorConverter;
 }
 
+void EXColorState::setUseLayerColorSpace(bool use)
+{
+    m_useLayerColorSpace = use;
+
+    if (use) {
+        if (m_dcc) {
+            setColorSpace(m_dcc->paintingColorSpace());
+            connect(
+                m_dcc,
+                &KisDisplayColorConverter::displayConfigurationChanged,
+                this,
+                [this]() {
+                    setColorSpace(m_dcc->paintingColorSpace());
+                },
+                Qt::UniqueConnection);
+            syncFromKrita();
+        }
+    } else {
+        disconnect(m_dcc, nullptr, this, nullptr);
+    }
+}
+
 void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
 {
     m_currentColorSpace = colorSpace;
     m_koColorConverter = new EXColorConverter(colorSpace, m_colorModel);
     m_kritaColorModel = ColorModelFactory::fromKoColorSpace(colorSpace);
+    Q_EMIT sigColorSpaceChanged(m_currentColorSpace);
 }

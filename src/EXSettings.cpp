@@ -1,3 +1,4 @@
+#include <KoColorSpaceRegistry.h>
 #include <ksharedconfig.h>
 
 #include "EXSettings.h"
@@ -71,6 +72,14 @@ EXGlobalSettings::EXGlobalSettings()
 
     auto outOfGamutColor(m_configGroup.readEntry("outOfGamutColor", "0.5,0.5,0.5"));
     this->outOfGamutColor = ExtendedUtils::stringToColor(outOfGamutColor);
+    useLayerColorSpace = m_configGroup.readEntry("useLayerColorSpace", true);
+    auto customColorModel = m_configGroup.readEntry("customColorModel", QString());
+    auto customColorDepth = m_configGroup.readEntry("customColorDepth", QString());
+    if (customColorModel.isEmpty() || customColorDepth.isEmpty()) {
+        customColorSpace = nullptr;
+    } else {
+        customColorSpace = KoColorSpaceRegistry::instance()->colorSpace(customColorModel, customColorDepth);
+    }
 }
 
 void EXGlobalSettings::writeAll()
@@ -88,5 +97,11 @@ void EXGlobalSettings::writeAll()
     m_configGroup.writeEntry("pEnableSliders", pEnableSliders);
     m_configGroup.writeEntry("pEnableColorModelSwitcher", pEnableColorModelSwitcher);
     m_configGroup.writeEntry("currentColorModel", currentColorModel);
+    m_configGroup.writeEntry("useLayerColorSpace", useLayerColorSpace);
+
+    if (customColorSpace) {
+        m_configGroup.writeEntry("customColorModel", customColorSpace->colorModelId().id());
+        m_configGroup.writeEntry("customColorDepth", customColorSpace->colorDepthId().id());
+    }
     m_configGroup.sync();
 }

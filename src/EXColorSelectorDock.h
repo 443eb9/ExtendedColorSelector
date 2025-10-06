@@ -2,9 +2,12 @@
 #define EXTENDEDCOLORSELECTORDOCK_H
 
 #include <QDockWidget>
+#include <QPushButton>
 #include <QObject>
 
+#include <KisPopupButton.h>
 #include <kis_canvas2.h>
+#include <kis_color_space_selector.h>
 #include <kis_mainwindow_observer.h>
 
 #include "EXChannelPlane.h"
@@ -38,6 +41,11 @@ private:
 
     EXColorStateSP m_colorState;
     EXSettingsStateSP m_settingsState;
+
+    KisPopupButton *m_colorSpaceSelectorButton;
+    KisColorSpaceSelector *m_colorSpaceSelector;
+    QPushButton *m_useLayerColorSpaceButton;
+    void colorSpaceSettingsChanged();
 };
 
 #endif // EXTENDEDCOLORSELECTORDOCK_H

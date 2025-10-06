@@ -4,6 +4,7 @@
 #include <QVector3D>
 #include <QVector>
 
+#include <KoColorSpace.h>
 #include <kconfiggroup.h>
 
 #include "EXColorModel.h"
@@ -56,6 +57,8 @@ public:
     bool pEnableSliders;
     bool pEnableColorModelSwitcher;
     int currentColorModel;
+    bool useLayerColorSpace;
+    const KoColorSpace *customColorSpace;
 
 private:
     KConfigGroup m_configGroup;
