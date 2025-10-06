@@ -70,7 +70,7 @@ void EXColorState::sendToKrita()
 
 void EXColorState::syncFromKrita()
 {
-    if (m_blockColorSync) {
+    if (m_blockColorSync || !m_resourceProvider || !m_currentColorSpace) {
         return;
     }
 
@@ -97,6 +97,7 @@ void EXColorState::setCanvas(KisCanvas2 *canvas)
                     this,
                     &EXColorState::onDisplayConfigChanged,
                     Qt::UniqueConnection);
+        } else {
             syncFromKrita();
         }
     }
@@ -226,7 +227,6 @@ void EXColorState::setUseLayerColorSpace(bool use)
                 this,
                 &EXColorState::onDisplayConfigChanged,
                 Qt::UniqueConnection);
-        syncFromKrita();
     } else {
         disconnect(m_dcc, nullptr, this, nullptr);
     }
@@ -238,12 +238,12 @@ void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
     m_koColorConverter = new EXColorConverter(colorSpace, m_colorModel);
     m_kritaColorModel = ColorModelFactory::fromKoColorSpace(colorSpace);
     Q_EMIT sigColorSpaceChanged(m_currentColorSpace);
+    syncFromKrita();
 }
 
 void EXColorState::onDisplayConfigChanged()
 {
     if (m_useLayerColorSpace && m_dcc) {
         setColorSpace(m_dcc->paintingColorSpace());
-        syncFromKrita();
     }
 }
