@@ -75,13 +75,20 @@ EXChannelPlane::EXChannelPlane(EXColorStateSP colorState,
         } else {
             show();
         }
-        
+
         settingsChanged();
         updateImage();
         update();
     });
 
     connect(m_settingsState.data(), &EXSettingsState::sigSettingsChanged, this, &EXChannelPlane::settingsChanged);
+
+    connect(m_colorState.data(), &EXColorState::sigColorSpaceChanged, this, [this]() {
+        updateImage();
+        update();
+    });
+
+    settingsChanged();
 }
 
 void EXChannelPlane::setCanvas(KisCanvas2 *canvas)

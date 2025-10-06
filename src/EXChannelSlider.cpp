@@ -80,11 +80,14 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
     layout->addWidget(m_radioButton);
     setLayout(layout);
 
-    connect(m_spinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [this, colorState](double value) mutable {
-        auto [chmn, chmx] = colorState->colorModel()->channelRanges();
-        colorState->setChannel(m_channelIndex,
-                               (value - chmn[m_channelIndex]) / (chmx[m_channelIndex] - chmn[m_channelIndex]));
-    });
+    connect(m_spinBox,
+            QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            this,
+            [this, colorState](double value) mutable {
+                auto [chmn, chmx] = colorState->colorModel()->channelRanges();
+                colorState->setChannel(m_channelIndex,
+                                       (value - chmn[m_channelIndex]) / (chmx[m_channelIndex] - chmn[m_channelIndex]));
+            });
 
     connect(colorState, &EXColorState::sigPrimaryChannelIndexChanged, this, [this, colorState]() {
         m_radioButton->setChecked(colorState->primaryChannelIndex() == m_channelIndex);
@@ -135,6 +138,11 @@ ChannelValueBar::ChannelValueBar(int channelIndex,
     });
 
     connect(m_colorState, &EXColorState::sigColorModelChanged, this, [this]() {
+        updateImage();
+        update();
+    });
+
+    connect(m_colorState, &EXColorState::sigColorSpaceChanged, this, [this]() {
         updateImage();
         update();
     });

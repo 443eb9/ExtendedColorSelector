@@ -55,6 +55,7 @@ Q_SIGNALS:
     void sigColorChanged(const QVector3D &color);
     void sigPrimaryChannelIndexChanged(quint32 index);
     void sigColorModelChanged(ColorModelId id);
+    void sigColorSpaceChanged(const KoColorSpace *colorSpace);
 
 private:
     QVector3D m_color;

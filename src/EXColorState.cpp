@@ -80,15 +80,15 @@ void EXColorState::syncFromKrita()
 void EXColorState::setCanvas(KisCanvas2 *canvas)
 {
     if (canvas) {
-        setColorSpace(canvas->image()->colorSpace());
+        auto dcc = canvas->displayColorConverter();
+        setColorSpace(dcc->paintingColorSpace());
         m_resourceProvider = canvas->imageView()->resourceProvider();
         m_dri = canvas->displayColorConverter()->displayRendererInterface();
 
         connect(m_resourceProvider, &KisCanvasResourceProvider::sigFGColorChanged, this, &EXColorState::syncFromKrita);
-        connect(canvas->image(), &KisImage::sigColorSpaceChanged, this, [this, canvas]() {
-            // TODO use per layer color space
-            setColorSpace(canvas->image()->colorSpace());
-            syncFromKrita();
+        connect(dcc, &KisDisplayColorConverter::displayConfigurationChanged, this, [this, dcc]() {
+            setColorSpace(dcc->paintingColorSpace());
+            Q_EMIT sigColorSpaceChanged(m_currentColorSpace);
         });
 
         syncFromKrita();
