@@ -45,7 +45,6 @@ private:
     KisPopupButton *m_colorSpaceSelectorButton;
     KisColorSpaceSelector *m_colorSpaceSelector;
     QPushButton *m_useLayerColorSpaceButton;
-    void colorSpaceSettingsChanged();
 };
 
 #endif // EXTENDEDCOLORSELECTORDOCK_H

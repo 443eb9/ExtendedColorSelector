@@ -64,6 +64,7 @@ EXColorSelectorDock::EXColorSelectorDock()
     if (m_settingsState->globalSettings.useLayerColorSpace) {
         m_useLayerColorSpaceButton->setIcon(KisIconUtils::loadIcon("chain-icon"));
     } else {
+        m_useLayerColorSpaceButton->setIcon(KisIconUtils::loadIcon("chain-broken-icon"));
         auto customColorSpace = m_settingsState->globalSettings.customColorSpace;
         m_colorSpaceSelector->setCurrentColorSpace(customColorSpace);
         m_colorState->setColorSpace(customColorSpace);
@@ -136,24 +137,4 @@ void EXColorSelectorDock::leaveEvent(QEvent *event)
     QDockWidget::leaveEvent(event);
     m_colorPatchPopup->recordColor();
     m_colorPatchPopup->hide();
-}
-
-void EXColorSelectorDock::colorSpaceSettingsChanged()
-{
-    auto &settings = m_settingsState->globalSettings;
-    auto useLayerColorSpace = settings.useLayerColorSpace;
-    m_useLayerColorSpaceButton->setChecked(useLayerColorSpace);
-    m_useLayerColorSpaceButton->setIcon(useLayerColorSpace ? KisIconUtils::loadIcon("chain-icon")
-                                                           : KisIconUtils::loadIcon("chain-broken-icon"));
-    m_colorState->setUseLayerColorSpace(useLayerColorSpace);
-    auto layerColorSpace = m_canvas ? m_canvas->displayColorConverter()->paintingColorSpace() : nullptr;
-    if (useLayerColorSpace) {
-        m_colorSpaceSelector->setCurrentColorSpace(layerColorSpace);
-    } else {
-        if (settings.customColorSpace) {
-            m_colorSpaceSelector->setCurrentColorSpace(settings.customColorSpace);
-        } else if (layerColorSpace) {
-            m_colorSpaceSelector->setCurrentColorSpace(layerColorSpace);
-        }
-    }
 }
