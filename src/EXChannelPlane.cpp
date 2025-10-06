@@ -140,6 +140,9 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
     QWidget::paintEvent(event);
     QPainter painter(this);
 
+    if (m_image.isNull()) {
+        updateImage();
+    }
     auto offset = (QSize(width(), height()) - m_image.size()) * 0.5;
     painter.drawImage(offset.width(), offset.height(), m_image);
 

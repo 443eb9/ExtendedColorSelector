@@ -92,14 +92,11 @@ void EXColorState::setCanvas(KisCanvas2 *canvas)
 
         if (m_useLayerColorSpace) {
             setColorSpace(m_dcc->paintingColorSpace());
-            connect(
-                m_dcc,
-                &KisDisplayColorConverter::displayConfigurationChanged,
-                this,
-                [this]() {
-                    setColorSpace(m_dcc->paintingColorSpace());
-                },
-                Qt::UniqueConnection);
+            connect(m_dcc,
+                    &KisDisplayColorConverter::displayConfigurationChanged,
+                    this,
+                    &EXColorState::onDisplayConfigChanged,
+                    Qt::UniqueConnection);
             syncFromKrita();
         }
     }
@@ -218,20 +215,18 @@ const EXColorConverterSP EXColorState::koColorConverter() const
 void EXColorState::setUseLayerColorSpace(bool use)
 {
     m_useLayerColorSpace = use;
+    if (!m_dcc) {
+        return;
+    }
 
     if (use) {
-        if (m_dcc) {
-            setColorSpace(m_dcc->paintingColorSpace());
-            connect(
-                m_dcc,
+        setColorSpace(m_dcc->paintingColorSpace());
+        connect(m_dcc,
                 &KisDisplayColorConverter::displayConfigurationChanged,
                 this,
-                [this]() {
-                    setColorSpace(m_dcc->paintingColorSpace());
-                },
+                &EXColorState::onDisplayConfigChanged,
                 Qt::UniqueConnection);
-            syncFromKrita();
-        }
+        syncFromKrita();
     } else {
         disconnect(m_dcc, nullptr, this, nullptr);
     }
@@ -243,4 +238,12 @@ void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
     m_koColorConverter = new EXColorConverter(colorSpace, m_colorModel);
     m_kritaColorModel = ColorModelFactory::fromKoColorSpace(colorSpace);
     Q_EMIT sigColorSpaceChanged(m_currentColorSpace);
+}
+
+void EXColorState::onDisplayConfigChanged()
+{
+    if (m_useLayerColorSpace && m_dcc) {
+        setColorSpace(m_dcc->paintingColorSpace());
+        syncFromKrita();
+    }
 }

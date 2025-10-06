@@ -191,6 +191,9 @@ void ChannelValueBar::paintEvent(QPaintEvent *event)
     QWidget::paintEvent(event);
     QPainter painter(this);
 
+    if (m_image.isNull()) {
+        updateImage();
+    }
     painter.drawImage(QRect(0, 0, width(), height()), m_image);
 
     auto contrastColor = ExtendedUtils::getContrastingColor(m_colorState->qColor());

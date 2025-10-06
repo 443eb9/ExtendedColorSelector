@@ -32,9 +32,7 @@ EXColorSelectorDock::EXColorSelectorDock()
     mainLayout->addLayout(colorSpaceLayout);
 
     connect(m_colorState.data(), &EXColorState::sigColorSpaceChanged, this, [this](const KoColorSpace *colorSpace) {
-        m_colorSpaceSelectorButton->setText(colorSpace->name());
-        if (m_useLayerColorSpaceButton->isChecked()) {
-            // Changed by layer change.
+        if (colorSpace != m_colorSpaceSelector->currentColorSpace()) {
             m_colorSpaceSelector->setCurrentColorSpace(colorSpace);
         }
         m_colorSpaceSelectorButton->setText(colorSpace->name());
@@ -44,31 +42,15 @@ EXColorSelectorDock::EXColorSelectorDock()
         settings.useLayerColorSpace = checked;
         m_colorState->setUseLayerColorSpace(checked);
         m_colorSpaceSelectorButton->setEnabled(!checked);
-        if (!checked) {
-            settings.customColorSpace = m_colorSpaceSelector->currentColorSpace();
-        }
+        settings.customColorSpace = m_colorSpaceSelector->currentColorSpace();
         m_useLayerColorSpaceButton->setIcon(checked ? KisIconUtils::loadIcon("chain-icon")
                                                     : KisIconUtils::loadIcon("chain-broken-icon"));
         settings.writeAll();
     });
     connect(m_colorSpaceSelector,
-            SIGNAL(colorSpaceSelected(const KoColorSpace *)),
+            SIGNAL(colorSpaceChanged(const KoColorSpace *)),
             this,
-            SLOT([this](const KoColorSpace *colorSpace) {
-                m_colorState->setColorSpace(colorSpace);
-                m_settingsState->globalSettings.customColorSpace = colorSpace;
-                m_settingsState->globalSettings.writeAll();
-            }));
-    // Initial sync.
-    m_useLayerColorSpaceButton->setChecked(m_settingsState->globalSettings.useLayerColorSpace);
-    if (m_settingsState->globalSettings.useLayerColorSpace) {
-        m_useLayerColorSpaceButton->setIcon(KisIconUtils::loadIcon("chain-icon"));
-    } else {
-        m_useLayerColorSpaceButton->setIcon(KisIconUtils::loadIcon("chain-broken-icon"));
-        auto customColorSpace = m_settingsState->globalSettings.customColorSpace;
-        m_colorSpaceSelector->setCurrentColorSpace(customColorSpace);
-        m_colorState->setColorSpace(customColorSpace);
-    }
+            SLOT(onColorSpaceSelected(const KoColorSpace *)));
 
     m_plane = new EXChannelPlane(m_colorState, m_settingsState, m_colorPatchPopup, this);
     m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
@@ -104,6 +86,17 @@ EXColorSelectorDock::EXColorSelectorDock()
     setWidget(mainWidget);
 
     m_portableSelector = new EXPortableColorSelector();
+
+    m_useLayerColorSpaceButton->setChecked(m_settingsState->globalSettings.useLayerColorSpace);
+    m_colorState->setUseLayerColorSpace(m_settingsState->globalSettings.useLayerColorSpace);
+    if (m_settingsState->globalSettings.useLayerColorSpace) {
+        m_useLayerColorSpaceButton->setIcon(KisIconUtils::loadIcon("chain-icon"));
+    } else {
+        m_useLayerColorSpaceButton->setIcon(KisIconUtils::loadIcon("chain-broken-icon"));
+        auto customColorSpace = m_settingsState->globalSettings.customColorSpace;
+        m_colorSpaceSelector->setCurrentColorSpace(customColorSpace);
+        m_colorState->setColorSpace(customColorSpace);
+    }
 }
 
 void EXColorSelectorDock::setViewManager(KisViewManager *kisview)
@@ -137,4 +130,14 @@ void EXColorSelectorDock::leaveEvent(QEvent *event)
     QDockWidget::leaveEvent(event);
     m_colorPatchPopup->recordColor();
     m_colorPatchPopup->hide();
+}
+
+void EXColorSelectorDock::onColorSpaceSelected(const KoColorSpace *colorSpace)
+{
+    auto &settings = m_settingsState->globalSettings;
+    if (!settings.useLayerColorSpace) {
+        m_colorState->setColorSpace(colorSpace);
+        settings.customColorSpace = colorSpace;
+        settings.writeAll();
+    }
 }

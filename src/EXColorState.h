@@ -59,6 +59,9 @@ Q_SIGNALS:
     void sigColorModelChanged(ColorModelId id);
     void sigColorSpaceChanged(const KoColorSpace *colorSpace);
 
+public Q_SLOTS:
+    void onDisplayConfigChanged();
+
 private:
     QVector3D m_color;
     quint32 m_primaryChannelIndex;
