@@ -4,6 +4,8 @@
 #include "EXColorModel.h"
 #include "ok_color.h"
 
+const float EPSILON = 1e-4f;
+
 const QVector<ColorModelId> ColorModelFactory::AllModels = {ColorModelId::Gray,
                                                             ColorModelId::Rgb,
                                                             ColorModelId::Hsv,
@@ -16,15 +18,23 @@ const QVector<ColorModelId> ColorModelFactory::AllModels = {ColorModelId::Gray,
                                                             ColorModelId::Okhsv,
                                                             ColorModelId::Okhsl};
 
-QVector3D ColorModel::transferTo(const ColorModel *toModel, const QVector3D &color, const QVector3D *reference) const
+QVector3D ColorModel::transferTo(const ColorModel *toModel, const QVector3D &color) const
 {
     if (toModel->id() == id()) {
         return color;
     }
 
-    QVector3D xyz = toXyz(color);
-    QVector3D result = toModel->fromXyz(xyz);
-    // TODO use reference color
+    return toModel->fromXyz(toXyz(color));
+}
+
+QVector3D ColorModel::transferTo(const ColorModel *toModel, const QVector3D &color, const QVector3D &reference) const
+{
+    if (toModel->id() == id()) {
+        return color;
+    }
+
+    auto result = toModel->fromXyz(toXyz(color));
+    toModel->resolveReference(result, reference);
     return result;
 }
 
@@ -148,6 +158,18 @@ QVector3D HSVModel::toXyz(const QVector3D &color) const
     return RGBModel().toXyz(hwbToRgb(QVector3D(color[0], (1. - color[1]) * color[2], 1. - color[2])));
 }
 
+void HSVModel::resolveReference(QVector3D &color, const QVector3D &reference) const
+{
+    if (color[1] < EPSILON) {
+        color[0] = reference[0];
+    }
+
+    if (color[2] < EPSILON) {
+        color[0] = reference[0];
+        color[1] = reference[1];
+    }
+}
+
 void HSVModel::makeColorful(QVector3D &color, int channelIndex) const
 {
     if (channelIndex == 0) {
@@ -178,6 +200,18 @@ QVector3D HSLModel::toXyz(const QVector3D &color) const
     saturation = value == 0. ? 0. : 2. * (1. - (lightness / value));
 
     return HSVModel().toXyz(QVector3D(color[0], saturation, value));
+}
+
+void HSLModel::resolveReference(QVector3D &color, const QVector3D &reference) const
+{
+    if (color[1] < EPSILON) {
+        color[0] = reference[0];
+    }
+
+    if (color[2] < EPSILON || color[2] > 1.0f - EPSILON) {
+        color[0] = reference[0];
+        color[1] = reference[1];
+    }
 }
 
 void HSLModel::makeColorful(QVector3D &color, int channelIndex) const
@@ -240,6 +274,14 @@ QVector3D LABModel::toXyz(const QVector3D &color) const
     return QVector3D(x, y, z);
 }
 
+void LABModel::resolveReference(QVector3D &color, const QVector3D &reference) const
+{
+    if (color[0] < EPSILON || color[0] > 1.0f - EPSILON) {
+        color[1] = reference[1];
+        color[2] = reference[2];
+    }
+}
+
 QVector3D LCHModel::fromXyz(const QVector3D &color) const
 {
     auto lab = LABModel().fromXyz(color);
@@ -262,6 +304,18 @@ QVector3D LCHModel::toXyz(const QVector3D &color) const
     float b = color[1] * sin;
 
     return LABModel().toXyz(QVector3D(color[0] * 1.5, a / 3 + 0.5, b / 3 + 0.5));
+}
+
+void LCHModel::resolveReference(QVector3D &color, const QVector3D &reference) const
+{
+    if (color[0] < EPSILON || color[0] > 1.0f - EPSILON) {
+        color[1] = reference[1];
+        color[2] = reference[2];
+    }
+
+    if (color[1] < EPSILON) {
+        color[2] = reference[2];
+    }
 }
 
 // https:#bottosson.github.io/posts/oklab/#converting-from-xyz-to-oklab
@@ -305,6 +359,14 @@ QVector3D OKLABModel::toXyz(const QVector3D &color) const
     return QVector3D(x, y, z);
 }
 
+void OKLABModel::resolveReference(QVector3D &color, const QVector3D &reference) const
+{
+    if (color[0] < EPSILON || color[0] > 1.0f - EPSILON) {
+        color[1] = reference[1];
+        color[2] = reference[2];
+    }
+}
+
 QVector3D OKLCHModel::fromXyz(const QVector3D &color) const
 {
     auto oklab = OKLABModel().fromXyz(color);
@@ -329,6 +391,18 @@ QVector3D OKLCHModel::toXyz(const QVector3D &color) const
     return OKLABModel().toXyz(QVector3D(color[0], a * 0.5 + 0.5, b * 0.5 + 0.5));
 }
 
+void OKLCHModel::resolveReference(QVector3D &color, const QVector3D &reference) const
+{
+    if (color[0] < EPSILON || color[0] > 1.0f - EPSILON) {
+        color[1] = reference[1];
+        color[2] = reference[2];
+    }
+
+    if (color[1] < EPSILON) {
+        color[2] = reference[2];
+    }
+}
+
 QVector3D OKHSVModel::fromXyz(const QVector3D &color) const
 {
     auto rgb = RGBModel().fromXyz(color);
@@ -343,6 +417,18 @@ QVector3D OKHSVModel::toXyz(const QVector3D &color) const
     auto rgb = ok_color::okhsv_to_linear_rgb(ok_color::HSV{color[0], qBound(0.0f, color[1], 1.0f - 1e-3f), color[2]});
     auto xyz = RGBModel().toXyz(QVector3D(rgb.r, rgb.g, rgb.b));
     return QVector3D(xyz[0], xyz[1], xyz[2]);
+}
+
+void OKHSVModel::resolveReference(QVector3D &color, const QVector3D &reference) const
+{
+    if (color[1] < EPSILON) {
+        color[0] = reference[0];
+    }
+
+    if (color[2] < EPSILON) {
+        color[0] = reference[0];
+        color[1] = reference[1];
+    }
 }
 
 void OKHSVModel::makeColorful(QVector3D &color, int channelIndex) const
@@ -370,4 +456,16 @@ QVector3D OKHSLModel::toXyz(const QVector3D &color) const
     auto rgb = ok_color::okhsl_to_linear_rgb(ok_color::HSL{color[0], color[1], color[2]});
     auto xyz = RGBModel().toXyz(QVector3D(rgb.r, rgb.g, rgb.b));
     return QVector3D(xyz[0], xyz[1], xyz[2]);
+}
+
+void OKHSLModel::resolveReference(QVector3D &color, const QVector3D &reference) const
+{
+    if (color[1] < EPSILON) {
+        color[0] = reference[0];
+    }
+
+    if (color[2] < EPSILON || color[2] > 1.0f - EPSILON) {
+        color[0] = reference[0];
+        color[1] = reference[1];
+    }
 }

@@ -31,9 +31,19 @@ class ColorModel : public KisShared
 public:
     virtual QVector3D toXyz(const QVector3D &color) const = 0;
     virtual QVector3D fromXyz(const QVector3D &color) const = 0;
+
+    virtual void resolveReference(QVector3D &color, const QVector3D &reference) const
+    {
+        Q_UNUSED(color);
+        Q_UNUSED(reference);
+    }
+
     virtual void makeColorful(QVector3D &color, int channelIndex) const
     {
+        Q_UNUSED(color);
+        Q_UNUSED(channelIndex);
     }
+
     virtual int colorfulableChannelIndexBits() const
     {
         return 0;
@@ -60,7 +70,8 @@ public:
         return (normalized + mn) / (mx - mn);
     }
 
-    QVector3D transferTo(const ColorModel *toModel, const QVector3D &color, const QVector3D *reference = nullptr) const;
+    QVector3D transferTo(const ColorModel *toModel, const QVector3D &color) const;
+    QVector3D transferTo(const ColorModel *toModel, const QVector3D &color, const QVector3D &reference) const;
 };
 
 class GrayModel : public ColorModel
@@ -162,6 +173,7 @@ class HSVModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    void resolveReference(QVector3D &color, const QVector3D &reference) const override;
     void makeColorful(QVector3D &color, int channelIndex) const override;
     int colorfulableChannelIndexBits() const override;
 
@@ -211,6 +223,7 @@ class HSLModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    void resolveReference(QVector3D &color, const QVector3D &reference) const override;
     void makeColorful(QVector3D &color, int channelIndex) const override;
     int colorfulableChannelIndexBits() const override;
 
@@ -307,6 +320,7 @@ class LABModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    void resolveReference(QVector3D &color, const QVector3D &reference) const override;
 
     ColorModelId id() const override
     {
@@ -354,6 +368,7 @@ class LCHModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    void resolveReference(QVector3D &color, const QVector3D &reference) const override;
 
     ColorModelId id() const override
     {
@@ -401,6 +416,7 @@ class OKLABModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    void resolveReference(QVector3D &color, const QVector3D &reference) const override;
 
     ColorModelId id() const override
     {
@@ -448,6 +464,7 @@ class OKLCHModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    void resolveReference(QVector3D &color, const QVector3D &reference) const override;
 
     ColorModelId id() const override
     {
@@ -497,6 +514,7 @@ public:
     QVector3D fromXyz(const QVector3D &color) const override;
     void makeColorful(QVector3D &color, int channelIndex) const override;
     int colorfulableChannelIndexBits() const override;
+    void resolveReference(QVector3D &color, const QVector3D &reference) const override;
 
     ColorModelId id() const override
     {
@@ -544,6 +562,7 @@ class OKHSLModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    void resolveReference(QVector3D &color, const QVector3D &reference) const override;
 
     ColorModelId id() const override
     {

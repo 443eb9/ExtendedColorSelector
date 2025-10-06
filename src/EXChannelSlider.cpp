@@ -162,7 +162,7 @@ void ChannelValueBar::updateImage()
         if (makeColorful) {
             m_colorState->colorModel()->makeColorful(color, m_channelIndex);
         }
-        color = m_colorState->colorModel()->transferTo(m_colorState->kritaColorModel(), color, nullptr);
+        color = m_colorState->colorModel()->transferTo(m_colorState->kritaColorModel(), color);
         auto settings = m_settingsState->globalSettings;
         if (m_colorState->possibleOutOfSrgb() && settings.outOfGamutColorEnabled) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);

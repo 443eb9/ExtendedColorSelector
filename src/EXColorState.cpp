@@ -42,7 +42,7 @@ void EXColorState::setColorModel(ColorModelId model)
 
     auto newModel = ColorModelFactory::fromId(model);
 
-    m_color = m_colorModel->transferTo(newModel, m_color, nullptr);
+    m_color = m_colorModel->transferTo(newModel, m_color, m_color);
     ExtendedUtils::saturateColor(m_color);
     m_colorModel = newModel;
     m_koColorConverter = new EXColorConverter(m_currentColorSpace, m_colorModel);
@@ -57,7 +57,7 @@ const ColorModelSP EXColorState::colorModel() const
 
 void EXColorState::sendToKrita()
 {
-    QVector3D currentColor = m_colorModel->transferTo(m_kritaColorModel, m_color, nullptr);
+    QVector3D currentColor = m_colorModel->transferTo(m_kritaColorModel, m_color);
     ExtendedUtils::saturateColor(currentColor);
 
     m_blockSync = true;
@@ -72,9 +72,8 @@ void EXColorState::syncFromKrita()
     }
 
     KoColor koColor = m_resourceProvider->fgColor();
-    auto channels = m_koColorConverter->koColorToDisplayChannels(koColor);
-    QVector3D newColor(channels[0], channels[1], channels[2]);
-    m_color = m_kritaColorModel->transferTo(m_colorModel, newColor, nullptr);
+    QVector3D newColor = m_koColorConverter->koColorToDisplayChannels(koColor).toVector3D();
+    m_color = m_kritaColorModel->transferTo(m_colorModel, newColor, m_color);
     Q_EMIT sigColorChanged(m_color);
 }
 
@@ -173,7 +172,7 @@ QVector3D EXColorState::color() const
 
 KoColor EXColorState::koColor() const
 {
-    auto kritaColor = m_colorModel->transferTo(m_kritaColorModel, m_color, nullptr);
+    auto kritaColor = m_colorModel->transferTo(m_kritaColorModel, m_color);
     return m_koColorConverter->displayChannelsToKoColor(QVector4D(kritaColor, 1.0f));
 }
 

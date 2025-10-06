@@ -216,7 +216,7 @@ void EXChannelPlane::updateImage()
             }
         }
 
-        color = m_colorState->colorModel()->transferTo(m_colorState->kritaColorModel(), color, nullptr);
+        color = m_colorState->colorModel()->transferTo(m_colorState->kritaColorModel(), color);
         auto &settings = EXSettingsState::instance()->globalSettings;
         if (m_colorState->possibleOutOfSrgb() && settings.outOfGamutColorEnabled) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
