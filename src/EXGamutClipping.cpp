@@ -79,10 +79,12 @@ EXGamutClipping::getAxesLimitsInterpolated(ColorModelId colorModel, int primary,
     auto [min1, max1] = getAxesLimits(colorModel, primary, qFloor(a));
     auto [min2, max2] = getAxesLimits(colorModel, primary, qCeil(a));
     int t = a - int(a);
+    auto minInterpolated = min1 * (1 - t) + min2 * t;
+    auto maxInterpolated = max1 * (1 - t) + max2 * t;
 
     return {
-        QVector2D(min1.x() * (1 - t) + min2.x() * t, min1.y() * (1 - t) + min2.y() * t),
-        QVector2D(max1.x() * (1 - t) + max2.x() * t, max1.y() * (1 - t) + max2.y() * t),
+        minInterpolated,
+        maxInterpolated,
     };
 }
 
