@@ -87,6 +87,7 @@ EXColorSelectorDock::EXColorSelectorDock()
 
     m_portableSelector = new EXPortableColorSelector();
 
+    m_colorState->setColorModel((ColorModelId)m_settingsState->globalSettings.currentColorModel);
     m_useLayerColorSpaceButton->setChecked(m_settingsState->globalSettings.useLayerColorSpace);
     m_colorState->setUseLayerColorSpace(m_settingsState->globalSettings.useLayerColorSpace);
     if (m_settingsState->globalSettings.useLayerColorSpace) {
