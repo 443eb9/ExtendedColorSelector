@@ -55,7 +55,7 @@ public:
 
     virtual ColorModelId id() const = 0;
     virtual QString displayName() const = 0;
-    virtual bool isOneDimensional() const;
+    virtual bool isOneDimensional() const = 0;
     virtual std::array<QString, 3> channelNames() const = 0;
     virtual std::array<QVector3D, 2> channelRanges() const = 0;
     virtual bool isSrgbBased() const = 0;
