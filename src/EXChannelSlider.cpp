@@ -163,8 +163,9 @@ void ChannelValueBar::updateImage()
     }
 
     auto makeColorful = m_settingsState->settings[m_colorState->colorModel()->id()].colorfulHueRing;
+    int alphaPos = m_colorState->colorSpace()->alphaPos();
 
-    auto pixelGet = [this, makeColorful](float x, float y) -> QVector4D {
+    auto pixelGet = [this, makeColorful, alphaPos](float x, float y) -> QVector4D {
         QVector3D color = m_colorState->color();
         color[m_channelIndex] = x;
         if (makeColorful) {
@@ -175,7 +176,9 @@ void ChannelValueBar::updateImage()
         if (m_colorState->possibleOutOfSrgb() && settings.outOfGamutColorEnabled) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
         }
-        return QVector4D(color, 1.0f);
+        auto colorWithAlpha = color.toVector4D();
+        colorWithAlpha[alphaPos] = 1.0f;
+        return colorWithAlpha;
     };
     m_image = ExtendedUtils::generateGradient(width(), 1, false, m_colorState->koColorConverter(), m_dri, pixelGet);
 }

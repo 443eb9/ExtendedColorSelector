@@ -180,8 +180,9 @@ void EXChannelPlane::updateImage()
     auto &settings = EXSettingsState::instance()->settings[m_colorState->colorModel()->id()];
     auto makeColorful = settings.colorfulHueRing;
     auto clipToSrgbGamut = settings.clipToSrgbGamut && m_colorState->possibleOutOfSrgb();
+    int alphaPos = m_colorState->colorSpace()->alphaPos();
 
-    auto pixelGet = [this, makeColorful, clipToSrgbGamut](float x, float y) -> QVector4D {
+    auto pixelGet = [this, makeColorful, clipToSrgbGamut, alphaPos](float x, float y) -> QVector4D {
         QVector3D color;
         QPointF widgetCoord = QPointF(x * 2 - 1, (1 - y) * 2 - 1);
         float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
@@ -231,8 +232,9 @@ void EXChannelPlane::updateImage()
         if (m_colorState->possibleOutOfSrgb() && settings.outOfGamutColorEnabled) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
         }
-
-        return QVector4D(color, 1.0f);
+        auto colorWithAlpha = color.toVector4D();
+        colorWithAlpha[alphaPos] = 1.0f;
+        return colorWithAlpha;
     };
     m_image = ExtendedUtils::generateGradient(size(),
                                               size(),
