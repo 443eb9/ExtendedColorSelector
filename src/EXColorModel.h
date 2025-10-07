@@ -6,6 +6,7 @@
 #include <QVector3D>
 
 #include <KoColorModelStandardIds.h>
+#include <KoColorProfile.h>
 #include <KoColorSpace.h>
 #include <kis_shared.h>
 #include <kis_shared_ptr.h>
@@ -14,16 +15,17 @@ typedef KisSharedPtr<class ColorModel> ColorModelSP;
 
 enum ColorModelId {
     Gray = 0,
-    Rgb = 1,
+    Srgb = 1,
     Hsv = 2,
     Hsl = 3,
-    Xyz = 4,
-    Lab = 5,
-    Lch = 6,
-    Oklab = 7,
-    Oklch = 8,
-    Okhsv = 9,
-    Okhsl = 10,
+    LinearRgb = 4,
+    Xyz = 5,
+    Lab = 6,
+    Lch = 7,
+    Oklab = 8,
+    Oklch = 9,
+    Okhsv = 10,
+    Okhsl = 11,
 };
 
 class ColorModel : public KisShared
@@ -56,7 +58,6 @@ public:
     virtual std::array<QVector3D, 2> channelRanges() const = 0;
     virtual bool isSrgbBased() const = 0;
     virtual bool parallelGradientGen() const = 0;
-    virtual bool requiresLinearization() const = 0;
 
     virtual QVector3D unnormalize(const QVector3D &normalized)
     {
@@ -114,14 +115,9 @@ public:
     {
         return false;
     }
-
-    bool requiresLinearization() const override
-    {
-        return false;
-    }
 };
 
-class RGBModel : public ColorModel
+class SRGBModel : public ColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -129,12 +125,12 @@ public:
 
     ColorModelId id() const override
     {
-        return ColorModelId::Rgb;
+        return ColorModelId::Srgb;
     }
 
     QString displayName() const override
     {
-        return "RGB";
+        return "SRGB";
     }
 
     bool isOneDimensional() const override
@@ -158,11 +154,6 @@ public:
     }
 
     bool parallelGradientGen() const override
-    {
-        return false;
-    }
-
-    bool requiresLinearization() const override
     {
         return false;
     }
@@ -211,11 +202,6 @@ public:
     {
         return false;
     }
-
-    bool requiresLinearization() const override
-    {
-        return false;
-    }
 };
 
 class HSLModel : public ColorModel
@@ -261,8 +247,45 @@ public:
     {
         return false;
     }
+};
 
-    bool requiresLinearization() const override
+class LinearRGBModel : public ColorModel
+{
+public:
+    QVector3D toXyz(const QVector3D &color) const override;
+    QVector3D fromXyz(const QVector3D &color) const override;
+
+    ColorModelId id() const override
+    {
+        return ColorModelId::LinearRgb;
+    }
+
+    QString displayName() const override
+    {
+        return "LinearRGB";
+    }
+
+    bool isOneDimensional() const override
+    {
+        return false;
+    }
+
+    std::array<QString, 3> channelNames() const override
+    {
+        return {"R", "G", "B"};
+    }
+
+    std::array<QVector3D, 2> channelRanges() const override
+    {
+        return {QVector3D(0, 0, 0), QVector3D(100, 100, 100)};
+    }
+
+    bool isSrgbBased() const override
+    {
+        return true;
+    }
+
+    bool parallelGradientGen() const override
     {
         return false;
     }
@@ -308,11 +331,6 @@ public:
     {
         return false;
     }
-
-    bool requiresLinearization() const override
-    {
-        return true;
-    }
 };
 
 class LABModel : public ColorModel
@@ -355,11 +373,6 @@ public:
     bool parallelGradientGen() const override
     {
         return false;
-    }
-
-    bool requiresLinearization() const override
-    {
-        return true;
     }
 };
 
@@ -404,11 +417,6 @@ public:
     {
         return false;
     }
-
-    bool requiresLinearization() const override
-    {
-        return true;
-    }
 };
 
 class OKLABModel : public ColorModel
@@ -452,11 +460,6 @@ public:
     {
         return false;
     }
-
-    bool requiresLinearization() const override
-    {
-        return true;
-    }
 };
 
 class OKLCHModel : public ColorModel
@@ -499,11 +502,6 @@ public:
     bool parallelGradientGen() const override
     {
         return false;
-    }
-
-    bool requiresLinearization() const override
-    {
-        return true;
     }
 };
 
@@ -550,11 +548,6 @@ public:
     {
         return true;
     }
-
-    bool requiresLinearization() const override
-    {
-        return true;
-    }
 };
 
 class OKHSLModel : public ColorModel
@@ -598,11 +591,6 @@ public:
     {
         return true;
     }
-
-    bool requiresLinearization() const override
-    {
-        return true;
-    }
 };
 
 class ColorModelFactory
@@ -613,12 +601,14 @@ public:
         switch (id) {
         case ColorModelId::Gray:
             return new GrayModel();
-        case ColorModelId::Rgb:
-            return new RGBModel();
+        case ColorModelId::Srgb:
+            return new SRGBModel();
         case ColorModelId::Hsv:
             return new HSVModel();
         case ColorModelId::Hsl:
             return new HSLModel();
+        case ColorModelId::LinearRgb:
+            return new LinearRGBModel();
         case ColorModelId::Xyz:
             return new XYZModel();
         case ColorModelId::Lab:
@@ -654,7 +644,12 @@ public:
     {
         auto id = colorSpace->colorModelId();
         if (id == RGBAColorModelID) {
-            return new RGBModel();
+            if (colorSpace->profile()->isLinear()) {
+                return new LinearRGBModel();
+            } else {
+                return new SRGBModel();
+            }
+            return new LinearRGBModel();
         } else if (id == LABAColorModelID) {
             return new LABModel();
         } else if (id == XYZAColorModelID) {

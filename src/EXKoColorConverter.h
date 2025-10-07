@@ -29,7 +29,6 @@ private:
     bool m_applyGamma;
     bool m_exposureSupported;
     ColorModelSP m_colorModel;
-    bool m_requiresLinearization;
 };
 
 typedef KisSharedPtr<EXColorConverter> EXColorConverterSP;

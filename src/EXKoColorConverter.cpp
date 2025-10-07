@@ -6,7 +6,6 @@
 EXColorConverter::EXColorConverter(const KoColorSpace *cs, const ColorModelSP &colorModel)
     : m_colorSpace(cs)
     , m_colorModel(colorModel)
-    , m_requiresLinearization(colorModel->requiresLinearization())
 {
     const QList<KoChannelInfo *> channelList = cs->channels();
 
@@ -39,28 +38,6 @@ KoColor EXColorConverter::displayChannelsToKoColor(const QVector4D &channels) co
     QVector4D baseValues(channels);
     QVector<float> channelVec(c.colorSpace()->channelCount());
 
-    if (m_isRGBA) {
-        if (!m_isLinear && m_requiresLinearization) {
-            QVector<qreal> tempVec({baseValues[0], baseValues[1], baseValues[2]});
-            if (m_exposureSupported) {
-                m_colorSpace->profile()->delinearizeFloatValue(tempVec);
-            } else {
-                m_colorSpace->profile()->delinearizeFloatValueFast(tempVec);
-            }
-            baseValues = QVector4D(tempVec[0], tempVec[1], tempVec[2], channels[3]);
-        }
-
-        if (m_applyGamma) {
-            for (int i = 0; i < 3; i++) {
-                baseValues[i] = pow(baseValues[i], 2.2);
-            }
-        }
-    }
-
-    // if (m_exposureSupported) {
-    //     baseValues *= m_d->channelMaxValues;
-    // }
-
     for (int i = 0; i < channelVec.size(); i++) {
         channelVec[m_logicalToMemoryPosition[i]] = baseValues[i];
     }
@@ -78,19 +55,6 @@ QVector4D EXColorConverter::koColorToDisplayChannels(const KoColor &c) const
 
     for (int i = 0; i < channelVec.size(); i++) {
         channels[i] = channelVec[m_logicalToMemoryPosition[i]];
-    }
-
-    if (m_isRGBA) {
-        if (m_applyGamma) {
-            for (int i = 0; i < 3; i++) {
-                channels[i] = pow(channels[i], 1 / 2.2);
-            }
-        }
-        if (!m_isLinear && m_requiresLinearization) {
-            QVector<qreal> temp({channels[0], channels[1], channels[2]});
-            m_colorSpace->profile()->linearizeFloatValue(temp);
-            channels = QVector4D(temp[0], temp[1], temp[2], channels[3]);
-        }
     }
 
     return channels;
