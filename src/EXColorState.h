@@ -24,6 +24,7 @@ class EXColorState : public QObject, public KisShared
 
 public:
     EXColorState();
+    ~EXColorState() override = default;
 
     qreal primaryChannelValue() const;
     void setPrimaryChannelValue(float value);

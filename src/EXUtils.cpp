@@ -92,6 +92,6 @@ QColor getContrastingColor(const QColor &color)
 
 bool testFlag(int flags, int flag)
 {
-    return (flags >> flag) & 1 == 1;
+    return ((flags >> flag) & 1) == 1;
 }
 } // namespace ExtendedUtils

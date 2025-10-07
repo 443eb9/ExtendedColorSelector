@@ -17,6 +17,7 @@ public:
     static EXSettingsState *instance();
 
     EXSettingsState();
+    ~EXSettingsState() override = default;
 
     EXGlobalSettings globalSettings;
     QVector<EXPerColorModelSettings> settings;

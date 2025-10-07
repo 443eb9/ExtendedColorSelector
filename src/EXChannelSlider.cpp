@@ -166,6 +166,8 @@ void ChannelValueBar::updateImage()
     int alphaPos = m_colorState->colorSpace()->alphaPos();
 
     auto pixelGet = [this, makeColorful, alphaPos](float x, float y) -> QVector4D {
+        Q_UNUSED(y);
+
         QVector3D color = m_colorState->color();
         color[m_channelIndex] = x;
         if (makeColorful) {
@@ -230,12 +232,16 @@ void ChannelValueBar::mouseReleaseEvent(QMouseEvent *event)
 
 void ChannelValueBar::edit(QMouseEvent *event)
 {
+    Q_UNUSED(event);
+
     float value = qBound(0.f, (float)event->pos().x() / width(), 1.f);
     m_colorState->setChannel(m_channelIndex, value);
 }
 
 void ChannelValueBar::shift(QMouseEvent *event, QVector2D delta)
 {
+    Q_UNUSED(event);
+
     qreal value = (m_editStart + delta.x()) / width();
     value = value - qFloor(value);
     m_colorState->setChannel(m_channelIndex, value);

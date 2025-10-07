@@ -11,6 +11,7 @@ class EXEditable : public QWidget
 
 public:
     EXEditable(QWidget *parent = nullptr);
+    ~EXEditable() override = default;
 
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;

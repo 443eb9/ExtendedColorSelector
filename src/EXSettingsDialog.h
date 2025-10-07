@@ -14,6 +14,7 @@ class EXPerColorModelSettingsDialog : public QDialog
     Q_OBJECT
 public:
     EXPerColorModelSettingsDialog(EXSettingsStateSP settingsState, QWidget *parent = nullptr);
+    ~EXPerColorModelSettingsDialog() override = default;
 
 private:
     QListWidget *m_pageSwitchers;

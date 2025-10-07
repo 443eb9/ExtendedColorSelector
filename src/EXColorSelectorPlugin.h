@@ -8,6 +8,7 @@ class EXColorSelectorPlugin : public QObject
 {
 public:
     EXColorSelectorPlugin(QObject *parent, const QVariantList &);
+    ~EXColorSelectorPlugin() override = default;
 };
 
 #endif // EXTENDEDCOLORSELECTOR_H

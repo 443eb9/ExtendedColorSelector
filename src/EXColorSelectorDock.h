@@ -25,6 +25,7 @@ class EXColorSelectorDock : public QDockWidget, public KisMainwindowObserver
 
 public:
     EXColorSelectorDock();
+    ~EXColorSelectorDock() override = default;
 
     void setViewManager(KisViewManager *kisview) override;
     void setCanvas(KoCanvasBase *canvas) override;

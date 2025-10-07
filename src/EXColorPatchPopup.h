@@ -13,6 +13,7 @@ class EXColorPatchPopup : public QDialog
 
 public:
     explicit EXColorPatchPopup(EXColorStateSP colorState, QWidget *parent = nullptr);
+    ~EXColorPatchPopup() override = default;
 
     void updateColor();
     void recordColor();

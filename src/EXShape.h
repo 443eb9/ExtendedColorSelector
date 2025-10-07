@@ -43,6 +43,8 @@ enum EXChannelPlaneShapeId {
 class EXChannelPlaneShape
 {
 public:
+    virtual ~EXChannelPlaneShape() = default;
+    
     virtual QString displayName() const = 0;
 
     QPointF shapeToWidgetCentered(const QPointF &shapeCoord);

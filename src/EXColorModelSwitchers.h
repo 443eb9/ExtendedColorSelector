@@ -12,6 +12,7 @@ class EXColorModelSwitchers : public QWidget
 
 public:
     EXColorModelSwitchers(EXColorStateSP colorState, EXSettingsStateSP settingsState, QWidget *parent);
+    ~EXColorModelSwitchers() override = default;
     void settingsChanged();
 
 private:

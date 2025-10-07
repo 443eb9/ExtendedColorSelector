@@ -322,7 +322,6 @@ QVector3D LCHModel::fromXyz(const QVector3D &color) const
     if (h < 0.0) {
         h += 360.0;
     }
-    float chroma = qBound(0.0f, c, 1.5f);
 
     return QVector3D(lab[0] / 1.5, c / 1.5, h / 360);
 }

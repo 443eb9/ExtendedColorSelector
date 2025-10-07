@@ -25,6 +25,7 @@ public:
                     EXSettingsStateSP settingsState,
                     EXColorPatchPopup *colorPatchPopup = nullptr,
                     QWidget *parent = nullptr);
+    ~ChannelValueBar() override = default;
 
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -63,7 +64,7 @@ public:
     void setCanvas(KisCanvas2 *canvas);
 
 private:
-    int m_channelIndex;
+    quint32 m_channelIndex;
     QRadioButton *m_radioButton;
     QDoubleSpinBox *m_spinBox;
     ChannelValueBar *m_bar;

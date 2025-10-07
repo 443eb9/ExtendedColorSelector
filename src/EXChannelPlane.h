@@ -21,6 +21,7 @@ public:
                             EXSettingsStateSP settingsState,
                             EXColorPatchPopup *colorPatchPopup = nullptr,
                             QWidget *parent = nullptr);
+    ~EXChannelPlane() override;
 
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;

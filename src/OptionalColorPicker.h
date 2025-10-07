@@ -12,6 +12,7 @@ class OptionalColorPicker : public QWidget
 
 public:
     OptionalColorPicker(QWidget *parent, const QString &labelText, const QColor &defaultColor);
+    ~OptionalColorPicker() override = default;
     void setPickingEnabled(bool enabled);
 
     QColorDialog *colorDialog;

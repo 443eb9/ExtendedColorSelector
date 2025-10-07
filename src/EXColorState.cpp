@@ -22,10 +22,10 @@ EXColorState::EXColorState()
           ColorModelFactory::fromId((ColorModelId)EXSettingsState::instance()->globalSettings.currentColorModel))
     , m_currentColorSpace(nullptr)
     , m_resourceProvider(nullptr)
+    , m_dri(nullptr)
+    , m_dcc(nullptr)
     , m_koColorConverter(nullptr)
     , m_blockColorSync(false)
-    , m_dcc(nullptr)
-    , m_dri(nullptr)
     , m_useLayerColorSpace(false)
 {
 }

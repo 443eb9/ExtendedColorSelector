@@ -21,6 +21,7 @@ class EXPortableColorSelector : public QDialog
 
 public:
     EXPortableColorSelector(QWidget *parent = nullptr);
+    ~EXPortableColorSelector() override = default;
     void setViewManager(KisViewManager *kisview);
     void setCanvas(KisCanvas2 *canvas);
     void toggle();

@@ -19,8 +19,8 @@ EXChannelPlane::EXChannelPlane(EXColorStateSP colorState,
                                EXColorPatchPopup *colorPatchPopup,
                                QWidget *parent)
     : EXEditable(parent)
-    , m_dri(nullptr)
     , m_shape(nullptr)
+    , m_dri(nullptr)
     , m_colorPatchPopup(colorPatchPopup)
     , m_colorState(colorState)
     , m_settingsState(settingsState)
@@ -89,6 +89,14 @@ EXChannelPlane::EXChannelPlane(EXColorStateSP colorState,
     });
 
     settingsChanged();
+}
+
+EXChannelPlane::~EXChannelPlane()
+{
+    if (m_shape) {
+        delete m_shape;
+        m_shape = nullptr;
+    }
 }
 
 void EXChannelPlane::setCanvas(KisCanvas2 *canvas)
@@ -282,6 +290,8 @@ void EXChannelPlane::edit(QMouseEvent *event)
 
 void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
 {
+    Q_UNUSED(event);
+
     if (!m_shape) {
         return;
     }
@@ -293,6 +303,8 @@ void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
 
 void EXChannelPlane::mouseReleaseEvent(QMouseEvent *event)
 {
+    Q_UNUSED(event);
+
     m_colorState->sendToKrita();
 
     if (m_colorPatchPopup && EXSettingsState::instance()->globalSettings.recordLastColorWhenMouseRelease) {

@@ -31,6 +31,8 @@ enum ColorModelId {
 class ColorModel : public KisShared
 {
 public:
+    virtual ~ColorModel() = default;
+
     virtual QVector3D toXyz(const QVector3D &color) const = 0;
     virtual QVector3D fromXyz(const QVector3D &color) const = 0;
 

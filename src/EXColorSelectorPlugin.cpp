@@ -38,6 +38,7 @@ public:
 
 EXColorSelectorPlugin::EXColorSelectorPlugin(QObject *parent, const QVariantList &)
 {
+    Q_UNUSED(parent)
     KoDockRegistry::instance()->add(new EXColorSelectorFactory());
 }
 
