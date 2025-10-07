@@ -61,7 +61,7 @@ KoColor EXColorConverter::displayChannelsToKoColor(const QVector4D &channels) co
     //     baseValues *= m_d->channelMaxValues;
     // }
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < channelVec.size(); i++) {
         channelVec[m_logicalToMemoryPosition[i]] = baseValues[i];
     }
 
@@ -76,7 +76,7 @@ QVector4D EXColorConverter::koColorToDisplayChannels(const KoColor &c) const
     m_colorSpace->normalisedChannelsValue(c.data(), channelVec);
     QVector4D channels(0, 0, 0, 0);
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < channelVec.size(); i++) {
         channels[i] = channelVec[m_logicalToMemoryPosition[i]];
     }
 
