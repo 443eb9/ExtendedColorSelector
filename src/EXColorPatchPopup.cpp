@@ -38,13 +38,6 @@ void EXColorPatchPopup::recordColor()
 
 void EXColorPatchPopup::popupAt(const QPoint &pos)
 {
-    recordColor();
     move(pos);
     show();
-}
-
-void EXColorPatchPopup::shutdown()
-{
-    m_lastColor = m_colorState->qColor();
-    hide();
 }

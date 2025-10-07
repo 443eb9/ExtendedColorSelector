@@ -17,7 +17,6 @@ public:
     void updateColor();
     void recordColor();
     void popupAt(const QPoint &pos);
-    void shutdown();
 
 private:
     QFrame *m_currentColorBox;

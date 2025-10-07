@@ -126,10 +126,15 @@ void EXColorSelectorDock::unsetCanvas()
     m_portableSelector->setCanvas(nullptr);
 }
 
+void EXColorSelectorDock::enterEvent(QEvent *event)
+{
+    QDockWidget::enterEvent(event);
+    m_colorPatchPopup->recordColor();
+}
+
 void EXColorSelectorDock::leaveEvent(QEvent *event)
 {
     QDockWidget::leaveEvent(event);
-    m_colorPatchPopup->recordColor();
     m_colorPatchPopup->hide();
 }
 

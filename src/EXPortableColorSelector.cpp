@@ -23,10 +23,7 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
 
     setLayout(mainLayout);
 
-    connect(m_settingsState,
-            &EXSettingsState::sigSettingsChanged,
-            this,
-            &EXPortableColorSelector::settingsChanged);
+    connect(m_settingsState, &EXSettingsState::sigSettingsChanged, this, &EXPortableColorSelector::settingsChanged);
 }
 
 void EXPortableColorSelector::settingsChanged()
@@ -68,9 +65,8 @@ void EXPortableColorSelector::toggle()
 {
     if (isVisible()) {
         hide();
-        m_colorPatchPopup->recordColor();
-        m_colorPatchPopup->shutdown();
     } else {
+        m_colorPatchPopup->recordColor();
         move(QCursor::pos() - QPoint(width() / 2, height() / 2));
         activateWindow();
         show();
@@ -81,8 +77,7 @@ void EXPortableColorSelector::toggle()
 void EXPortableColorSelector::leaveEvent(QEvent *event)
 {
     QDialog::leaveEvent(event);
-    m_colorPatchPopup->recordColor();
-    m_colorPatchPopup->shutdown();
+    m_colorPatchPopup->hide();
     hide();
 }
 
