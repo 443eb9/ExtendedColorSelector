@@ -35,26 +35,37 @@ EXColorConverter::EXColorConverter(const KoColorSpace *cs, const ColorModelSP &c
 KoColor EXColorConverter::displayChannelsToKoColor(const QVector4D &channels) const
 {
     KoColor c(m_colorSpace);
-    QVector4D baseValues(channels);
-    QVector<float> channelVec(c.colorSpace()->channelCount());
+    QVector<float> channelVec(m_colorSpace->channelCount());
+    displayChannelsToKoColor(c.data(), channels, channelVec);
+    return c;
+}
 
-    for (int i = 0; i < channelVec.size(); i++) {
-        channelVec[m_logicalToMemoryPosition[i]] = baseValues[i];
+void EXColorConverter::displayChannelsToKoColor(quint8 *target,
+                                                const QVector4D &channels,
+                                                QVector<float> &tempChannelBuffer) const
+{
+    QVector4D baseValues(channels);
+
+    for (int i = 0; i < tempChannelBuffer.size(); i++) {
+        tempChannelBuffer[m_logicalToMemoryPosition[i]] = baseValues[i];
     }
 
-    c.colorSpace()->fromNormalisedChannelsValue(c.data(), channelVec);
-
-    return c;
+    m_colorSpace->fromNormalisedChannelsValue(target, tempChannelBuffer);
 }
 
 QVector4D EXColorConverter::koColorToDisplayChannels(const KoColor &c) const
 {
     QVector<float> channelVec(c.colorSpace()->channelCount());
-    m_colorSpace->normalisedChannelsValue(c.data(), channelVec);
+    return koColorToDisplayChannels(c, channelVec);
+}
+
+QVector4D EXColorConverter::koColorToDisplayChannels(const KoColor &c, QVector<float> &tempChannelBuffer) const
+{
+    m_colorSpace->normalisedChannelsValue(c.data(), tempChannelBuffer);
     QVector4D channels(0, 0, 0, 0);
 
-    for (int i = 0; i < channelVec.size(); i++) {
-        channels[i] = channelVec[m_logicalToMemoryPosition[i]];
+    for (int i = 0; i < tempChannelBuffer.size(); i++) {
+        channels[i] = tempChannelBuffer[m_logicalToMemoryPosition[i]];
     }
 
     return channels;

@@ -17,7 +17,9 @@ class EXColorConverter : public KisShared
 public:
     EXColorConverter(const KoColorSpace *colorSpace, const ColorModelSP &colorModel);
     KoColor displayChannelsToKoColor(const QVector4D &channels) const;
+    void displayChannelsToKoColor(quint8 *target, const QVector4D &channels, QVector<float> &tempChannelBuffer) const;
     QVector4D koColorToDisplayChannels(const KoColor &color) const;
+    QVector4D koColorToDisplayChannels(const KoColor &color, QVector<float> &tempChannelBuffer) const;
     const KoColorSpace *colorSpace() const;
     const ColorModelSP colorModel() const;
 

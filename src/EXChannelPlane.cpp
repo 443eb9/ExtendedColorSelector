@@ -236,12 +236,7 @@ void EXChannelPlane::updateImage()
         colorWithAlpha[alphaPos] = 1.0f;
         return colorWithAlpha;
     };
-    m_image = ExtendedUtils::generateGradient(size(),
-                                              size(),
-                                              m_colorState->colorModel()->parallelGradientGen(),
-                                              m_colorState->koColorConverter(),
-                                              m_dri,
-                                              pixelGet);
+    m_image = ExtendedUtils::generateGradient(size(), size(), true, m_colorState->koColorConverter(), m_dri, pixelGet);
 }
 
 void EXChannelPlane::startEdit(QMouseEvent *event, bool isShift)

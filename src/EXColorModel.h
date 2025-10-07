@@ -57,7 +57,6 @@ public:
     virtual std::array<QString, 3> channelNames() const = 0;
     virtual std::array<QVector3D, 2> channelRanges() const = 0;
     virtual bool isSrgbBased() const = 0;
-    virtual bool parallelGradientGen() const = 0;
 
     virtual QVector3D unnormalize(const QVector3D &normalized)
     {
@@ -110,11 +109,6 @@ public:
     {
         return true;
     }
-
-    bool parallelGradientGen() const override
-    {
-        return false;
-    }
 };
 
 class SRGBModel : public ColorModel
@@ -151,11 +145,6 @@ public:
     bool isSrgbBased() const override
     {
         return true;
-    }
-
-    bool parallelGradientGen() const override
-    {
-        return false;
     }
 };
 
@@ -197,11 +186,6 @@ public:
     {
         return true;
     }
-
-    bool parallelGradientGen() const override
-    {
-        return false;
-    }
 };
 
 class HSLModel : public ColorModel
@@ -242,11 +226,6 @@ public:
     {
         return true;
     }
-
-    bool parallelGradientGen() const override
-    {
-        return false;
-    }
 };
 
 class LinearRGBModel : public ColorModel
@@ -284,11 +263,6 @@ public:
     {
         return true;
     }
-
-    bool parallelGradientGen() const override
-    {
-        return false;
-    }
 };
 
 class XYZModel : public ColorModel
@@ -323,11 +297,6 @@ public:
     }
 
     bool isSrgbBased() const override
-    {
-        return false;
-    }
-
-    bool parallelGradientGen() const override
     {
         return false;
     }
@@ -369,11 +338,6 @@ public:
     {
         return false;
     }
-
-    bool parallelGradientGen() const override
-    {
-        return false;
-    }
 };
 
 class LCHModel : public ColorModel
@@ -409,11 +373,6 @@ public:
     }
 
     bool isSrgbBased() const override
-    {
-        return false;
-    }
-
-    bool parallelGradientGen() const override
     {
         return false;
     }
@@ -455,11 +414,6 @@ public:
     {
         return false;
     }
-
-    bool parallelGradientGen() const override
-    {
-        return false;
-    }
 };
 
 class OKLCHModel : public ColorModel
@@ -495,11 +449,6 @@ public:
     }
 
     bool isSrgbBased() const override
-    {
-        return false;
-    }
-
-    bool parallelGradientGen() const override
     {
         return false;
     }
@@ -543,11 +492,6 @@ public:
     {
         return true;
     }
-
-    bool parallelGradientGen() const override
-    {
-        return true;
-    }
 };
 
 class OKHSLModel : public ColorModel
@@ -583,11 +527,6 @@ public:
     }
 
     bool isSrgbBased() const override
-    {
-        return true;
-    }
-
-    bool parallelGradientGen() const override
     {
         return true;
     }

@@ -23,13 +23,12 @@ QImage generateGradient(int width,
     quint8 *dataPtr = raw.data();
 
     auto processRow = [&](int y) {
+        QVector<float> tempChannelBuffer(colorConverter->colorSpace()->channelCount());
         quint8 *rowPtr = dataPtr + y * deviceWidth * pixelSize;
 
         for (int x = 0; x < deviceWidth; x++) {
             auto channels = pixelGet((float)x / (width - 1), (float)y / (height - 1));
-            auto koColor = colorConverter->displayChannelsToKoColor(channels);
-            // colorSpace->fromNormalisedChannelsValue(color.data(), channels);
-            memcpy(rowPtr, koColor.data(), pixelSize);
+            colorConverter->displayChannelsToKoColor(rowPtr, channels, tempChannelBuffer);
             rowPtr += pixelSize;
         }
     };
