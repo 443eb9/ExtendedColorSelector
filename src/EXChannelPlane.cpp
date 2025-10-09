@@ -136,6 +136,7 @@ void EXChannelPlane::settingsChanged()
 void EXChannelPlane::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
+    settingsChanged();
     updateImage();
 }
 
