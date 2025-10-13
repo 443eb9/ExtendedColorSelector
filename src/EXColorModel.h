@@ -53,6 +53,11 @@ public:
         return 0;
     }
 
+    virtual int wrappableChannelIndexBits() const
+    {
+        return 0;
+    }
+
     virtual ColorModelId id() const = 0;
     virtual QString displayName() const = 0;
     virtual bool isOneDimensional() const = 0;
@@ -157,7 +162,6 @@ public:
     QVector3D fromXyz(const QVector3D &color) const override;
     void resolveReference(QVector3D &color, const QVector3D &reference) const override;
     void makeColorful(QVector3D &color, int channelIndex) const override;
-    int colorfulableChannelIndexBits() const override;
 
     ColorModelId id() const override
     {
@@ -188,6 +192,16 @@ public:
     {
         return true;
     }
+
+    int colorfulableChannelIndexBits() const override
+    {
+        return 0b001;
+    }
+
+    int wrappableChannelIndexBits() const override
+    {
+        return 0b001;
+    }
 };
 
 class HSLModel : public ColorModel
@@ -197,7 +211,6 @@ public:
     QVector3D fromXyz(const QVector3D &color) const override;
     void resolveReference(QVector3D &color, const QVector3D &reference) const override;
     void makeColorful(QVector3D &color, int channelIndex) const override;
-    int colorfulableChannelIndexBits() const override;
 
     ColorModelId id() const override
     {
@@ -227,6 +240,16 @@ public:
     bool isSrgbBased() const override
     {
         return true;
+    }
+
+    int colorfulableChannelIndexBits() const override
+    {
+        return 0b001;
+    }
+
+    int wrappableChannelIndexBits() const override
+    {
+        return 0b001;
     }
 };
 
@@ -378,6 +401,11 @@ public:
     {
         return false;
     }
+
+    int wrappableChannelIndexBits() const override
+    {
+        return 0b001;
+    }
 };
 
 class OKLABModel : public ColorModel
@@ -454,6 +482,11 @@ public:
     {
         return false;
     }
+
+    int wrappableChannelIndexBits() const override
+    {
+        return 0b001;
+    }
 };
 
 class OKHSVModel : public ColorModel
@@ -462,7 +495,6 @@ public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
     void makeColorful(QVector3D &color, int channelIndex) const override;
-    int colorfulableChannelIndexBits() const override;
     void resolveReference(QVector3D &color, const QVector3D &reference) const override;
 
     ColorModelId id() const override
@@ -493,6 +525,16 @@ public:
     bool isSrgbBased() const override
     {
         return true;
+    }
+
+    int colorfulableChannelIndexBits() const override
+    {
+        return 0b001;
+    }
+
+    int wrappableChannelIndexBits() const override
+    {
+        return 0b001;
     }
 };
 
@@ -531,6 +573,16 @@ public:
     bool isSrgbBased() const override
     {
         return true;
+    }
+
+    int colorfulableChannelIndexBits() const override
+    {
+        return 0b001;
+    }
+
+    int wrappableChannelIndexBits() const override
+    {
+        return 0b001;
     }
 };
 

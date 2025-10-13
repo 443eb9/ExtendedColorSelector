@@ -243,7 +243,11 @@ void ChannelValueBar::shift(QMouseEvent *event, QVector2D delta)
     Q_UNUSED(event);
 
     qreal value = (m_editStart + delta.x()) / width();
-    value = value - qFloor(value);
+    if (ExtendedUtils::testFlag(m_colorState->colorModel()->wrappableChannelIndexBits(), m_channelIndex)) {
+        value = value - qFloor(value);
+    } else {
+        value = qBound(0.0, value, 1.0);
+    }
     m_colorState->setChannel(m_channelIndex, value);
 }
 

@@ -187,11 +187,6 @@ void HSVModel::makeColorful(QVector3D &color, int channelIndex) const
     }
 }
 
-int HSVModel::colorfulableChannelIndexBits() const
-{
-    return 0b001;
-}
-
 QVector3D HSLModel::fromXyz(const QVector3D &color) const
 {
     auto hsv = HSVModel().fromXyz(color);
@@ -229,11 +224,6 @@ void HSLModel::makeColorful(QVector3D &color, int channelIndex) const
         color[1] = 1.0;
         color[2] = 0.5;
     }
-}
-
-int HSLModel::colorfulableChannelIndexBits() const
-{
-    return 0b001;
 }
 
 QVector3D LinearRGBModel::toXyz(const QVector3D &color) const
@@ -467,11 +457,6 @@ void OKHSVModel::makeColorful(QVector3D &color, int channelIndex) const
         color[1] = 1.0;
         color[2] = 1.0;
     }
-}
-
-int OKHSVModel::colorfulableChannelIndexBits() const
-{
-    return 0b001;
 }
 
 QVector3D OKHSLModel::fromXyz(const QVector3D &color) const
