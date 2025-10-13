@@ -404,7 +404,7 @@ public:
 
     int wrappableChannelIndexBits() const override
     {
-        return 0b001;
+        return 0b100;
     }
 };
 
@@ -485,7 +485,7 @@ public:
 
     int wrappableChannelIndexBits() const override
     {
-        return 0b001;
+        return 0b100;
     }
 };
 
