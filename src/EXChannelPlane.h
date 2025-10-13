@@ -52,7 +52,7 @@ private:
     };
 
     EditMode m_editMode;
-    QPointF m_editStart;
+    QPointF m_editStartWidgetCoordPx;
     QColor m_imageColor;
     EXChannelPlaneShape *m_shape;
     QImage m_image;
