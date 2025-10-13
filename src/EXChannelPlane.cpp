@@ -259,7 +259,7 @@ void EXChannelPlane::startEdit(QMouseEvent *event, bool isShift)
     QPointF centeredCoord = widgetCoord * 2 - QPointF(1, 1);
     float dist = qSqrt(centeredCoord.x() * centeredCoord.x() + centeredCoord.y() * centeredCoord.y());
 
-    if (m_shape->ring.thickness > 0 && dist > m_shape->ring.boundaryDiameter()) {
+    if (m_shape->ring.thickness > 0 && dist > m_shape->ring.marginedBoundaryDiameter()) {
         m_editMode = Ring;
         if (isShift) {
             m_editStartWidgetCoordPx = m_shape->ring.getWidgetCoord(m_colorState->primaryChannelValue()) * size();
