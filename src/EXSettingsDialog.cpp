@@ -176,6 +176,10 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(EXSettingsStateSP s
         pageLayout->addLayout(ringSettingsLayouts);
         pageLayout->addStretch(1);
         pages->addWidget(page);
+
+        if (colorModel->colorfulableChannelIndexBits() == 0) {
+            colorfulPrimaryChannel->deleteLater();
+        }
     }
 
     connect(pageSwitchers,
