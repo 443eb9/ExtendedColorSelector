@@ -6,6 +6,7 @@
 #include <QListWidget>
 #include <QStackedLayout>
 
+#include "EXColorModel.h"
 #include "EXSettings.h"
 #include "EXSettingsState.h"
 
@@ -19,9 +20,10 @@ public:
 private:
     QListWidget *m_pageSwitchers;
     EXSettingsStateSP m_settingsState;
+    QVector<QListWidget *> m_extraSlidersLists;
 
-    void updateOrder();
-    void handleColorModelEnabledChange(QListWidgetItem *item);
+    void updateColorModelsOrder();
+    void updateExtraSlidersOrder(ColorModelId colorModelId);
 
     void closeEvent(QCloseEvent *event) override;
 };

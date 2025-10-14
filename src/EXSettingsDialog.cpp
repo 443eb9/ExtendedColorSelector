@@ -19,6 +19,7 @@
 EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(EXSettingsStateSP settingsState, QWidget *parent)
     : QDialog(parent)
     , m_settingsState(settingsState)
+    , m_extraSlidersLists(ColorModelFactory::AllModels.size(), nullptr)
 {
     setWindowTitle("Extended Color Selector - Settings");
     auto mainLayout = new QHBoxLayout();
@@ -32,11 +33,11 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(EXSettingsStateSP s
         auto &settings = m_settingsState->settings[colorModelId];
         auto colorModel = ColorModelFactory::fromId(colorModelId);
 
-        pageSwitchers->addItem(colorModel->displayName());
-        auto button = pageSwitchers->item(pageSwitchers->count() - 1);
-        Q_ASSERT(button);
-        button->setFlags(button->flags() | Qt::ItemFlag::ItemIsUserCheckable);
-        button->setCheckState(settings.enabled ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+        auto pageSwitcherItem = new QListWidgetItem(colorModel->displayName());
+        pageSwitcherItem->setData(Qt::UserRole, static_cast<int>(colorModelId));
+        pageSwitcherItem->setFlags(pageSwitcherItem->flags() | Qt::ItemFlag::ItemIsUserCheckable);
+        pageSwitcherItem->setCheckState(settings.enabled ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+        pageSwitchers->addItem(pageSwitcherItem);
 
         auto page = new QWidget();
         auto pageLayout = new QVBoxLayout();
@@ -48,6 +49,31 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(EXSettingsStateSP s
             settings.slidersEnabled = checked;
             Q_EMIT m_settingsState->sigSettingsChanged();
         });
+
+        auto extraSlidersLabel = new QLabel("Extra Sliders");
+        auto extraSlidersList = new QListWidget();
+        extraSlidersList->setDropIndicatorShown(true);
+        extraSlidersList->setDragDropMode(QListWidget::InternalMove);
+        for (const auto &modelId : ColorModelFactory::AllModels) {
+            if (modelId == colorModelId) {
+                continue;
+            }
+            auto item = new QListWidgetItem(ColorModelFactory::fromId(modelId)->displayName());
+            item->setData(Qt::UserRole, static_cast<int>(modelId));
+            item->setFlags(item->flags() | Qt::ItemFlag::ItemIsUserCheckable);
+            item->setCheckState(settings.extraSliders.contains(modelId) ? Qt::CheckState::Checked
+                                                                        : Qt::CheckState::Unchecked);
+            extraSlidersList->addItem(item);
+        }
+
+        auto model = extraSlidersList->model();
+        connect(model, &QAbstractItemModel::rowsMoved, this, [this, colorModelId]() {
+            updateExtraSlidersOrder(colorModelId);
+        });
+        connect(extraSlidersList, &QListWidget::itemChanged, this, [this, colorModelId]() {
+            updateExtraSlidersOrder(colorModelId);
+        });
+        m_extraSlidersLists[colorModelId] = extraSlidersList;
 
         auto colorfulPrimaryChannel = new QCheckBox("Colorful Primary Channel");
         colorfulPrimaryChannel->setChecked(settings.colorfulHueRing);
@@ -164,6 +190,8 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(EXSettingsStateSP s
         });
 
         pageLayout->addWidget(slidersEnabled);
+        pageLayout->addWidget(extraSlidersLabel);
+        pageLayout->addWidget(extraSlidersList);
         pageLayout->addWidget(colorfulPrimaryChannel);
         if (colorModel->isSrgbBased()) {
             clipGamutBox->deleteLater();
@@ -182,10 +210,9 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(EXSettingsStateSP s
         }
     }
 
-    connect(pageSwitchers,
-            &QListWidget::itemChanged,
-            this,
-            &EXPerColorModelSettingsDialog::handleColorModelEnabledChange);
+    auto model = pageSwitchers->model();
+    connect(model, &QAbstractItemModel::rowsMoved, this, &EXPerColorModelSettingsDialog::updateColorModelsOrder);
+    connect(pageSwitchers, &QListWidget::itemChanged, this, &EXPerColorModelSettingsDialog::updateColorModelsOrder);
     connect(pageSwitchers, &QListWidget::currentItemChanged, this, [pages](QListWidgetItem *current) {
         if (!current) {
             return;
@@ -193,10 +220,6 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(EXSettingsStateSP s
         pages->setCurrentIndex(current->listWidget()->row(current));
     });
     m_pageSwitchers = pageSwitchers;
-    auto model = pageSwitchers->model();
-    QObject::connect(model, &QAbstractItemModel::rowsMoved, this, [this]() {
-        updateOrder();
-    });
 
     mainLayout->addWidget(pageSwitchers);
     mainLayout->addLayout(pages);
@@ -204,40 +227,38 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(EXSettingsStateSP s
     QDialog::setLayout(mainLayout);
 }
 
-void EXPerColorModelSettingsDialog::updateOrder()
+void EXPerColorModelSettingsDialog::updateColorModelsOrder()
 {
-    auto widgets = QVector<QListWidgetItem *>();
-    for (int i = 0; i < m_pageSwitchers->count(); ++i) {
-        widgets.append(m_pageSwitchers->item(i));
-    }
-
     auto &globalSettings = m_settingsState->globalSettings;
     globalSettings.displayOrder.clear();
 
-    for (const auto widget : widgets) {
-        auto colorModel = ColorModelFactory::fromName(widget->text());
-        if (colorModel) {
-            globalSettings.displayOrder.append(colorModel->id());
+    for (int i = 0; i < m_pageSwitchers->count(); ++i) {
+        auto item = m_pageSwitchers->item(i);
+        if (item->checkState() == Qt::CheckState::Checked) {
+            auto modelId = static_cast<ColorModelId>(item->data(Qt::UserRole).toInt());
+            globalSettings.displayOrder.append(modelId);
         }
     }
 
     globalSettings.writeAll();
-
     Q_EMIT m_settingsState->sigSettingsChanged();
 }
 
-void EXPerColorModelSettingsDialog::handleColorModelEnabledChange(QListWidgetItem *item)
+void EXPerColorModelSettingsDialog::updateExtraSlidersOrder(ColorModelId colorModelId)
 {
-    auto colorModel = ColorModelFactory::fromName(item->text());
-    if (!colorModel) {
-        return;
+    auto &settings = m_settingsState->settings[colorModelId];
+    auto extraSlidersList = m_extraSlidersLists[colorModelId];
+    settings.extraSliders.clear();
+
+    for (int i = 0; i < extraSlidersList->count(); ++i) {
+        auto item = extraSlidersList->item(i);
+        if (item->checkState() == Qt::CheckState::Checked) {
+            auto modelId = static_cast<ColorModelId>(item->data(Qt::UserRole).toInt());
+            settings.extraSliders.append(modelId);
+        }
     }
 
-    auto &settings = m_settingsState->settings[colorModel->id()];
-    settings.enabled = item->checkState() == Qt::CheckState::Checked;
-
     settings.writeAll();
-
     Q_EMIT m_settingsState->sigSettingsChanged();
 }
 

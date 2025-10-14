@@ -33,13 +33,15 @@ public Q_SLOTS:
 
 private:
     EXChannelPlane *m_plane;
-    EXChannelSliders *m_sliders;
+    EXChannelSlidersGroup *m_sliders;
     EXColorModelSwitchers *m_colorModelSwitchers;
     KisAction *m_toggleAction;
     EXColorPatchPopup *m_colorPatchPopup;
 
     EXColorStateSP m_colorState;
     EXSettingsStateSP m_settingsState;
+
+    void updateSliders();
 };
 
 #endif

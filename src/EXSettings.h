@@ -34,6 +34,7 @@ public:
     int primaryIndex;
     bool colorfulHueRing;
     bool clipToSrgbGamut;
+    QVector<ColorModelId> extraSliders;
 
 private:
     KConfigGroup m_configGroup;
@@ -50,7 +51,6 @@ public:
     QVector<ColorModelId> displayOrder;
     bool outOfGamutColorEnabled;
     QVector3D outOfGamutColor;
-    float barHeight;
     bool dontSyncIfOutOfGamut;
     float pWidth;
     bool pEnableChannelPlane;

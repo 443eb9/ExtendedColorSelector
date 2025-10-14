@@ -4,10 +4,10 @@
 
 OptionalColorPicker::OptionalColorPicker(QWidget *parent, const QString &labelText, const QColor &defaultColor)
     : QWidget(parent)
-    , cachedColor(defaultColor)
-    , indicator(new QPushButton(this))
-    , enableBox(new QCheckBox(labelText, this))
     , colorDialog(new QColorDialog(this))
+    , cachedColor(defaultColor)
+    , enableBox(new QCheckBox(labelText, this))
+    , indicator(new QPushButton(this))
 {
     auto mainLayout = new QHBoxLayout(this);
     setLayout(mainLayout);

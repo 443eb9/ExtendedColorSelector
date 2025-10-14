@@ -13,6 +13,53 @@
 #include "EXSettingsState.h"
 #include "EXUtils.h"
 
+EXChannelSlidersGroup::EXChannelSlidersGroup(QVector<ColorModelId> colorModels,
+                                             EXColorStateSP colorState,
+                                             EXSettingsStateSP settingsState,
+                                             EXColorPatchPopup *colorPatchPopup,
+                                             QWidget *parent)
+    : QWidget(parent)
+    , m_canvas(nullptr)
+    , m_colorState(colorState)
+    , m_settingsState(settingsState)
+    , m_colorPatchPopup(colorPatchPopup)
+{
+    m_layout = new QVBoxLayout(this);
+    m_layout->setContentsMargins(0, 0, 0, 0);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    resetColorModels(colorModels);
+    setLayout(m_layout);
+}
+
+void EXChannelSlidersGroup::setCanvas(KisCanvas2 *canvas)
+{
+    m_canvas = canvas;
+    for (auto sliders : m_sliders) {
+        sliders->setCanvas(canvas);
+        sliders->update();
+    }
+}
+
+void EXChannelSlidersGroup::resetColorModels(QVector<ColorModelId> colorModels)
+{
+    for (int i = m_layout->count() - 1; i >= 0; --i) {
+        auto item = m_layout->takeAt(i);
+        item->widget()->deleteLater();
+    }
+
+    m_sliders.clear();
+    for (auto modelId : colorModels) {
+        auto sliders = new EXChannelSliders(ColorModelFactory::fromId(modelId),
+                                            m_colorState,
+                                            m_settingsState,
+                                            m_colorPatchPopup,
+                                            this);
+        m_layout->addWidget(sliders);
+        m_sliders.append(sliders);
+        setCanvas(m_canvas);
+    }
+}
+
 EXChannelSliders::EXChannelSliders(ColorModelSP colorModel,
                                    EXColorStateSP colorState,
                                    EXSettingsStateSP settingsState,
@@ -20,8 +67,6 @@ EXChannelSliders::EXChannelSliders(ColorModelSP colorModel,
                                    QWidget *parent)
     : QWidget(parent)
 {
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-
     auto layout = new QVBoxLayout(this);
     auto group = new QButtonGroup(this);
     group->setExclusive(true);
@@ -49,6 +94,7 @@ EXChannelSliders::EXChannelSliders(ColorModelSP colorModel,
                     m_channelWidgets[2]->show();
                 }
             });
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 }
 
 void EXChannelSliders::setCanvas(KisCanvas2 *canvas)
@@ -81,6 +127,7 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
     auto layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 2, 0, 2);
     auto channelNames = colorModel->channelNames();
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     m_radioButton = new QRadioButton(channelNames[m_channelIndex], this);
     group->addButton(m_radioButton);
@@ -160,6 +207,7 @@ ChannelValueBar::ChannelValueBar(int channelIndex,
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+    m_colorAtCurrentModel = m_colorState->colorModel()->transferTo(m_colorModel.data(), m_colorState->color());
     connect(m_colorState, &EXColorState::sigColorChanged, this, [this]() {
         m_colorAtCurrentModel = m_colorState->colorModel()->transferTo(m_colorModel.data(), m_colorState->color());
         updateImage();
@@ -201,8 +249,10 @@ void ChannelValueBar::updateImage()
 
     auto makeColorful = m_settingsState->settings[m_colorModel->id()].colorfulHueRing;
     int alphaPos = m_colorState->colorSpace()->alphaPos();
+    auto sanitizeOutOfGamut = m_colorState->kritaColorModel()->isSrgbBased() && !m_colorModel->isSrgbBased()
+        && m_settingsState->globalSettings.outOfGamutColorEnabled;
 
-    auto pixelGet = [this, makeColorful, alphaPos](float x, float y) -> QVector4D {
+    auto pixelGet = [this, makeColorful, sanitizeOutOfGamut, alphaPos](float x, float y) -> QVector4D {
         Q_UNUSED(y);
 
         QVector3D color = m_colorAtCurrentModel;
@@ -211,9 +261,8 @@ void ChannelValueBar::updateImage()
             m_colorModel->makeColorful(color, m_channelIndex);
         }
         color = m_colorModel->transferTo(m_colorState->kritaColorModel(), color);
-        auto settings = m_settingsState->globalSettings;
-        if (m_colorState->possibleOutOfSrgb() && settings.outOfGamutColorEnabled) {
-            ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
+        if (sanitizeOutOfGamut) {
+            ExtendedUtils::sanitizeOutOfGamutColor(color, m_settingsState->globalSettings.outOfGamutColor);
         }
         auto colorWithAlpha = color.toVector4D();
         colorWithAlpha[alphaPos] = 1.0f;

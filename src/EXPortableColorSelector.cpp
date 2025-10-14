@@ -18,7 +18,7 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
     m_plane = new EXChannelPlane(m_colorState, m_settingsState, m_colorPatchPopup, this);
     m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
     m_sliders =
-        new EXChannelSliders(m_colorState->colorModel(), m_colorState, m_settingsState, m_colorPatchPopup, this);
+        new EXChannelSlidersGroup(QVector<ColorModelId>(), m_colorState, m_settingsState, m_colorPatchPopup, this);
     mainLayout->addWidget(m_plane);
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);
@@ -26,9 +26,7 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
     setLayout(mainLayout);
 
     connect(m_settingsState, &EXSettingsState::sigSettingsChanged, this, &EXPortableColorSelector::settingsChanged);
-    connect(m_colorState.data(), &EXColorState::sigColorModelChanged, this, [this]() {
-        m_sliders->resetColorModel(m_colorState->colorModel());
-    });
+    connect(m_colorState.data(), &EXColorState::sigColorModelChanged, this, &EXPortableColorSelector::updateSliders);
 }
 
 void EXPortableColorSelector::settingsChanged()
@@ -42,6 +40,7 @@ void EXPortableColorSelector::settingsChanged()
     }
 
     if (settings.pEnableSliders) {
+        updateSliders();
         m_sliders->show();
     } else {
         m_sliders->hide();
@@ -97,5 +96,17 @@ void EXPortableColorSelector::keyPressEvent(QKeyEvent *event)
 
     if (m_toggleAction && m_toggleAction->shortcut() == QKeySequence(event->key() + int(event->modifiers()))) {
         toggle();
+    }
+}
+
+void EXPortableColorSelector::updateSliders()
+{
+    auto &settings = m_settingsState->settings[m_colorState->colorModel()->id()];
+    if (settings.slidersEnabled) {
+        auto sliders = QVector(settings.extraSliders);
+        sliders.prepend(m_colorState->colorModel()->id());
+        m_sliders->resetColorModels(sliders);
+    } else {
+        m_sliders->resetColorModels(settings.extraSliders);
     }
 }

@@ -56,15 +56,15 @@ EXColorSelectorDock::EXColorSelectorDock()
     m_plane = new EXChannelPlane(m_colorState, m_settingsState, m_colorPatchPopup, this);
     m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
     m_sliders =
-        new EXChannelSliders(m_colorState->colorModel(), m_colorState, m_settingsState, m_colorPatchPopup, this);
+        new EXChannelSlidersGroup(QVector<ColorModelId>(), m_colorState, m_settingsState, m_colorPatchPopup, this);
     mainLayout->addWidget(m_plane);
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);
     mainLayout->addStretch(1);
 
-    connect(m_colorState.data(), &EXColorState::sigColorModelChanged, this, [this]() {
-        m_sliders->resetColorModel(m_colorState->colorModel());
-    });
+    updateSliders();
+    connect(m_colorState.data(), &EXColorState::sigColorModelChanged, this, &EXColorSelectorDock::updateSliders);
+    connect(m_settingsState.data(), &EXSettingsState::sigSettingsChanged, this, &EXColorSelectorDock::updateSliders);
 
     m_settings = new EXPerColorModelSettingsDialog(m_settingsState, this);
     m_globalSettings = new EXGlobalSettingsDialog(m_settingsState, this);
@@ -93,7 +93,6 @@ EXColorSelectorDock::EXColorSelectorDock()
 
     m_portableSelector = new EXPortableColorSelector();
 
-    m_colorState->setColorModel((ColorModelId)m_settingsState->globalSettings.currentColorModel);
     m_useLayerColorSpaceButton->setChecked(m_settingsState->globalSettings.useLayerColorSpace);
     m_colorState->setUseLayerColorSpace(m_settingsState->globalSettings.useLayerColorSpace);
     if (m_settingsState->globalSettings.useLayerColorSpace) {
@@ -151,5 +150,17 @@ void EXColorSelectorDock::onColorSpaceSelected(const KoColorSpace *colorSpace)
         m_colorState->setColorSpace(colorSpace);
         settings.customColorSpace = colorSpace;
         settings.writeAll();
+    }
+}
+
+void EXColorSelectorDock::updateSliders()
+{
+    auto &settings = m_settingsState->settings[m_colorState->colorModel()->id()];
+    if (settings.slidersEnabled) {
+        auto sliders = QVector(settings.extraSliders);
+        sliders.prepend(m_colorState->colorModel()->id());
+        m_sliders->resetColorModels(sliders);
+    } else {
+        m_sliders->resetColorModels(settings.extraSliders);
     }
 }

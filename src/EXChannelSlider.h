@@ -4,6 +4,7 @@
 #include <QButtonGroup>
 #include <QDoubleSpinBox>
 #include <QRadioButton>
+#include <QVBoxLayout>
 #include <QVector>
 #include <QWidget>
 
@@ -100,6 +101,30 @@ public:
 
 private:
     ChannelValueWidget *m_channelWidgets[3];
+};
+
+class EXChannelSlidersGroup : public QWidget
+{
+    Q_OBJECT
+public:
+    EXChannelSlidersGroup(QVector<ColorModelId> colorModels,
+                          EXColorStateSP colorState,
+                          EXSettingsStateSP settingsState,
+                          EXColorPatchPopup *colorPatchPopup = nullptr,
+                          QWidget *parent = nullptr);
+    ~EXChannelSlidersGroup() override = default;
+
+    void setCanvas(KisCanvas2 *canvas);
+    void resetColorModels(QVector<ColorModelId> colorModels);
+
+private:
+    QVBoxLayout *m_layout;
+    QVector<EXChannelSliders *> m_sliders;
+    KisCanvas2 *m_canvas;
+
+    EXColorStateSP m_colorState;
+    EXSettingsStateSP m_settingsState;
+    EXColorPatchPopup *m_colorPatchPopup;
 };
 
 #endif // ExtendedChannelSlider_H

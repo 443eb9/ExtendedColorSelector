@@ -4,6 +4,7 @@
 #include <QDockWidget>
 #include <QObject>
 #include <QPushButton>
+#include <QVBoxLayout>
 
 #include <KisPopupButton.h>
 #include <kis_canvas2.h>
@@ -36,7 +37,7 @@ public:
 private:
     KisCanvas2 *m_canvas;
     EXChannelPlane *m_plane;
-    EXChannelSliders *m_sliders;
+    EXChannelSlidersGroup *m_sliders;
     EXColorModelSwitchers *m_colorModelSwitchers;
     EXGlobalSettingsDialog *m_globalSettings;
     EXPerColorModelSettingsDialog *m_settings;
@@ -49,6 +50,8 @@ private:
     KisPopupButton *m_colorSpaceSelectorButton;
     KisColorSpaceSelector *m_colorSpaceSelector;
     QPushButton *m_useLayerColorSpaceButton;
+
+    void updateSliders();
 
 public Q_SLOTS:
     void onColorSpaceSelected(const KoColorSpace *colorSpace);

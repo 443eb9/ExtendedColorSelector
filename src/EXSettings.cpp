@@ -23,6 +23,10 @@ EXPerColorModelSettings::EXPerColorModelSettings(QString colorModel)
     primaryIndex = m_configGroup.readEntry(m_colorModel + ".primaryIndex", 0);
     colorfulHueRing = m_configGroup.readEntry(m_colorModel + ".colorfulHueRing", true);
     clipToSrgbGamut = m_configGroup.readEntry(m_colorModel + ".clipToSrgbGamut", false);
+    auto extraSliders = m_configGroup.readEntry(m_colorModel + ".extraSliders", "");
+    this->extraSliders = ExtendedUtils::stringToVector<ColorModelId>(extraSliders, [](const QString &str) {
+        return static_cast<ColorModelId>(str.toInt());
+    });
 
     int shape = m_configGroup.readEntry(colorModel + ".shape", (int)EXChannelPlaneShapeId::Square);
     this->shape = static_cast<EXChannelPlaneShapeId>(shape);
@@ -46,6 +50,11 @@ void EXPerColorModelSettings::writeAll()
     m_configGroup.writeEntry(m_colorModel + ".primaryIndex", primaryIndex);
     m_configGroup.writeEntry(m_colorModel + ".colorfulHueRing", colorfulHueRing);
     m_configGroup.writeEntry(m_colorModel + ".clipToSrgbGamut", clipToSrgbGamut);
+    m_configGroup.writeEntry(
+        m_colorModel + ".extraSliders",
+        ExtendedUtils::vectorToString<ColorModelId>(this->extraSliders, [](const ColorModelId &id) {
+            return QString::number(static_cast<int>(id));
+        }));
     m_configGroup.sync();
 }
 
@@ -62,9 +71,7 @@ EXGlobalSettings::EXGlobalSettings()
 
     auto displayOrder = m_configGroup.readEntry("displayOrder", "");
     this->displayOrder = ExtendedUtils::stringToVector<ColorModelId>(displayOrder, [](const QString &str) {
-        bool ok;
-        int id = str.toInt(&ok);
-        return static_cast<ColorModelId>(id);
+        return static_cast<ColorModelId>(str.toInt());
     });
     if (this->displayOrder.size() != ColorModelFactory::AllModels.size()) {
         this->displayOrder = ColorModelFactory::AllModels;
