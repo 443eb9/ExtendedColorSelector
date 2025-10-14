@@ -4,7 +4,7 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 
 ## Features
 
-- Supports color picking in 10 color models. (`Gray`, `RGB`, `HSV`, `HSL`, `XYZ`, `Lab`, `OkLab`, `OkLch`, `OkHsv`, `OkHsl`)
+- Supports color picking in 10 color models. (`Gray`, `SRGB`, `HSV`, `HSL`, `LinearRGB`, `XYZ`, `Lab`, `OkLab`, `OkLch`, `OkHsv`, `OkHsl`)
 - Fully modular, and highly customizable.
   - Three wheel shapes: square, triangle, and circle.
   - Channel sliders and ring to modify the third channel.
@@ -16,6 +16,13 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 - `Shift` and `Alt` modifiers to shift slowly.
 - Out of gamut hinting.
 - Integrated with color management from Krita. Display the correct color under specific color profile.
+
+## Known issues
+
+- `YCbCr` color space layers/images causes crash.
+- Performance issue when altering primary channel, really lag.
+- Alias issue on visual selector image.
+- Clipping to SRGB gamut looks weird under Grayscale color space.
 
 ## How to use
 

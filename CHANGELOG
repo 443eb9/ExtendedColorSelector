@@ -1,0 +1,65 @@
+# Unreleased
+
+- Rewrite the entire plugin using C++;
+- Allow add multiple sliders in one color model;
+- Integrated with color management system from Krita;
+- Added `Gray`, `Lch` and `LinearRgb` color models;
+- Renamed model `Rgb` to `Srgb`;
+- Allow hiding channel value spin boxes;
+
+Windows version is built on Windows 11 23H2 with CMake 3.31.8 and ninja 1.13.1.
+
+Linux version is built on Ubuntu 24.04.
+
+# v0.4.0
+
+Global settings will be reset to default after update!
+
+- Added `OkHsv` and `OkHsl` color picker.
+- Fixed incorrect gamut clipping for srgb based color models.
+- Fixed setting pages and color model not matching if reordered.
+- Fixed missing toe functions for `OkLab` and `OkLch` color pickers.
+- Fixed ring still visible when `Enable Ring` is not checked in settings.
+- Fixed content in settings docker sometimes get squashed.
+- Shifting on locked channel bar now warps.
+- Fixed shifting on ring not working as expected.
+- Fixed scale issue on devices with HighDPI scaling.
+- Fixed color wheel overlaps with other widgets.
+- Moved shortcut to toggle the portable color selector from global settings to Krita settings.
+- Support color picking for masks.
+- Fixed color picking not working properly for Krita `LAB` layers.
+
+# v0.3.0
+
+- Channel spin boxes display incorrect values, and won't update value range when color model changes.
+- Clipping the selector area to SRGB gamut. This is disabled by default and can be enabled in settings for each color model.
+- Fixed not-working channel spin boxes.
+- Stop syncing color from Krita when editing channel spin boxes.
+- Index of locked channel is not updating when switching between color models.
+- Fixed `L` channel of Oklch not updating, caused by mistyping `>` into `<`.
+- Fixed color model switchers not updating when switching from another selector.
+- Fixed order of color models are not saving.
+
+# v0.2.0
+
+- Open portable color selector at center of cursor.
+- Avoid indeterminable values during color model transferring.
+- Removed redundant color sending, which causes eraser mode of brushes being overridden.
+- Display two indicators when selecting colors: current color and last picked color.
+- Support colorful ring for `HSV` and `HSL` color models.
+- Remembering last used color model.
+- Optional color model switchers on portable color selector.
+- Portable color selector won't stop syncing color from Krita, which causes jittering.
+
+# v0.1.1
+
+- Fixed some OpenGL rendering issues on Linux platform.
+
+# v0.1.0 Initial release. 🥳 
+
+- Color picking in 7 color models: `RGB`, `HSV`, `HSL`, `OkLab`, `XYZ`, `Lab`, `OkLch`
+- 3 wheel shapes: square, triangle, circle
+- Out of gamut hint.
+- Axes swapping, reverting.
+- Color ring and bar. Color picker can rotate with ring.
+- `Shift` and `Alt` modifiers to shift slowly.
