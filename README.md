@@ -11,7 +11,6 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
   - Swappable and revertable axes.
   - Color picker rotate with ring.
   - Scale to fit SRGB gamut for color models in CIE color space.
-- Flexible and tiny. Thanks to OpenGL shaders and mathemagics, we can draw color wheels realtime.
 - Portable color selector. Open the selector at anywhere on canvas using shortcut.
 - `Shift` and `Alt` modifiers to shift slowly.
 - Out of gamut hinting.
