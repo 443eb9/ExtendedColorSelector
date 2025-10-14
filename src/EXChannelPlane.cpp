@@ -168,9 +168,11 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
                                                                         planeValues);
     }
 
-    QPointF widgetCoord = m_shape->shapeToWidget01(QPointF(planeValues.x(), planeValues.y()));
-    offsetWidgetCoord(widgetCoord);
-    painter.drawArc(QRectF(widgetCoord.x() * size - 4, widgetCoord.y() * size - 4, 8, 8), 0, 360 * 16);
+    if (planeValues.x() >= 0.0f && planeValues.x() <= 1.0f && planeValues.y() >= 0.0f && planeValues.y() <= 1.0f) {
+        QPointF widgetCoord = m_shape->shapeToWidget01(QPointF(planeValues.x(), planeValues.y()));
+        offsetWidgetCoord(widgetCoord);
+        painter.drawArc(QRectF(widgetCoord.x() * size - 4, widgetCoord.y() * size - 4, 8, 8), 0, 360 * 16);
+    }
 
     if (m_shape->ring.thickness > 0) {
         QPointF ringWidgetCoord = m_shape->ring.getWidgetCoord(m_colorState->primaryChannelValue());
