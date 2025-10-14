@@ -280,16 +280,6 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
         Q_EMIT m_settingsState->sigSettingsChanged();
     });
 
-    auto barHeightLayout = new QHBoxLayout(this);
-    auto barHeightBox = new QSpinBox();
-    barHeightBox->setValue(settings.barHeight);
-    connect(barHeightBox, QOverload<int>::of(&QSpinBox::valueChanged), [this, &settings](int val) {
-        settings.barHeight = val;
-        Q_EMIT m_settingsState->sigSettingsChanged();
-    });
-    barHeightLayout->addWidget(new QLabel("Bar Height"));
-    barHeightLayout->addWidget(barHeightBox);
-
     auto dontSyncIfOutOfGamutBox = new QCheckBox("Don't Sync Color From Krita If Out Of Gamut");
     dontSyncIfOutOfGamutBox->setChecked(settings.dontSyncIfOutOfGamut);
     connect(dontSyncIfOutOfGamutBox, &QCheckBox::clicked, [this, &settings](bool checked) {
@@ -341,7 +331,6 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
     mainLayout->addWidget(recordLastColorWhenMouseReleaseBox);
     mainLayout->addWidget(outOfGamutColorPicker);
     mainLayout->addWidget(dontSyncIfOutOfGamutBox);
-    mainLayout->addLayout(barHeightLayout);
     mainLayout->addWidget(pSettingsGroup);
     mainLayout->addStretch(1);
 }
