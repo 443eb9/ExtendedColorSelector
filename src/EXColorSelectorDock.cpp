@@ -6,6 +6,7 @@
 #include <kis_display_color_converter.h>
 #include <kis_icon_utils.h>
 
+#include "EXColorModel.h"
 #include "EXColorSelectorDock.h"
 
 EXColorSelectorDock::EXColorSelectorDock()
@@ -54,11 +55,16 @@ EXColorSelectorDock::EXColorSelectorDock()
 
     m_plane = new EXChannelPlane(m_colorState, m_settingsState, m_colorPatchPopup, this);
     m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
-    m_sliders = new EXChannelSliders(m_colorState, m_settingsState, m_colorPatchPopup, this);
+    m_sliders =
+        new EXChannelSliders(m_colorState->colorModel(), m_colorState, m_settingsState, m_colorPatchPopup, this);
     mainLayout->addWidget(m_plane);
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);
     mainLayout->addStretch(1);
+
+    connect(m_colorState.data(), &EXColorState::sigColorModelChanged, this, [this]() {
+        m_sliders->resetColorModel(m_colorState->colorModel());
+    });
 
     m_settings = new EXPerColorModelSettingsDialog(m_settingsState, this);
     m_globalSettings = new EXGlobalSettingsDialog(m_settingsState, this);

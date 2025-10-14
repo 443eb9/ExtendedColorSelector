@@ -164,13 +164,6 @@ void EXColorState::setSecondaryChannelValues(const QVector2D &values)
     Q_EMIT sigColorChanged(m_color);
 }
 
-void EXColorState::setChannel(quint32 index, float value)
-{
-    Q_ASSERT(index < 3);
-    m_color[index] = value;
-    Q_EMIT sigColorChanged(m_color);
-}
-
 QVector3D EXColorState::color() const
 {
     return m_color;

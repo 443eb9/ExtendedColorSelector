@@ -32,7 +32,6 @@ public:
     void setSecondaryChannelValues(const QVector2D &values);
     quint32 primaryChannelIndex() const;
     void setPrimaryChannelIndex(quint32 index);
-    void setChannel(quint32 index, float value);
 
     QVector3D color() const;
     QColor qColor() const;

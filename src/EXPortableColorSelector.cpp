@@ -2,6 +2,7 @@
 
 #include <kis_action_manager.h>
 
+#include "EXColorModel.h"
 #include "EXPortableColorSelector.h"
 
 EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
@@ -16,7 +17,8 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
     m_colorPatchPopup = new EXColorPatchPopup(m_colorState, this);
     m_plane = new EXChannelPlane(m_colorState, m_settingsState, m_colorPatchPopup, this);
     m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
-    m_sliders = new EXChannelSliders(m_colorState, m_settingsState, m_colorPatchPopup, this);
+    m_sliders =
+        new EXChannelSliders(m_colorState->colorModel(), m_colorState, m_settingsState, m_colorPatchPopup, this);
     mainLayout->addWidget(m_plane);
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);
@@ -24,6 +26,9 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
     setLayout(mainLayout);
 
     connect(m_settingsState, &EXSettingsState::sigSettingsChanged, this, &EXPortableColorSelector::settingsChanged);
+    connect(m_colorState.data(), &EXColorState::sigColorModelChanged, this, [this]() {
+        m_sliders->resetColorModel(m_colorState->colorModel());
+    });
 }
 
 void EXPortableColorSelector::settingsChanged()
