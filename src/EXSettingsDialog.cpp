@@ -308,13 +308,6 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
         Q_EMIT m_settingsState->sigSettingsChanged();
     });
 
-    auto dontSyncIfOutOfGamutBox = new QCheckBox("Don't Sync Color From Krita If Out Of Gamut");
-    dontSyncIfOutOfGamutBox->setChecked(settings.dontSyncIfOutOfGamut);
-    connect(dontSyncIfOutOfGamutBox, &QCheckBox::clicked, [this, &settings](bool checked) {
-        settings.dontSyncIfOutOfGamut = checked;
-        Q_EMIT m_settingsState->sigSettingsChanged();
-    });
-
     auto pSettingsGroup = new QGroupBox("Portable Color Selector");
     auto pSettingsLayout = new QVBoxLayout();
     pSettingsGroup->setLayout(pSettingsLayout);
@@ -359,7 +352,6 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
     mainLayout->addWidget(recordLastColorWhenMouseReleaseBox);
     mainLayout->addWidget(channelSpinBoxesEnabled);
     mainLayout->addWidget(outOfGamutColorPicker);
-    mainLayout->addWidget(dontSyncIfOutOfGamutBox);
     mainLayout->addWidget(pSettingsGroup);
     mainLayout->addStretch(1);
 }

@@ -52,7 +52,6 @@ public:
     QVector<ColorModelId> displayOrder;
     bool outOfGamutColorEnabled;
     QVector3D outOfGamutColor;
-    bool dontSyncIfOutOfGamut;
     float pWidth;
     bool pEnableChannelPlane;
     bool pEnableSliders;
