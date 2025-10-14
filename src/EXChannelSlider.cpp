@@ -130,6 +130,8 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     m_radioButton = new QRadioButton(channelNames[m_channelIndex], this);
+    m_radioButton->setChecked(colorState->primaryChannelIndex() == m_channelIndex);
+    m_label = new QLabel(channelNames[m_channelIndex], this);
     group->addButton(m_radioButton);
     m_spinBox = new QDoubleSpinBox(this);
     m_bar = new ChannelValueBar(channelIndex, colorModel, colorState, settingsState, colorPatchPopup, this);
@@ -137,6 +139,7 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
     layout->addWidget(m_bar);
     layout->addWidget(m_spinBox);
     layout->addWidget(m_radioButton);
+    layout->addWidget(m_label);
     setLayout(layout);
 
     connect(m_spinBox,
@@ -166,6 +169,8 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
     connect(colorState, &EXColorState::sigColorModelChanged, this, [this, colorState]() {
         m_radioButton->setText(colorState->colorModel()->channelNames()[m_channelIndex]);
     });
+
+    resetColorModel(colorModel);
 }
 
 void ChannelValueWidget::setCanvas(KisCanvas2 *canvas)
@@ -178,6 +183,14 @@ void ChannelValueWidget::resetColorModel(ColorModelSP colorModel)
     m_colorModel = colorModel;
     m_bar->resetColorModel(colorModel);
     updateSpinBoxRangeAndValue();
+
+    if (colorModel->id() == m_colorState->colorModel()->id()) {
+        m_radioButton->show();
+        m_label->hide();
+    } else {
+        m_radioButton->hide();
+        m_label->show();
+    }
 }
 
 void ChannelValueWidget::updateSpinBoxRangeAndValue()

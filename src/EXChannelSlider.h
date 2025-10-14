@@ -7,6 +7,7 @@
 #include <QVBoxLayout>
 #include <QVector>
 #include <QWidget>
+#include <QLabel>
 
 #include <KoColorDisplayRendererInterface.h>
 #include <kis_canvas2.h>
@@ -76,6 +77,7 @@ public:
 private:
     quint32 m_channelIndex;
     QRadioButton *m_radioButton;
+    QLabel *m_label;
     QDoubleSpinBox *m_spinBox;
     ChannelValueBar *m_bar;
     QVector3D m_colorAtCurrentModel;
