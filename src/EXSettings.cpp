@@ -62,6 +62,7 @@ EXGlobalSettings::EXGlobalSettings()
     : m_configGroup(KSharedConfig::openConfig()->group(EXSettingsGroupName))
 {
     recordLastColorWhenMouseRelease = m_configGroup.readEntry("recordLastColorWhenMouseRelease", false);
+    showChannelSpinBoxes = m_configGroup.readEntry("showChannelSpinBoxes", true);
     outOfGamutColorEnabled = m_configGroup.readEntry("outOfGamutColorEnabled", true);
     pWidth = m_configGroup.readEntry("pWidth", 300.0f);
     pEnableChannelPlane = m_configGroup.readEntry("pEnableChannelPlane", true);
@@ -92,6 +93,7 @@ EXGlobalSettings::EXGlobalSettings()
 void EXGlobalSettings::writeAll()
 {
     m_configGroup.writeEntry("recordLastColorWhenMouseRelease", recordLastColorWhenMouseRelease);
+    m_configGroup.writeEntry("showChannelSpinBoxes", showChannelSpinBoxes);
     m_configGroup.writeEntry(
         "displayOrder",
         ExtendedUtils::vectorToString<ColorModelId>(this->displayOrder, [](const ColorModelId &id) {

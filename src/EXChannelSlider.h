@@ -73,6 +73,7 @@ public:
 
     void setCanvas(KisCanvas2 *canvas);
     void resetColorModel(ColorModelSP colorModel);
+    void settingsChanged();
 
 private:
     quint32 m_channelIndex;
@@ -83,6 +84,7 @@ private:
     QVector3D m_colorAtCurrentModel;
     ColorModelSP m_colorModel;
     EXColorStateSP m_colorState;
+    EXSettingsStateSP m_settingsState;
 
     void updateSpinBoxRangeAndValue();
 };

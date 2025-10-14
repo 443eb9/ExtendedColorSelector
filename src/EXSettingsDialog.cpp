@@ -285,6 +285,13 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
         Q_EMIT m_settingsState->sigSettingsChanged();
     });
 
+    auto channelSpinBoxesEnabled = new QCheckBox("Show Channel Spin Boxes");
+    channelSpinBoxesEnabled->setChecked(settings.showChannelSpinBoxes);
+    connect(channelSpinBoxesEnabled, &QCheckBox::clicked, [this, &settings](bool checked) {
+        settings.showChannelSpinBoxes = checked;
+        Q_EMIT m_settingsState->sigSettingsChanged();
+    });
+
     auto outOfGamutColorPicker = new OptionalColorPicker(
         this,
         "Out Of Gamut Color",
@@ -350,6 +357,7 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
     pSettingsLayout->addLayout(pSettingForm);
 
     mainLayout->addWidget(recordLastColorWhenMouseReleaseBox);
+    mainLayout->addWidget(channelSpinBoxesEnabled);
     mainLayout->addWidget(outOfGamutColorPicker);
     mainLayout->addWidget(dontSyncIfOutOfGamutBox);
     mainLayout->addWidget(pSettingsGroup);

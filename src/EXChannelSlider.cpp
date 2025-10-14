@@ -123,9 +123,11 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
     , m_channelIndex(channelIndex)
     , m_colorModel(colorModel)
     , m_colorState(colorState)
+    , m_settingsState(settingsState)
 {
     auto layout = new QHBoxLayout(this);
-    layout->setContentsMargins(0, 2, 0, 2);
+    layout->setContentsMargins(0, 1, 0, 1);
+    setFixedHeight(24);
     auto channelNames = colorModel->channelNames();
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
@@ -171,6 +173,7 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
     });
 
     resetColorModel(colorModel);
+    settingsChanged();
 }
 
 void ChannelValueWidget::setCanvas(KisCanvas2 *canvas)
@@ -191,6 +194,12 @@ void ChannelValueWidget::resetColorModel(ColorModelSP colorModel)
         m_radioButton->hide();
         m_label->show();
     }
+}
+
+void ChannelValueWidget::settingsChanged()
+{
+    bool showSpinBoxes = m_settingsState->globalSettings.showChannelSpinBoxes;
+    m_spinBox->setVisible(showSpinBoxes);
 }
 
 void ChannelValueWidget::updateSpinBoxRangeAndValue()
