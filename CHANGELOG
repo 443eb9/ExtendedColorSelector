@@ -1,7 +1,8 @@
 # Unreleased
 
-- Toggling color model isn't working.
-- Shifting on sliders that not in current model isn't working as expected.
+- Fixed toggling color model isn't working.
+- Fixed shifting on sliders that not in current model isn't working as expected.
+- Fixed sliders that not in current model not using reference color.
 
 # v0.5.0
 

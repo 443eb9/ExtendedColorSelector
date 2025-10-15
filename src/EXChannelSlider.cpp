@@ -144,32 +144,35 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
     layout->addWidget(m_label);
     setLayout(layout);
 
-    connect(m_spinBox,
-            QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-            this,
-            [this, colorState](double value) mutable {
-                auto [chmn, chmx] = m_colorModel->channelRanges();
-                auto channel = (value - chmn[m_channelIndex]) / (chmx[m_channelIndex] - chmn[m_channelIndex]);
-                auto color = m_colorAtCurrentModel;
-                color[m_channelIndex] = channel;
-                colorState->setColor(m_colorModel->transferTo(colorState->colorModel().data(), color));
-                colorState->sendToKrita();
-            });
-
-    connect(colorState, &EXColorState::sigPrimaryChannelIndexChanged, this, [this, colorState]() {
-        m_radioButton->setChecked(colorState->primaryChannelIndex() == m_channelIndex);
+    connect(m_spinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [this](double value) mutable {
+        auto [chmn, chmx] = m_colorModel->channelRanges();
+        auto channel = (value - chmn[m_channelIndex]) / (chmx[m_channelIndex] - chmn[m_channelIndex]);
+        auto color = m_colorAtCurrentModel;
+        color[m_channelIndex] = channel;
+        m_colorState->setColor(
+            m_colorModel->transferTo(m_colorState->colorModel().data(), color, m_colorState->color()));
+        m_colorState->sendToKrita();
     });
 
-    connect(colorState, &EXColorState::sigColorChanged, this, &ChannelValueWidget::updateSpinBoxRangeAndValue);
+    connect(m_colorState, &EXColorState::sigPrimaryChannelIndexChanged, this, [this]() {
+        m_radioButton->setChecked(m_colorState->primaryChannelIndex() == m_channelIndex);
+    });
 
-    connect(m_radioButton, &QRadioButton::clicked, this, [this, colorState](bool checked) mutable {
+    connect(m_colorState, &EXColorState::sigColorChanged, this, [this]() {
+        m_colorAtCurrentModel =
+            m_colorState->colorModel()->transferTo(m_colorModel.data(), m_colorState->color(), m_colorAtCurrentModel);
+        m_bar->updateColorAtCurrentModel(m_colorAtCurrentModel);
+        updateSpinBoxRangeAndValue();
+    });
+
+    connect(m_radioButton, &QRadioButton::clicked, this, [this](bool checked) mutable {
         if (checked) {
-            colorState->setPrimaryChannelIndex(m_channelIndex);
+            m_colorState->setPrimaryChannelIndex(m_channelIndex);
         }
     });
 
-    connect(colorState, &EXColorState::sigColorModelChanged, this, [this, colorState]() {
-        m_radioButton->setText(colorState->colorModel()->channelNames()[m_channelIndex]);
+    connect(m_colorState, &EXColorState::sigColorModelChanged, this, [this]() {
+        m_radioButton->setText(m_colorState->colorModel()->channelNames()[m_channelIndex]);
     });
 
     resetColorModel(colorModel);
@@ -205,7 +208,8 @@ void ChannelValueWidget::settingsChanged()
 void ChannelValueWidget::updateSpinBoxRangeAndValue()
 {
     auto [chmn, chmx] = m_colorModel->channelRanges();
-    m_colorAtCurrentModel = m_colorState->colorModel()->transferTo(m_colorModel.data(), m_colorState->color());
+    m_colorAtCurrentModel =
+        m_colorState->colorModel()->transferTo(m_colorModel.data(), m_colorState->color(), m_colorAtCurrentModel);
     m_spinBox->blockSignals(true);
     m_spinBox->setRange(chmn[m_channelIndex], chmx[m_channelIndex]);
     m_spinBox->setValue(m_colorAtCurrentModel[m_channelIndex] * (chmx[m_channelIndex] - chmn[m_channelIndex])
@@ -228,13 +232,6 @@ ChannelValueBar::ChannelValueBar(int channelIndex,
     , m_colorModel(colorModel)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    m_colorAtCurrentModel = m_colorState->colorModel()->transferTo(m_colorModel.data(), m_colorState->color());
-    connect(m_colorState, &EXColorState::sigColorChanged, this, [this]() {
-        m_colorAtCurrentModel = m_colorState->colorModel()->transferTo(m_colorModel.data(), m_colorState->color());
-        updateImage();
-        update();
-    });
 
     connect(m_colorState, &EXColorState::sigColorModelChanged, this, [this]() {
         updateImage();
@@ -296,6 +293,13 @@ void ChannelValueBar::updateImage()
                                               new EXColorConverter(m_colorState->colorSpace(), m_colorModel),
                                               m_dri,
                                               pixelGet);
+}
+
+void ChannelValueBar::updateColorAtCurrentModel(QVector3D colorAtCurrentModel)
+{
+    m_colorAtCurrentModel = colorAtCurrentModel;
+    updateImage();
+    update();
 }
 
 void ChannelValueBar::resizeEvent(QResizeEvent *event)

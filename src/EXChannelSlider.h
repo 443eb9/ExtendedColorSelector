@@ -3,11 +3,11 @@
 
 #include <QButtonGroup>
 #include <QDoubleSpinBox>
+#include <QLabel>
 #include <QRadioButton>
 #include <QVBoxLayout>
 #include <QVector>
 #include <QWidget>
-#include <QLabel>
 
 #include <KoColorDisplayRendererInterface.h>
 #include <kis_canvas2.h>
@@ -44,6 +44,7 @@ public:
 
     void setCanvas(KisCanvas2 *canvas);
     void resetColorModel(ColorModelSP colorModel);
+    void updateColorAtCurrentModel(QVector3D colorAtCurrentModel);
 
 private:
     int m_channelIndex;
