@@ -158,6 +158,15 @@ ChannelValueWidget::ChannelValueWidget(int channelIndex,
         m_radioButton->setChecked(m_colorState->primaryChannelIndex() == m_channelIndex);
     });
 
+    connect(m_bar, &ChannelValueBar::sigValueChanged, this, [this](float value) {
+        auto color = m_colorAtCurrentModel;
+        color[m_channelIndex] = value;
+        m_colorState->setColor(m_colorModel->transferTo(m_colorState->colorModel().data(), color));
+
+        m_colorAtCurrentModel[m_channelIndex] = value;
+        updateSpinBoxRangeAndValue();
+    });
+
     connect(m_colorState, &EXColorState::sigColorChanged, this, [this]() {
         m_colorAtCurrentModel =
             m_colorState->colorModel()->transferTo(m_colorModel.data(), m_colorState->color(), m_colorAtCurrentModel);
@@ -352,25 +361,21 @@ void ChannelValueBar::edit(QMouseEvent *event)
     Q_UNUSED(event);
 
     float value = qBound(0.f, (float)event->pos().x() / width(), 1.f);
-    auto color = m_colorAtCurrentModel;
-    color[m_channelIndex] = value;
-    m_colorState->setColor(m_colorModel->transferTo(m_colorState->colorModel().data(), color));
+    Q_EMIT sigValueChanged(value);
 }
 
 void ChannelValueBar::shift(QMouseEvent *event, QVector2D delta)
 {
     Q_UNUSED(event);
 
-    qreal value = (m_editStart + delta.x()) / width();
+    float value = (m_editStart + delta.x()) / width();
     if (ExtendedUtils::testFlag(m_colorState->colorModel()->wrappableChannelIndexBits(), m_channelIndex)) {
         value = value - qFloor(value);
     } else {
-        value = qBound(0.0, value, 1.0);
+        value = qBound(0.0f, value, 1.0f);
     }
 
-    auto color = m_colorAtCurrentModel;
-    color[m_channelIndex] = value;
-    m_colorState->setColor(m_colorModel->transferTo(m_colorState->colorModel().data(), color));
+    Q_EMIT sigValueChanged(value);
 }
 
 float ChannelValueBar::currentWidgetCoord()

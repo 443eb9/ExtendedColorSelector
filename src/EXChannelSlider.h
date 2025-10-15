@@ -46,6 +46,9 @@ public:
     void resetColorModel(ColorModelSP colorModel);
     void updateColorAtCurrentModel(QVector3D colorAtCurrentModel);
 
+Q_SIGNALS:
+    void sigValueChanged(float value);
+
 private:
     int m_channelIndex;
     KoColorDisplayRendererInterface *m_dri;

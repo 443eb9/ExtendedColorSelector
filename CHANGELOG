@@ -3,6 +3,7 @@
 - Fixed toggling color model isn't working.
 - Fixed shifting on sliders that not in current model isn't working as expected.
 - Fixed sliders that not in current model not using reference color.
+- Fixed sliders that not in current models is not slidable if changing current channel won't affect the values in state.
 
 # v0.5.0
 
