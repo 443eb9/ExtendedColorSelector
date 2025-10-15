@@ -1,6 +1,7 @@
 # Unreleased
 
 - Toggling color model isn't working.
+- Shifting on sliders that not in current model isn't working as expected.
 
 # v0.5.0
 

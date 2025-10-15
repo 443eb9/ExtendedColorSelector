@@ -371,5 +371,5 @@ void ChannelValueBar::shift(QMouseEvent *event, QVector2D delta)
 
 float ChannelValueBar::currentWidgetCoord()
 {
-    return (float)(m_colorState->color()[m_channelIndex] * width());
+    return (float)(m_colorAtCurrentModel[m_channelIndex] * width());
 }
