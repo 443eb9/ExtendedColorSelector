@@ -1,5 +1,9 @@
 # Unreleased
 
+- Toggling color model isn't working.
+
+# v0.5.0
+
 - Rewrite the entire plugin using C++;
 - Allow add multiple sliders in one color model;
 - Integrated with color management system from Krita;
@@ -7,9 +11,9 @@
 - Renamed model `Rgb` to `Srgb`;
 - Allow hiding channel value spin boxes;
 
-Windows version is built on Windows 11 23H2 with CMake 3.31.8 and ninja 1.13.1.
-
-Linux version is built on Ubuntu 24.04.
+**Build Details**
+- Windows version is built on Windows 11 23H2 with CMake 3.31.8 and ninja 1.13.1.
+- Linux version is built on Ubuntu 24.04.
 
 # v0.4.0
 

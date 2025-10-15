@@ -234,10 +234,9 @@ void EXPerColorModelSettingsDialog::updateColorModelsOrder()
 
     for (int i = 0; i < m_pageSwitchers->count(); ++i) {
         auto item = m_pageSwitchers->item(i);
-        if (item->checkState() == Qt::CheckState::Checked) {
-            auto modelId = static_cast<ColorModelId>(item->data(Qt::UserRole).toInt());
-            globalSettings.displayOrder.append(modelId);
-        }
+        auto modelId = static_cast<ColorModelId>(item->data(Qt::UserRole).toInt());
+        m_settingsState->settings[modelId].enabled = item->checkState() == Qt::CheckState::Checked;
+        globalSettings.displayOrder.append(modelId);
     }
 
     globalSettings.writeAll();
