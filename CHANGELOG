@@ -1,3 +1,5 @@
+# Unreleased
+
 # v0.6.0
 
 - Fixed toggling color model isn't working.
@@ -8,6 +10,12 @@
 
 **Binary Details `5.2.13`**
 - Built with Krita `5.2.13` git commit `6d3651ac4df88efb68e013d21061de9846e83fe8`.
+- Windows version is built on Windows 11 23H2 with CMake 3.31.8 and ninja 1.13.1.
+- Linux version is built on Ubuntu 24.04.
+- Tested on these two OS.
+
+**Binary Details `master`**
+- Built with Krita `5.3.0-prealpha` git commit `cba0495bd818001bc13d5ab2824a5e5ccb1aef96`.
 - Windows version is built on Windows 11 23H2 with CMake 3.31.8 and ninja 1.13.1.
 - Linux version is built on Ubuntu 24.04.
 - Tested on these two OS.
