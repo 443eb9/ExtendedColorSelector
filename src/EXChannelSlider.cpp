@@ -369,7 +369,7 @@ void ChannelValueBar::shift(QMouseEvent *event, QVector2D delta)
     Q_UNUSED(event);
 
     float value = (m_editStart + delta.x()) / width();
-    if (ExtendedUtils::testFlag(m_colorState->colorModel()->wrappableChannelIndexBits(), m_channelIndex)) {
+    if (ExtendedUtils::testFlag(m_colorModel->wrappableChannelIndexBits(), m_channelIndex)) {
         value = value - qFloor(value);
     } else {
         value = qBound(0.0f, value, 1.0f);
