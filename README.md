@@ -62,7 +62,7 @@ krita/
   └── ...
 ```
 
-Next, open `CMakeLists.txt`, and add the following line after the last `add_subdirectory( ... )` line:
+Next, open `CMakeLists.txt`, and add this line after the last `add_subdirectory( ... )` line:
 
 ```cmake
 add_subdirectory( ExtendedColorSelector )
@@ -71,7 +71,7 @@ add_subdirectory( ExtendedColorSelector )
 Finally, build again, and in the install directory, you will find the plugin `extended_color_selector`.
 
 - On Windows, it should at `_install\extended_color_selector`
-- On Linux, it should at `/home/appimage/.local/share/krita/pykrita/extended_color_selector`
+- On Linux, it should at `/home/appimage/.local/share/krita/pykrita/extended_color_selector` inside the container.
 
 It is recommended to create symlinks in `pykrita` folder to the install folder so you don't need to manually copy after every build.
 
