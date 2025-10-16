@@ -1,4 +1,4 @@
-# v0.5.1
+# v0.6.0
 
 - Fixed toggling color model isn't working.
 - Fixed shifting on sliders that not in current model isn't working as expected.
