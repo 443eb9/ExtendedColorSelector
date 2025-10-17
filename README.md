@@ -49,16 +49,14 @@ First, you need to follow [Building Krita from Source](https://docs.krita.org/en
 
 Then, clone this repository into `krita/plugins/` folder.
 
-The directory structure should be like this:
+The directory structure of Krita source code should be like this:
 
 ```
 krita/
-  ├── ...
-  ├── pics/
   ├── plugins/
   │    ├── ExtendedColorSelector/   # This repository
-  │    └── CMakeLists.txt   # The CMakeLists.txt you are going to modify
-  ├── po/
+  │    ├── CMakeLists.txt   # The CMakeLists.txt you are going to modify
+  │    └── ...
   └── ...
 ```
 
@@ -71,7 +69,7 @@ add_subdirectory( ExtendedColorSelector )
 Finally, build again, and in the install directory, you will find the plugin `extended_color_selector`.
 
 - On Windows, it should at `_install\extended_color_selector`
-- On Linux, it should at `/home/appimage/.local/share/krita/pykrita/extended_color_selector` inside the container.
+- On Linux, it should at `/home/appimage/appimage-workspace/krita.appdir/usr/extended_color_selector` inside the container.
 
 It is recommended to create symlinks in `pykrita` folder to the install folder so you don't need to manually copy after every build.
 
