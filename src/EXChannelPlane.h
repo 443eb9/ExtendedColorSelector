@@ -26,7 +26,7 @@ public:
     void setColor(QVector3D color);
     void setClipToSrgbGamut(bool clip);
     void setColorfulRing(bool colorful);
-    void setKoColorConverter(EXColorConverterSP colorConverter);
+    void setColorConverter(EXColorConverterSP colorConverter);
     void setShape(EXChannelPlaneShapeSP shape);
     void setSanitizeOutOfGamut(bool sanitize, QVector3D outOfGamutColor = QVector3D());
 
@@ -58,7 +58,7 @@ private:
     QVector3D m_color;
     bool m_clipToSrgbGamut;
     bool m_colorfulRing;
-    EXColorConverterSP m_koColorConverter;
+    EXColorConverterSP m_converter;
     bool m_sanitizeOutOfGamut;
     QVector3D m_outOfGamutColor;
 

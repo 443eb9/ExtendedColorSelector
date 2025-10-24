@@ -78,9 +78,6 @@ private:
     EXColorConverterSP m_koColorConverter;
     bool m_blockColorSync;
     bool m_useLayerColorSpace;
-
-    QVector<EXChannelPlane *> m_connectedChannelPlanes;
-    QVector<EXChannelSlider *> m_connectedChannelSliders;
 };
 
 typedef KisSharedPtr<EXColorState> EXColorStateSP;

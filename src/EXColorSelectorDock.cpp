@@ -167,9 +167,6 @@ void EXColorSelectorDock::onColorSpaceSelected(const KoColorSpace *colorSpace)
 
 void EXColorSelectorDock::updateSliders()
 {
-    m_colorState->clearConnectedChannelSliders();
-    m_settingsState->clearConnectedChannelSliders();
-
     auto &settings = m_settingsState->settings[m_colorState->colorModel()->id()];
     if (settings.slidersEnabled) {
         auto sliders = QVector(settings.extraSliders);

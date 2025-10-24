@@ -77,9 +77,9 @@ void EXChannelPlane::setColorfulRing(bool colorful)
     updateImage();
 }
 
-void EXChannelPlane::setKoColorConverter(EXColorConverterSP colorConverter)
+void EXChannelPlane::setColorConverter(EXColorConverterSP colorConverter)
 {
-    m_koColorConverter = colorConverter;
+    m_converter = colorConverter;
     updateImage();
 }
 
@@ -164,12 +164,12 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
 
 void EXChannelPlane::updateImage()
 {
-    if (!m_dri || !m_shape) {
+    if (!m_dri || !m_shape || !m_converter) {
         m_image = QImage();
         return;
     }
 
-    int alphaPos = m_koColorConverter->colorSpace()->alphaPos();
+    int alphaPos = m_converter->colorSpace()->alphaPos();
 
     auto pixelGet = [this, alphaPos](float x, float y) -> QVector4D {
         QVector3D color;
@@ -214,7 +214,7 @@ void EXChannelPlane::updateImage()
             }
         }
 
-        color = m_colorModel->transferTo(m_koColorConverter->colorModel(), color);
+        color = m_colorModel->transferTo(m_converter->colorModel(), color);
         if (!m_colorModel->isSrgbBased() && m_sanitizeOutOfGamut) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor);
         }
@@ -222,7 +222,7 @@ void EXChannelPlane::updateImage()
         colorWithAlpha[alphaPos] = 1.0f;
         return colorWithAlpha;
     };
-    m_image = ExtendedUtils::generateGradient(size(), size(), true, m_koColorConverter, m_dri, pixelGet);
+    m_image = ExtendedUtils::generateGradient(size(), size(), true, m_converter, m_dri, pixelGet);
     update();
 }
 
