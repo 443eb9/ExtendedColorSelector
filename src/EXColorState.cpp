@@ -266,6 +266,8 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
     slider->setColorConverter(m_koColorConverter);
     slider->setColor(m_color, m_colorModel);
     slider->setActive(colorModel->id() == m_colorModel->id());
+    slider->setSelected(channelIndex == m_primaryChannelIndex);
+
     connect(slider->bar(), &EXChannelSliderBar::sigValueChanging, this, [this, colorModel, slider]() {
         setColor(colorModel->transferTo(m_colorModel.data(), slider->colorAtCurrentModel(), m_color));
     });
@@ -282,5 +284,8 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
     });
     connect(this, &EXColorState::sigPrimaryChannelIndexChanged, slider, [this, channelIndex, slider](quint32 index) {
         slider->setSelected(channelIndex == index);
+    });
+    connect(slider, &EXChannelSlider::sigSelected, this, [this, channelIndex]() {
+        setPrimaryChannelIndex(channelIndex);
     });
 }
