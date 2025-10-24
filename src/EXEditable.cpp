@@ -9,6 +9,8 @@ void EXEditable::mousePressEvent(QMouseEvent *event)
 {
     m_editStart = event->pos();
     startEdit(event, event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::AltModifier));
+
+    Q_EMIT sigValueChangeStarted();
 }
 
 void EXEditable::mouseMoveEvent(QMouseEvent *event)
@@ -26,4 +28,12 @@ void EXEditable::mouseMoveEvent(QMouseEvent *event)
     } else {
         shift(event, QVector2D(event->pos() - m_editStart) * factor);
     }
+
+    Q_EMIT sigValueChanging();
+}
+
+void EXEditable::mouseReleaseEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event);
+    Q_EMIT sigValueFinalized();
 }

@@ -28,14 +28,13 @@ public:
     void setColorfulRing(bool colorful);
     void setKoColorConverter(EXColorConverterSP colorConverter);
     void setShape(EXChannelPlaneShapeSP shape);
+    void setSanitizeOutOfGamut(bool sanitize, QVector3D outOfGamutColor = QVector3D());
 
     ColorModelSP colorModel() const;
 
 Q_SIGNALS:
     void sigPrimaryChannelValueSelected(float value);
     void sigSecondaryChannelsValueSelected(QVector2D values);
-    void sigStartColorSelection();
-    void sigValuesFinalized();
 
 private:
     enum EditMode {
@@ -60,6 +59,8 @@ private:
     bool m_clipToSrgbGamut;
     bool m_colorfulRing;
     EXColorConverterSP m_koColorConverter;
+    bool m_sanitizeOutOfGamut;
+    QVector3D m_outOfGamutColor;
 
     void handleCursorEdit(const QPointF &widgetCoord);
     void sendPlaneColor(const QPointF &widgetCoord);
@@ -71,7 +72,6 @@ private:
 
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
 
     void startEdit(QMouseEvent *event, bool isShift) override;
     void edit(QMouseEvent *event) override;

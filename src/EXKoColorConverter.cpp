@@ -3,9 +3,9 @@
 
 #include "EXKoColorConverter.h"
 
-EXColorConverter::EXColorConverter(const KoColorSpace *cs, const ColorModelSP &colorModel)
+EXColorConverter::EXColorConverter(const KoColorSpace *cs)
     : m_colorSpace(cs)
-    , m_colorModel(colorModel)
+    , m_colorModel(ColorModelFactory::fromKoColorSpace(cs))
 {
     const QList<KoChannelInfo *> channelList = cs->channels();
 

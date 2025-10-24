@@ -4,6 +4,7 @@
 #include <QButtonGroup>
 #include <QDoubleSpinBox>
 #include <QLabel>
+#include <QPair>
 #include <QRadioButton>
 #include <QVBoxLayout>
 #include <QVector>
@@ -13,24 +14,18 @@
 #include <kis_canvas2.h>
 
 #include "EXColorModel.h"
-#include "EXColorPatchPopup.h"
-#include "EXColorState.h"
 #include "EXEditable.h"
 #include "EXKoColorConverter.h"
-#include "EXSettingsState.h"
 
-class ChannelValueBar : public EXEditable
+class EXChannelSliderBar : public EXEditable
 {
     Q_OBJECT
 
+    friend class EXChannelSlider;
+
 public:
-    ChannelValueBar(int channelIndex,
-                    ColorModelSP colorModel,
-                    EXColorStateSP colorState,
-                    EXSettingsStateSP settingsState,
-                    EXColorPatchPopup *colorPatchPopup = nullptr,
-                    QWidget *parent = nullptr);
-    ~ChannelValueBar() override = default;
+    EXChannelSliderBar(int channelIndex, ColorModelSP colorModel, QWidget *parent = nullptr);
+    ~EXChannelSliderBar() override = default;
 
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -43,52 +38,55 @@ public:
     float currentWidgetCoord();
 
     void setCanvas(KisCanvas2 *canvas);
-    void resetColorModel(ColorModelSP colorModel);
-    void updateColorAtCurrentModel(QVector3D colorAtCurrentModel);
-
-Q_SIGNALS:
-    void sigValueChanged(float value);
 
 private:
     int m_channelIndex;
     KoColorDisplayRendererInterface *m_dri;
     QImage m_image;
     float m_editStart;
-    EXColorPatchPopup *m_colorPatchPopup;
-    EXColorStateSP m_colorState;
-    EXSettingsStateSP m_settingsState;
     QVector3D m_colorAtCurrentModel;
-    EXColorConverterSP m_converterAtCurrentModel;
+    EXColorConverterSP m_converter;
     ColorModelSP m_colorModel;
+    bool m_colorful;
+    bool m_sanitizeOutOfGamut;
+    QVector3D m_outOfGamutColor;
 
     void updateImage();
 };
 
-class ChannelValueWidget : public QWidget
+class EXChannelSlider : public QWidget
 {
+    Q_OBJECT
+
 public:
-    ChannelValueWidget(int channelIndex,
-                       QButtonGroup *group,
-                       ColorModelSP colorModel,
-                       EXColorStateSP colorState,
-                       EXSettingsStateSP settingsState,
-                       EXColorPatchPopup *colorPatchPopup = nullptr,
-                       QWidget *parent = nullptr);
+    EXChannelSlider(int channelIndex,
+                    ColorModelSP colorModel,
+                    QButtonGroup *group = nullptr,
+                    QWidget *parent = nullptr);
 
     void setCanvas(KisCanvas2 *canvas);
-    void resetColorModel(ColorModelSP colorModel);
-    void settingsChanged();
+    void setActive(bool active);
+    void setSelected(bool selected);
+    void setColor(QVector3D color, ColorModelSP colorModel);
+    void setSanitizeOutOfGamut(bool sanitize, QVector3D outOfGamutColor = QVector3D());
+    void setShowChannelSpinBoxes(bool show);
+    void setColorConverter(EXColorConverterSP converter);
+    void setColorful(bool colorful);
+    QPair<ColorModelSP, quint32> colorModelAndChannelIndex() const;
+
+    QVector3D colorAtCurrentModel() const;
+    EXChannelSliderBar *bar() const;
+
+Q_SIGNALS:
+    void sigSelected();
 
 private:
     quint32 m_channelIndex;
     QRadioButton *m_radioButton;
     QLabel *m_label;
     QDoubleSpinBox *m_spinBox;
-    ChannelValueBar *m_bar;
-    QVector3D m_colorAtCurrentModel;
+    EXChannelSliderBar *m_bar;
     ColorModelSP m_colorModel;
-    EXColorStateSP m_colorState;
-    EXSettingsStateSP m_settingsState;
 
     void updateSpinBoxRangeAndValue();
 };
@@ -98,41 +96,35 @@ class EXChannelSliders : public QWidget
     Q_OBJECT
 
 public:
-    EXChannelSliders(ColorModelSP colorModel,
-                     EXColorStateSP colorState,
-                     EXSettingsStateSP settingsState,
-                     EXColorPatchPopup *colorPatchPopup = nullptr,
-                     QWidget *parent = nullptr);
+    EXChannelSliders(ColorModelSP colorModel, QWidget *parent = nullptr);
 
     void setCanvas(KisCanvas2 *canvas);
-    void resetColorModel(ColorModelSP colorModel);
+    void setActive(bool active);
+    std::array<EXChannelSlider *, 3> sliders() const;
 
 private:
-    ChannelValueWidget *m_channelWidgets[3];
+    std::array<EXChannelSlider *, 3> m_channelWidgets;
 };
 
 class EXChannelSlidersGroup : public QWidget
 {
     Q_OBJECT
 public:
-    EXChannelSlidersGroup(QVector<ColorModelId> colorModels,
-                          EXColorStateSP colorState,
-                          EXSettingsStateSP settingsState,
-                          EXColorPatchPopup *colorPatchPopup = nullptr,
-                          QWidget *parent = nullptr);
+    EXChannelSlidersGroup(QVector<ColorModelId> colorModels, QWidget *parent = nullptr);
     ~EXChannelSlidersGroup() override = default;
 
     void setCanvas(KisCanvas2 *canvas);
     void resetColorModels(QVector<ColorModelId> colorModels);
 
+    const QVector<EXChannelSliders *> &sliders() const;
+
+Q_SIGNALS:
+    void sigChannelValueChanged(int channelIndex, float value, QVector3D fullColor, ColorModelSP colorModel);
+
 private:
     QVBoxLayout *m_layout;
     QVector<EXChannelSliders *> m_sliders;
     KisCanvas2 *m_canvas;
-
-    EXColorStateSP m_colorState;
-    EXSettingsStateSP m_settingsState;
-    EXColorPatchPopup *m_colorPatchPopup;
 };
 
 #endif // ExtendedChannelSlider_H

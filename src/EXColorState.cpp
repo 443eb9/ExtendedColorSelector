@@ -48,11 +48,15 @@ void EXColorState::setColorModel(ColorModelId model)
     m_color = m_colorModel->transferTo(newModel, m_color, m_color);
     ExtendedUtils::saturateColor(m_color);
     m_colorModel = newModel;
-    m_koColorConverter = new EXColorConverter(m_currentColorSpace, m_colorModel);
+    m_koColorConverter = new EXColorConverter(m_currentColorSpace);
 
     for (EXChannelPlane *plane : m_connectedChannelPlanes) {
         plane->setColor(m_color);
         plane->setColorModel(m_colorModel);
+    }
+    for (EXChannelSlider *slider : m_connectedChannelSliders) {
+        slider->setColor(m_color, m_colorModel);
+        slider->setActive(slider->colorModelAndChannelIndex().first->id() == model);
     }
 
     Q_EMIT sigColorModelChanged(model);
@@ -66,7 +70,7 @@ const ColorModelSP EXColorState::colorModel() const
 
 void EXColorState::sendToKrita()
 {
-    QVector3D currentColor = m_colorModel->transferTo(m_kritaColorModel, m_color);
+    QVector3D currentColor = m_colorModel->transferTo(kritaColorModel(), m_color);
     ExtendedUtils::saturateColor(currentColor);
 
     m_blockColorSync = true;
@@ -76,14 +80,14 @@ void EXColorState::sendToKrita()
 
 void EXColorState::syncFromKrita()
 {
-    if (m_blockColorSync || !m_resourceProvider || !m_currentColorSpace) {
+    if (m_blockColorSync || !m_resourceProvider || !m_currentColorSpace || !m_colorModel) {
         return;
     }
 
     KoColor koColor = m_resourceProvider->fgColor();
     koColor.convertTo(m_currentColorSpace);
     QVector3D newColor = m_koColorConverter->koColorToDisplayChannels(koColor).toVector3D();
-    m_color = m_kritaColorModel->transferTo(m_colorModel, newColor, m_color);
+    m_color = kritaColorModel()->transferTo(m_colorModel, newColor, m_color);
     setColor(m_color);
 }
 
@@ -117,11 +121,7 @@ qreal EXColorState::primaryChannelValue() const
 void EXColorState::setPrimaryChannelValue(float value)
 {
     m_color[m_primaryChannelIndex] = value;
-    Q_EMIT sigColorChanged(m_color);
-
-    for (EXChannelPlane *plane : m_connectedChannelPlanes) {
-        plane->setColor(m_color);
-    }
+    setColor(m_color);
 }
 
 quint32 EXColorState::primaryChannelIndex() const
@@ -141,6 +141,10 @@ void EXColorState::setPrimaryChannelIndex(quint32 index)
     for (EXChannelPlane *plane : m_connectedChannelPlanes) {
         plane->setColor(m_color);
     }
+    for (EXChannelSlider *slider : m_connectedChannelSliders) {
+        slider->setSelected(slider->colorModelAndChannelIndex().second == index);
+    }
+
     Q_EMIT sigPrimaryChannelIndexChanged(index);
 }
 
@@ -174,7 +178,8 @@ void EXColorState::setSecondaryChannelValues(const QVector2D &values)
         m_color[1] = values.y();
         break;
     }
-    Q_EMIT sigColorChanged(m_color);
+
+    setColor(m_color);
 }
 
 QVector3D EXColorState::color() const
@@ -184,7 +189,7 @@ QVector3D EXColorState::color() const
 
 KoColor EXColorState::koColor() const
 {
-    auto kritaColor = m_colorModel->transferTo(m_kritaColorModel, m_color);
+    auto kritaColor = m_colorModel->transferTo(kritaColorModel(), m_color);
     return m_koColorConverter->displayChannelsToKoColor(QVector4D(kritaColor, 1.0f));
 }
 
@@ -199,6 +204,9 @@ void EXColorState::setColor(const QVector3D &color)
     for (EXChannelPlane *plane : m_connectedChannelPlanes) {
         plane->setColor(m_color);
     }
+    for (EXChannelSlider *slider : m_connectedChannelSliders) {
+        slider->setColor(m_color, m_colorModel);
+    }
 
     Q_EMIT sigColorChanged(m_color);
 }
@@ -210,12 +218,7 @@ const KoColorSpace *EXColorState::colorSpace() const
 
 const ColorModelSP EXColorState::kritaColorModel() const
 {
-    return m_kritaColorModel;
-}
-
-bool EXColorState::possibleOutOfSrgb() const
-{
-    return m_kritaColorModel->isSrgbBased() && !m_colorModel->isSrgbBased();
+    return m_koColorConverter->colorModel();
 }
 
 const EXColorConverterSP EXColorState::koColorConverter() const
@@ -245,15 +248,17 @@ void EXColorState::setUseLayerColorSpace(bool use)
 void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
 {
     m_currentColorSpace = colorSpace;
-    m_kritaColorModel = ColorModelFactory::fromKoColorSpace(colorSpace);
-    m_koColorConverter = new EXColorConverter(colorSpace, m_kritaColorModel);
+    m_koColorConverter = new EXColorConverter(colorSpace);
 
     for (EXChannelPlane *plane : m_connectedChannelPlanes) {
         plane->setKoColorConverter(m_koColorConverter);
     }
+    for (EXChannelSlider *slider : m_connectedChannelSliders) {
+        slider->setColorConverter(m_koColorConverter);
+    }
 
-    Q_EMIT sigColorSpaceChanged(m_currentColorSpace);
     syncFromKrita();
+    Q_EMIT sigColorSpaceChanged(m_currentColorSpace);
 }
 
 void EXColorState::onDisplayConfigChanged()
@@ -271,4 +276,26 @@ void EXColorState::connectChannelPlane(EXChannelPlane *plane)
     connect(plane, &EXChannelPlane::sigPrimaryChannelValueSelected, this, &EXColorState::setPrimaryChannelValue);
     connect(plane, &EXChannelPlane::sigSecondaryChannelsValueSelected, this, &EXColorState::setSecondaryChannelValues);
     m_connectedChannelPlanes.append(plane);
+}
+
+void EXColorState::connectChannelSlider(EXChannelSlider *slider)
+{
+    auto [colorModel, channelIndex] = slider->colorModelAndChannelIndex();
+    slider->setColorConverter(m_koColorConverter);
+    slider->setColor(m_color, m_colorModel);
+    slider->setActive(colorModel->id() == m_colorModel->id());
+    connect(slider->bar(), &EXChannelSliderBar::sigValueChanging, this, [this, colorModel, slider]() {
+        setColor(colorModel->transferTo(m_colorModel.data(), slider->colorAtCurrentModel(), m_color));
+    });
+    connect(slider->bar(), &EXChannelSliderBar::sigValueFinalized, this, &EXColorState::sendToKrita);
+    m_connectedChannelSliders.append(slider);
+}
+
+void EXColorState::clearConnectedChannelSliders()
+{
+    for (EXChannelSlider *slider : m_connectedChannelSliders) {
+        disconnect(slider, nullptr, this, nullptr);
+    }
+
+    m_connectedChannelSliders.clear();
 }

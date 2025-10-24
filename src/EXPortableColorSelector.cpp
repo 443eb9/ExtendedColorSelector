@@ -19,19 +19,9 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
     m_plane->setColorModel(ColorModelFactory::fromId((ColorModelId)m_settingsState->globalSettings.currentColorModel));
     m_colorState->connectChannelPlane(m_plane);
     m_settingsState->connectChannelPlane(m_plane);
-    m_settingsState->updateConnectedChannelPlanes();
-    connect(m_plane, &EXChannelPlane::sigStartColorSelection, this, [this]() {
-        m_colorPatchPopup->popupAtWidget(m_plane);
-    });
-    connect(m_plane, &EXChannelPlane::sigValuesFinalized, this, [this]() {
-        if (m_settingsState->globalSettings.recordLastColorWhenMouseRelease) {
-            m_colorPatchPopup->recordColor(m_colorState->qColor());
-        }
-    });
 
     m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
-    m_sliders =
-        new EXChannelSlidersGroup(QVector<ColorModelId>(), m_colorState, m_settingsState, m_colorPatchPopup, this);
+    m_sliders = new EXChannelSlidersGroup(QVector<ColorModelId>(), this);
     mainLayout->addWidget(m_plane);
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);

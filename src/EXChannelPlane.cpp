@@ -91,6 +91,13 @@ void EXChannelPlane::setShape(EXChannelPlaneShapeSP shape)
     updateImage();
 }
 
+void EXChannelPlane::setSanitizeOutOfGamut(bool sanitize, QVector3D outOfGamutColor)
+{
+    m_sanitizeOutOfGamut = sanitize;
+    m_outOfGamutColor = outOfGamutColor;
+    updateImage();
+}
+
 ColorModelSP EXChannelPlane::colorModel() const
 {
     return m_colorModel;
@@ -208,9 +215,8 @@ void EXChannelPlane::updateImage()
         }
 
         color = m_colorModel->transferTo(m_koColorConverter->colorModel(), color);
-        auto &settings = EXSettingsState::instance()->globalSettings;
-        if (!m_colorModel->isSrgbBased() && m_clipToSrgbGamut) {
-            ExtendedUtils::sanitizeOutOfGamutColor(color, settings.outOfGamutColor);
+        if (!m_colorModel->isSrgbBased() && m_sanitizeOutOfGamut) {
+            ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor);
         }
         auto colorWithAlpha = color.toVector4D();
         colorWithAlpha[alphaPos] = 1.0f;
@@ -257,11 +263,6 @@ void EXChannelPlane::startEdit(QMouseEvent *event, bool isShift)
     if (!isShift) {
         handleCursorEdit(widgetCoord);
     }
-
-    // if (m_colorPatchPopup) {
-    //     m_colorPatchPopup->popupAt(mapToGlobal(QPoint()) - QPoint(m_colorPatchPopup->width(), 0));
-    // }
-    Q_EMIT sigStartColorSelection();
 }
 
 void EXChannelPlane::edit(QMouseEvent *event)
@@ -286,16 +287,6 @@ void EXChannelPlane::shift(QMouseEvent *event, QVector2D delta)
     QPointF widgetCoord = (m_editStartWidgetCoordPx + QPointF(delta.x(), delta.y())) / size();
     unoffsetWidgetCoord(widgetCoord);
     handleCursorEdit(widgetCoord);
-}
-
-void EXChannelPlane::mouseReleaseEvent(QMouseEvent *event)
-{
-    Q_UNUSED(event);
-
-    // if (m_colorPatchPopup && EXSettingsState::instance()->globalSettings.recordLastColorWhenMouseRelease) {
-    //     m_colorPatchPopup->recordColor();
-    // }
-    Q_EMIT sigValuesFinalized();
 }
 
 float EXChannelPlane::size() const

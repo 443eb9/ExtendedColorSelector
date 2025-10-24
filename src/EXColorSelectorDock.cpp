@@ -60,19 +60,11 @@ EXColorSelectorDock::EXColorSelectorDock()
     m_plane->setColorModel(ColorModelFactory::fromId((ColorModelId)m_settingsState->globalSettings.currentColorModel));
     m_colorState->connectChannelPlane(m_plane);
     m_settingsState->connectChannelPlane(m_plane);
-    m_settingsState->updateConnectedChannelPlanes();
-    connect(m_plane, &EXChannelPlane::sigStartColorSelection, this, [this]() {
-        m_colorPatchPopup->popupAtWidget(m_plane);
-    });
-    connect(m_plane, &EXChannelPlane::sigValuesFinalized, this, [this]() {
-        if (m_settingsState->globalSettings.recordLastColorWhenMouseRelease) {
-            m_colorPatchPopup->recordColor(m_colorState->qColor());
-        }
-    });
+    m_colorPatchPopup->connectToWidget(m_plane);
 
+    m_sliders = new EXChannelSlidersGroup(QVector<ColorModelId>(), this);
     m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
-    m_sliders =
-        new EXChannelSlidersGroup(QVector<ColorModelId>(), m_colorState, m_settingsState, m_colorPatchPopup, this);
+
     mainLayout->addWidget(m_plane);
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);
@@ -175,6 +167,9 @@ void EXColorSelectorDock::onColorSpaceSelected(const KoColorSpace *colorSpace)
 
 void EXColorSelectorDock::updateSliders()
 {
+    m_colorState->clearConnectedChannelSliders();
+    m_settingsState->clearConnectedChannelSliders();
+
     auto &settings = m_settingsState->settings[m_colorState->colorModel()->id()];
     if (settings.slidersEnabled) {
         auto sliders = QVector(settings.extraSliders);
@@ -182,5 +177,13 @@ void EXColorSelectorDock::updateSliders()
         m_sliders->resetColorModels(sliders);
     } else {
         m_sliders->resetColorModels(settings.extraSliders);
+    }
+
+    for (auto sliders : m_sliders->sliders()) {
+        for (auto slider : sliders->sliders()) {
+            m_colorState->connectChannelSlider(slider);
+            m_settingsState->connectChannelSlider(slider);
+            m_colorPatchPopup->connectToWidget(slider->bar());
+        }
     }
 }

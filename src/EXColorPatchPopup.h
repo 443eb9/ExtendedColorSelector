@@ -6,6 +6,8 @@
 #include <QFrame>
 #include <QWidget>
 
+#include "EXEditable.h"
+
 class EXColorPatchPopup : public QDialog
 {
     Q_OBJECT
@@ -16,7 +18,7 @@ public:
 
     void updateColor(QColor color);
     void recordColor(QColor color);
-    void popupAtWidget(const QWidget *widget);
+    void connectToWidget(const EXEditable *widget);
 
 private:
     QFrame *m_currentColorBox;

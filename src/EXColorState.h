@@ -16,6 +16,7 @@
 #include <kis_shared_ptr.h>
 
 #include "EXChannelPlane.h"
+#include "EXChannelSlider.h"
 #include "EXColorModel.h"
 #include "EXKoColorConverter.h"
 
@@ -45,13 +46,15 @@ public:
 
     void setColorModel(ColorModelId model);
     const ColorModelSP colorModel() const;
-    bool possibleOutOfSrgb() const;
     void setUseLayerColorSpace(bool use);
 
     void sendToKrita();
     void syncFromKrita();
     void setCanvas(KisCanvas2 *canvas);
+
     void connectChannelPlane(EXChannelPlane *plane);
+    void connectChannelSlider(EXChannelSlider *slider);
+    void clearConnectedChannelSliders();
 
     static EXColorState *instance();
 
@@ -68,7 +71,6 @@ private:
     QVector3D m_color;
     quint32 m_primaryChannelIndex;
     ColorModelSP m_colorModel;
-    ColorModelSP m_kritaColorModel;
     const KoColorSpace *m_currentColorSpace;
     KisCanvasResourceProvider *m_resourceProvider;
     KoColorDisplayRendererInterface *m_dri;
@@ -76,7 +78,9 @@ private:
     EXColorConverterSP m_koColorConverter;
     bool m_blockColorSync;
     bool m_useLayerColorSpace;
+
     QVector<EXChannelPlane *> m_connectedChannelPlanes;
+    QVector<EXChannelSlider *> m_connectedChannelSliders;
 };
 
 typedef KisSharedPtr<EXColorState> EXColorStateSP;
