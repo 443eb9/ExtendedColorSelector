@@ -342,7 +342,7 @@ void ChannelValueBar::startEdit(QMouseEvent *event, bool isShift)
     }
 
     if (m_colorPatchPopup) {
-        m_colorPatchPopup->popupAt(mapToGlobal(QPoint()) - QPoint(m_colorPatchPopup->width(), 0));
+        m_colorPatchPopup->popupAtWidget(this);
     }
 }
 
@@ -352,7 +352,7 @@ void ChannelValueBar::mouseReleaseEvent(QMouseEvent *event)
     m_colorState->sendToKrita();
 
     if (m_colorPatchPopup && m_settingsState->globalSettings.recordLastColorWhenMouseRelease) {
-        m_colorPatchPopup->recordColor();
+        m_colorPatchPopup->recordColor(m_colorState->qColor());
     }
 }
 

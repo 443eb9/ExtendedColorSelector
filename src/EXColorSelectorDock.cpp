@@ -18,7 +18,10 @@ EXColorSelectorDock::EXColorSelectorDock()
     m_canvas = nullptr;
     auto mainLayout = new QVBoxLayout();
 
-    m_colorPatchPopup = new EXColorPatchPopup(m_colorState, this);
+    m_colorPatchPopup = new EXColorPatchPopup(this);
+    connect(m_colorState.data(), &EXColorState::sigColorChanged, this, [this]() {
+        m_colorPatchPopup->updateColor(m_colorState->qColor());
+    });
 
     auto colorSpaceLayout = new QHBoxLayout(this);
     m_colorSpaceSelectorButton = new KisPopupButton(this);
@@ -53,7 +56,20 @@ EXColorSelectorDock::EXColorSelectorDock()
             this,
             SLOT(onColorSpaceSelected(const KoColorSpace *)));
 
-    m_plane = new EXChannelPlane(m_colorState, m_settingsState, m_colorPatchPopup, this);
+    m_plane = new EXChannelPlane(this);
+    m_plane->setColorModel(ColorModelFactory::fromId((ColorModelId)m_settingsState->globalSettings.currentColorModel));
+    m_colorState->connectChannelPlane(m_plane);
+    m_settingsState->connectChannelPlane(m_plane);
+    m_settingsState->updateConnectedChannelPlanes();
+    connect(m_plane, &EXChannelPlane::sigStartColorSelection, this, [this]() {
+        m_colorPatchPopup->popupAtWidget(m_plane);
+    });
+    connect(m_plane, &EXChannelPlane::sigValuesFinalized, this, [this]() {
+        if (m_settingsState->globalSettings.recordLastColorWhenMouseRelease) {
+            m_colorPatchPopup->recordColor(m_colorState->qColor());
+        }
+    });
+
     m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
     m_sliders =
         new EXChannelSlidersGroup(QVector<ColorModelId>(), m_colorState, m_settingsState, m_colorPatchPopup, this);
@@ -103,6 +119,10 @@ EXColorSelectorDock::EXColorSelectorDock()
         m_colorSpaceSelector->setCurrentColorSpace(customColorSpace);
         m_colorState->setColorSpace(customColorSpace);
     }
+
+    connect(m_colorState.data(), &EXColorState::sigColorModelChanged, this, [this]() {
+        m_settingsState->updateConnectedChannelPlanes();
+    });
 }
 
 void EXColorSelectorDock::setViewManager(KisViewManager *kisview)
@@ -134,7 +154,7 @@ void EXColorSelectorDock::unsetCanvas()
 void EXColorSelectorDock::enterEvent(QEvent *event)
 {
     QDockWidget::enterEvent(event);
-    m_colorPatchPopup->recordColor();
+    m_colorPatchPopup->recordColor(m_colorState->qColor());
 }
 
 void EXColorSelectorDock::leaveEvent(QEvent *event)

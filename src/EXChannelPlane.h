@@ -1,5 +1,5 @@
-#ifndef COLORWHEEL_H
-#define COLORWHEEL_H
+#ifndef EXCHANNELPLANE_H
+#define EXCHANNELPLANE_H
 
 #include <QWidget>
 
@@ -7,9 +7,8 @@
 #include <kis_canvas2.h>
 
 #include "EXColorPatchPopup.h"
-#include "EXColorState.h"
 #include "EXEditable.h"
-#include "EXSettingsState.h"
+#include "EXKoColorConverter.h"
 #include "EXShape.h"
 
 class EXChannelPlane : public EXEditable
@@ -17,11 +16,58 @@ class EXChannelPlane : public EXEditable
     Q_OBJECT
 
 public:
-    explicit EXChannelPlane(EXColorStateSP colorState,
-                            EXSettingsStateSP settingsState,
-                            EXColorPatchPopup *colorPatchPopup = nullptr,
-                            QWidget *parent = nullptr);
-    ~EXChannelPlane() override;
+    explicit EXChannelPlane(QWidget *parent = nullptr);
+    ~EXChannelPlane() override = default;
+
+    void updateImage();
+    void setCanvas(KisCanvas2 *canvas);
+    void setColorModel(ColorModelSP colorModel);
+    void setPrimaryChannelIndex(int index);
+    void setColor(QVector3D color);
+    void setClipToSrgbGamut(bool clip);
+    void setColorfulRing(bool colorful);
+    void setKoColorConverter(EXColorConverterSP colorConverter);
+    void setShape(EXChannelPlaneShapeSP shape);
+
+    ColorModelSP colorModel() const;
+
+Q_SIGNALS:
+    void sigPrimaryChannelValueSelected(float value);
+    void sigSecondaryChannelsValueSelected(QVector2D values);
+    void sigStartColorSelection();
+    void sigValuesFinalized();
+
+private:
+    enum EditMode {
+        Plane,
+        Ring,
+    };
+
+    EditMode m_editMode;
+    QPointF m_editStartWidgetCoordPx;
+    QColor m_imageColor;
+    EXChannelPlaneShapeSP m_shape;
+    EXPrimaryChannelRing m_unnormalizedRing;
+    QImage m_image;
+    KoColorDisplayRendererInterface *m_dri;
+
+    float m_lastPrimaryChannelValue;
+
+    ColorModelSP m_colorModel;
+    int m_primaryChannelIndex;
+    QVector2D m_secondaryChannelValues;
+    QVector3D m_color;
+    bool m_clipToSrgbGamut;
+    bool m_colorfulRing;
+    EXColorConverterSP m_koColorConverter;
+
+    void handleCursorEdit(const QPointF &widgetCoord);
+    void sendPlaneColor(const QPointF &widgetCoord);
+    void sendRingColor(const QPointF &widgetCoord);
+    void offsetWidgetCoord(QPointF &widgetCoord);
+    void unoffsetWidgetCoord(QPointF &widgetCoord);
+
+    void updateNormalizedRing();
 
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
@@ -30,10 +76,6 @@ public:
     void startEdit(QMouseEvent *event, bool isShift) override;
     void edit(QMouseEvent *event) override;
     void shift(QMouseEvent *event, QVector2D delta) override;
-
-    float size() const;
-
-    void setCanvas(KisCanvas2 *canvas);
 
     bool hasHeightForWidth() const override
     {
@@ -45,35 +87,7 @@ public:
         return width;
     }
 
-private:
-    enum EditMode {
-        Plane,
-        Ring,
-    };
-
-    EditMode m_editMode;
-    QPointF m_editStartWidgetCoordPx;
-    QColor m_imageColor;
-    EXChannelPlaneShape *m_shape;
-    QImage m_image;
-    KoColorDisplayRendererInterface *m_dri;
-    EXColorPatchPopup *m_colorPatchPopup;
-    EXColorStateSP m_colorState;
-    EXSettingsStateSP m_settingsState;
-
-    float m_lastPrimaryChannelValue;
-
-    void updateImage();
-    void trySyncRingRotation();
-    void handleCursorEdit(const QPointF &widgetCoord);
-    void sendPlaneColor(const QPointF &widgetCoord);
-    void sendRingColor(const QPointF &widgetCoord);
-    void offsetWidgetCoord(QPointF &widgetCoord);
-    void unoffsetWidgetCoord(QPointF &widgetCoord);
-    bool requiresImageUpdate() const;
-
-private Q_SLOTS:
-    void settingsChanged();
+    float size() const;
 };
 
-#endif // COLORWHEEL_H
+#endif // EXCHANNELPLANE_H

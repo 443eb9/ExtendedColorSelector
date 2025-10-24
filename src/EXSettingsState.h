@@ -7,6 +7,7 @@
 #include <kis_shared.h>
 #include <kis_shared_ptr.h>
 
+#include "EXChannelPlane.h"
 #include "EXSettings.h"
 
 class EXSettingsState : public QObject, public KisShared
@@ -22,8 +23,14 @@ public:
     EXGlobalSettings globalSettings;
     QVector<EXPerColorModelSettings> settings;
 
+    void connectChannelPlane(EXChannelPlane *plane);
+    void updateConnectedChannelPlanes();
+
 Q_SIGNALS:
     void sigSettingsChanged();
+
+private:
+    QVector<EXChannelPlane *> m_connectedChannelPlanes;
 };
 
 typedef KisSharedPtr<EXSettingsState> EXSettingsStateSP;

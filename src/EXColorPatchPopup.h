@@ -4,27 +4,24 @@
 #include <QColor>
 #include <QDialog>
 #include <QFrame>
-
-#include "EXColorState.h"
+#include <QWidget>
 
 class EXColorPatchPopup : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit EXColorPatchPopup(EXColorStateSP colorState, QWidget *parent = nullptr);
+    explicit EXColorPatchPopup(QWidget *parent = nullptr);
     ~EXColorPatchPopup() override = default;
 
-    void updateColor();
-    void recordColor();
-    void popupAt(const QPoint &pos);
+    void updateColor(QColor color);
+    void recordColor(QColor color);
+    void popupAtWidget(const QWidget *widget);
 
 private:
     QFrame *m_currentColorBox;
     QFrame *m_lastColorBox;
     QColor m_lastColor;
-    
-    EXColorStateSP m_colorState;
 };
 
 #endif

@@ -3,9 +3,8 @@
 
 #include "EXColorPatchPopup.h"
 
-EXColorPatchPopup::EXColorPatchPopup(EXColorStateSP colorState, QWidget *parent)
+EXColorPatchPopup::EXColorPatchPopup(QWidget *parent)
     : QDialog(parent)
-    , m_colorState(colorState)
 {
     auto mainLayout = new QVBoxLayout(this);
     setFixedSize(100, 150);
@@ -20,24 +19,21 @@ EXColorPatchPopup::EXColorPatchPopup(EXColorStateSP colorState, QWidget *parent)
 
     mainLayout->addWidget(m_currentColorBox, 1);
     mainLayout->addWidget(m_lastColorBox, 1);
-
-    connect(m_colorState.data(), &EXColorState::sigColorChanged, this, &EXColorPatchPopup::updateColor);
 }
 
-void EXColorPatchPopup::updateColor()
+void EXColorPatchPopup::updateColor(QColor color)
 {
-    auto currentColor = m_colorState->qColor();
-    m_currentColorBox->setStyleSheet(QString("background-color: %1").arg(currentColor.name()));
+    m_currentColorBox->setStyleSheet(QString("background-color: %1").arg(color.name()));
 }
 
-void EXColorPatchPopup::recordColor()
+void EXColorPatchPopup::recordColor(QColor color)
 {
-    m_lastColor = m_colorState->qColor();
+    m_lastColor = color;
     m_lastColorBox->setStyleSheet(QString("background-color: %1").arg(m_lastColor.name()));
 }
 
-void EXColorPatchPopup::popupAt(const QPoint &pos)
+void EXColorPatchPopup::popupAtWidget(const QWidget *widget)
 {
-    move(pos);
+    move(widget->mapToGlobal(QPoint(0, 0)) - QPoint(width(), 0));
     show();
 }

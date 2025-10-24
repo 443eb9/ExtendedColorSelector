@@ -18,3 +18,30 @@ EXSettingsState::EXSettingsState()
         settings.append(EXPerColorModelSettings(ColorModelFactory::fromId(colorModelId)->displayName()));
     }
 }
+
+void EXSettingsState::connectChannelPlane(EXChannelPlane *plane)
+{
+    m_connectedChannelPlanes.append(plane);
+}
+
+void EXSettingsState::updateConnectedChannelPlanes()
+{
+    for (EXChannelPlane *plane : m_connectedChannelPlanes) {
+        auto model = plane->colorModel();
+        auto &settings = this->settings[model->id()];
+        plane->setClipToSrgbGamut(settings.clipToSrgbGamut);
+        plane->setColorfulRing(settings.colorfulHueRing);
+        plane->setPrimaryChannelIndex(settings.primaryIndex);
+        auto shape = EXShapeFactory::fromId(settings.shape);
+        shape->reverseX = settings.reverseX;
+        shape->reverseY = settings.reverseY;
+        shape->swapAxes = settings.swapAxes;
+        shape->rotateWithRing = settings.planeRotateWithRing;
+        shape->setRotation(settings.rotation);
+        shape->ring.margin = settings.ringMargin;
+        shape->ring.thickness = settings.ringThickness;
+        shape->ring.rotationOffset = settings.ringRotation;
+        shape->ring.reversed = settings.ringReversed;
+        plane->setShape(shape);
+    }
+}

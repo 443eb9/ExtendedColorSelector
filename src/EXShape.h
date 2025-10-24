@@ -4,6 +4,9 @@
 #include <QPointF>
 #include <QVector>
 
+#include <kis_shared.h>
+#include <kis_shared_ptr.h>
+
 class EXPrimaryChannelRing
 {
 public:
@@ -40,11 +43,11 @@ enum EXChannelPlaneShapeId {
     Circle = 2,
 };
 
-class EXChannelPlaneShape
+class EXChannelPlaneShape : public KisShared
 {
 public:
     virtual ~EXChannelPlaneShape() = default;
-    
+
     virtual QString displayName() const = 0;
 
     QPointF shapeToWidgetCentered(const QPointF &shapeCoord);
@@ -62,6 +65,7 @@ public:
     bool reverseX;
     bool reverseY;
     bool swapAxes;
+    bool rotateWithRing;
 
 protected:
     virtual bool widgetCenteredToShapeUntransformed(const QPointF &widgetCoordCentered, QPointF &shapeCoord) = 0;
@@ -140,5 +144,7 @@ public:
         return nullptr;
     }
 };
+
+typedef KisSharedPtr<EXChannelPlaneShape> EXChannelPlaneShapeSP;
 
 #endif // EXTENDED_SHAPE_H

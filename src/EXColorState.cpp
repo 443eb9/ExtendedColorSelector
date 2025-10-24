@@ -49,6 +49,12 @@ void EXColorState::setColorModel(ColorModelId model)
     ExtendedUtils::saturateColor(m_color);
     m_colorModel = newModel;
     m_koColorConverter = new EXColorConverter(m_currentColorSpace, m_colorModel);
+
+    for (EXChannelPlane *plane : m_connectedChannelPlanes) {
+        plane->setColor(m_color);
+        plane->setColorModel(m_colorModel);
+    }
+
     Q_EMIT sigColorModelChanged(model);
     Q_EMIT sigColorChanged(m_color);
 }
@@ -78,7 +84,7 @@ void EXColorState::syncFromKrita()
     koColor.convertTo(m_currentColorSpace);
     QVector3D newColor = m_koColorConverter->koColorToDisplayChannels(koColor).toVector3D();
     m_color = m_kritaColorModel->transferTo(m_colorModel, newColor, m_color);
-    Q_EMIT sigColorChanged(m_color);
+    setColor(m_color);
 }
 
 void EXColorState::setCanvas(KisCanvas2 *canvas)
@@ -112,6 +118,10 @@ void EXColorState::setPrimaryChannelValue(float value)
 {
     m_color[m_primaryChannelIndex] = value;
     Q_EMIT sigColorChanged(m_color);
+
+    for (EXChannelPlane *plane : m_connectedChannelPlanes) {
+        plane->setColor(m_color);
+    }
 }
 
 quint32 EXColorState::primaryChannelIndex() const
@@ -128,6 +138,9 @@ void EXColorState::setPrimaryChannelIndex(quint32 index)
     settings.writeAll();
 
     m_primaryChannelIndex = index;
+    for (EXChannelPlane *plane : m_connectedChannelPlanes) {
+        plane->setColor(m_color);
+    }
     Q_EMIT sigPrimaryChannelIndexChanged(index);
 }
 
@@ -183,6 +196,10 @@ QColor EXColorState::qColor() const
 void EXColorState::setColor(const QVector3D &color)
 {
     m_color = color;
+    for (EXChannelPlane *plane : m_connectedChannelPlanes) {
+        plane->setColor(m_color);
+    }
+
     Q_EMIT sigColorChanged(m_color);
 }
 
@@ -228,8 +245,13 @@ void EXColorState::setUseLayerColorSpace(bool use)
 void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
 {
     m_currentColorSpace = colorSpace;
-    m_koColorConverter = new EXColorConverter(colorSpace, m_colorModel);
     m_kritaColorModel = ColorModelFactory::fromKoColorSpace(colorSpace);
+    m_koColorConverter = new EXColorConverter(colorSpace, m_kritaColorModel);
+
+    for (EXChannelPlane *plane : m_connectedChannelPlanes) {
+        plane->setKoColorConverter(m_koColorConverter);
+    }
+
     Q_EMIT sigColorSpaceChanged(m_currentColorSpace);
     syncFromKrita();
 }
@@ -239,4 +261,14 @@ void EXColorState::onDisplayConfigChanged()
     if (m_useLayerColorSpace && m_dcc) {
         setColorSpace(m_dcc->paintingColorSpace());
     }
+}
+
+void EXColorState::connectChannelPlane(EXChannelPlane *plane)
+{
+    plane->setColorModel(m_colorModel);
+    plane->setColor(m_color);
+    plane->setKoColorConverter(m_koColorConverter);
+    connect(plane, &EXChannelPlane::sigPrimaryChannelValueSelected, this, &EXColorState::setPrimaryChannelValue);
+    connect(plane, &EXChannelPlane::sigSecondaryChannelsValueSelected, this, &EXColorState::setSecondaryChannelValues);
+    m_connectedChannelPlanes.append(plane);
 }
