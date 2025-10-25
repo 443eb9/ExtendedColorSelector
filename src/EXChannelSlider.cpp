@@ -105,9 +105,8 @@ EXChannelSlider::EXChannelSlider(int channelIndex, ColorModelSP colorModel, QBut
     }
     m_spinBox = new QDoubleSpinBox(this);
     m_bar = new EXChannelSliderBar(channelIndex, colorModel, this);
-    if (colorModel->channelCount() == 2 || m_channelIndex == 1) {
-        setActive(false);
-    }
+    m_activable = m_colorModel->channelCount() == 3;
+    setActive(false);
 
     layout->addWidget(m_bar);
     layout->addWidget(m_spinBox);
@@ -141,6 +140,7 @@ void EXChannelSlider::setCanvas(KisCanvas2 *canvas)
 
 void EXChannelSlider::setActive(bool active)
 {
+    active &= m_activable;
     m_radioButton->setVisible(active);
     m_label->setVisible(!active);
 }

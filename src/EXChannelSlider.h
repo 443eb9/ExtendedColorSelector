@@ -87,6 +87,7 @@ private:
     QDoubleSpinBox *m_spinBox;
     EXChannelSliderBar *m_bar;
     ColorModelSP m_colorModel;
+    bool m_activable;
 
     void updateSpinBoxRangeAndValue();
 };
