@@ -15,7 +15,7 @@
 #include "EXUtils.h"
 
 EXChannelPlane::EXChannelPlane(QWidget *parent)
-    : EXEditableGLImage(parent)
+    : EXEditableImage(parent)
     , m_shape(nullptr)
     , m_lastPrimaryChannelValue(-1.0f)
     , m_primaryChannelIndex(0)
@@ -23,7 +23,7 @@ EXChannelPlane::EXChannelPlane(QWidget *parent)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);
-    setStretchEnabled(false);
+    setStretch(false);
 }
 
 void EXChannelPlane::setCanvas(KisCanvas2 *canvas)
@@ -103,14 +103,15 @@ void EXChannelPlane::setSanitizeOutOfGamut(bool sanitize, QVector3D outOfGamutCo
 
 void EXChannelPlane::setDynamicRange(float dynamicRange)
 {
-    float clampedRange = qMax(0.0f, dynamicRange);
-    if (qAbs(m_dynamicRange - clampedRange) < 1e-6f) {
-        return;
-    }
-
-    m_dynamicRange = clampedRange;
+    m_dynamicRange = dynamicRange;
     updateImage();
     update();
+}
+
+void EXChannelPlane::setUseHdr(bool use)
+{
+    setUseGLImage(use);
+    updateImage();
 }
 
 ColorModelSP EXChannelPlane::colorModel() const
@@ -184,7 +185,7 @@ void EXChannelPlane::resizeEvent(QResizeEvent *event)
 
 void EXChannelPlane::paintEvent(QPaintEvent *event)
 {
-    KisGLImageWidget::paintEvent(event);
+    EXEditableImage::paintEvent(event);
 
     if (!m_shape || !m_converter || !displayRenderer()) {
         return;
@@ -225,13 +226,7 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
 
 void EXChannelPlane::updateImage()
 {
-    if (!displayRenderer() || !m_shape || !m_converter || !displayColorConverter()) {
-        loadImage(KisGLImageF16());
-        return;
-    }
-
-    if (!m_colorModel) {
-        loadImage(KisGLImageF16());
+    if (!displayRenderer() || !m_shape || !m_converter || !displayColorConverter() || !m_colorModel) {
         return;
     }
 
@@ -331,35 +326,30 @@ void EXChannelPlane::updateImage()
         return colorWithAlpha;
     };
 
-    const int dimension = qMax(1, qMin(width(), height()));
     const KoColorSpace *generationCS = generationColorSpace(m_converter ? m_converter->colorSpace() : nullptr);
 
-    if (!generationCS) {
-        loadImage(KisGLImageF16());
-        return;
-    }
-
-    KisGLImageF16 image;
     switch (m_colorModel->channelCount()) {
     case 2:
-        image = ExtendedUtils::generateGLGradient(dimension,
-                                                  dimension,
-                                                  m_converter,
-                                                  generationCS,
-                                                  displayColorConverter(),
-                                                  pixelGet2);
+        ExtendedUtils::loadImageIntoEditableWidget(this,
+                                                   size(),
+                                                   size(),
+                                                   true,
+                                                   generationCS,
+                                                   m_converter,
+                                                   displayColorConverter(),
+                                                   pixelGet2);
         break;
     case 3:
-        image = ExtendedUtils::generateGLGradient(dimension,
-                                                  dimension,
-                                                  m_converter,
-                                                  generationCS,
-                                                  displayColorConverter(),
-                                                  pixelGet3);
+        ExtendedUtils::loadImageIntoEditableWidget(this,
+                                                   size(),
+                                                   size(),
+                                                   true,
+                                                   generationCS,
+                                                   m_converter,
+                                                   displayColorConverter(),
+                                                   pixelGet3);
         break;
     }
-
-    loadImage(image);
 }
 
 void EXChannelPlane::startEdit(QMouseEvent *event, bool isShift)

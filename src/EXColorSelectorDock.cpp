@@ -72,16 +72,8 @@ EXColorSelectorDock::EXColorSelectorDock()
     mainLayout->addWidget(m_plane);
 
     m_dynamicRangeSlider = new EXDynamicRangeSlider(this);
+    m_colorState->connectDynamicRangeSlider(m_dynamicRangeSlider);
     mainLayout->addWidget(m_dynamicRangeSlider, 0);
-    m_dynamicRangeSlider->setVisible(m_colorState->hasHardwareHDR());
-    connect(m_dynamicRangeSlider,
-            &EXDynamicRangeSlider::sigDynamicRangeChanged,
-            m_colorState.data(),
-            &EXColorState::setDynamicRange);
-    connect(m_colorState.data(),
-            &EXColorState::sigDynamicRangeChanged,
-            m_dynamicRangeSlider,
-            &EXDynamicRangeSlider::setDynamicRange);
 
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);

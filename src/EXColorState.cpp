@@ -27,7 +27,7 @@ EXColorState::EXColorState()
     , m_resourceProvider(nullptr)
     , m_dri(nullptr)
     , m_dcc(nullptr)
-    , m_koColorConverter(nullptr)
+    , m_colorConverter(nullptr)
     , m_blockColorSync(false)
     , m_useLayerColorSpace(false)
     , m_dynamicRange(1.0f)
@@ -53,7 +53,7 @@ void EXColorState::setColorModel(ColorModelId model)
     m_color = m_colorModel->transferTo(newModel, m_color, m_color);
     ExtendedUtils::saturateColor(m_color);
     m_colorModel = newModel;
-    m_koColorConverter = new EXKoColorConverter(m_currentColorSpace);
+    m_colorConverter = new EXKoColorConverter(m_currentColorSpace);
 
     Q_EMIT sigColorModelChanged(model);
     Q_EMIT sigColorChanged(m_color);
@@ -68,10 +68,10 @@ void EXColorState::sendToKrita()
 {
     QVector3D currentColor = m_colorModel->transferTo(kritaColorModel(), m_color);
     ExtendedUtils::saturateColor(currentColor);
-    currentColor *= m_dynamicRange;
+    currentColor *= dynamicRange();
 
     m_blockColorSync = true;
-    m_resourceProvider->setFGColor(m_koColorConverter->displayChannelsToKoColor(QVector4D(currentColor, 1.0f)));
+    m_resourceProvider->setFGColor(m_colorConverter->displayChannelsToKoColor(QVector4D(currentColor, 1.0f)));
     m_blockColorSync = false;
 }
 
@@ -83,7 +83,7 @@ void EXColorState::syncFromKrita()
 
     KoColor koColor = m_resourceProvider->fgColor();
     koColor.convertTo(m_currentColorSpace);
-    QVector3D newColor = m_koColorConverter->koColorToDisplayChannels(koColor).toVector3D();
+    QVector3D newColor = m_colorConverter->koColorToDisplayChannels(koColor).toVector3D();
     m_color = kritaColorModel()->transferTo(m_colorModel, newColor, m_color);
     setColor(m_color);
 }
@@ -169,8 +169,8 @@ QVector3D EXColorState::color() const
 KoColor EXColorState::koColor() const
 {
     auto kritaColor = m_colorModel->transferTo(kritaColorModel(), m_color);
-    kritaColor *= m_dynamicRange;
-    return m_koColorConverter->displayChannelsToKoColor(QVector4D(kritaColor, 1.0f));
+    kritaColor *= dynamicRange();
+    return m_colorConverter->displayChannelsToKoColor(QVector4D(kritaColor, 1.0f));
 }
 
 QColor EXColorState::qColor() const
@@ -191,12 +191,12 @@ const KoColorSpace *EXColorState::colorSpace() const
 
 const ColorModelSP EXColorState::kritaColorModel() const
 {
-    return m_koColorConverter->colorModel();
+    return m_colorConverter->colorModel();
 }
 
 const EXColorConverterSP EXColorState::koColorConverter() const
 {
-    return m_koColorConverter;
+    return m_colorConverter;
 }
 
 void EXColorState::setDynamicRange(float dynamicRange)
@@ -236,7 +236,7 @@ void EXColorState::setUseLayerColorSpace(bool use)
 void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
 {
     m_currentColorSpace = colorSpace;
-    m_koColorConverter = new EXKoColorConverter(colorSpace);
+    m_colorConverter = new EXKoColorConverter(colorSpace);
 
     syncFromKrita();
     Q_EMIT sigColorSpaceChanged(m_currentColorSpace);
@@ -251,12 +251,12 @@ void EXColorState::onDisplayConfigChanged()
 
 float EXColorState::dynamicRange() const
 {
-    return m_hasHardwareHDR ? m_dynamicRange : 1.0f;
+    return hdrSupported() ? m_dynamicRange : 1.0f;
 }
 
-bool EXColorState::hasHardwareHDR() const
+bool EXColorState::hdrSupported() const
 {
-    return m_hasHardwareHDR;
+    return m_hasHardwareHDR && m_colorConverter && m_colorConverter->colorSpace()->hasHighDynamicRange();
 }
 
 void EXColorState::connectChannelPlane(EXChannelPlane *plane)
@@ -264,8 +264,10 @@ void EXColorState::connectChannelPlane(EXChannelPlane *plane)
     // Assume the color model inside the plane is always the same as we use here.
     plane->setColorModel(m_colorModel);
     plane->setColor(m_color, m_colorModel);
-    plane->setColorConverter(m_koColorConverter);
-    plane->setDynamicRange(m_dynamicRange);
+    plane->setColorConverter(m_colorConverter);
+    plane->setDynamicRange(dynamicRange());
+    plane->setUseHdr(hdrSupported());
+
     connect(plane, &EXChannelPlane::sigPrimaryChannelValueSelected, this, &EXColorState::setPrimaryChannelValue);
     connect(plane, &EXChannelPlane::sigSecondaryChannelsValueSelected, this, &EXColorState::setSecondaryChannelValues);
     connect(plane, &EXChannelPlane::sigValueFinalized, this, &EXColorState::sendToKrita);
@@ -277,7 +279,9 @@ void EXColorState::connectChannelPlane(EXChannelPlane *plane)
         plane->setColor(m_color, m_colorModel);
     });
     connect(this, &EXColorState::sigColorSpaceChanged, plane, [this, plane](const KoColorSpace *) {
-        plane->setColorConverter(m_koColorConverter);
+        plane->setColorConverter(m_colorConverter);
+        plane->setDynamicRange(dynamicRange());
+        plane->setUseHdr(hdrSupported());
     });
     connect(this, &EXColorState::sigPrimaryChannelIndexChanged, plane, [plane](quint32 index) {
         plane->setPrimaryChannelIndex(index);
@@ -292,11 +296,12 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
     auto result = slider->colorModelAndChannelIndex();
     auto colorModel = result.first;
     auto channelIndex = result.second;
-    slider->setColorConverter(m_koColorConverter);
+    slider->setColorConverter(m_colorConverter);
     slider->setColor(m_color, m_colorModel);
     slider->setActive(colorModel->id() == m_colorModel->id());
     slider->setSelected(channelIndex == m_primaryChannelIndex);
-    slider->setDynamicRange(m_dynamicRange);
+    slider->setDynamicRange(dynamicRange());
+    slider->setUseHdr(hdrSupported());
 
     connect(slider->bar(), &EXChannelSliderBar::sigValueChanging, this, [this, colorModel, slider]() {
         setColor(colorModel->transferTo(m_colorModel.data(), slider->colorAtCurrentModel(), m_color));
@@ -308,9 +313,11 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
     connect(this, &EXColorState::sigColorModelChanged, slider, [this, colorModel, slider](ColorModelId modelId) {
         slider->setColor(m_color, m_colorModel);
         slider->setActive(colorModel->id() == modelId);
+        slider->setUseHdr(hdrSupported());
+        slider->setDynamicRange(dynamicRange());
     });
     connect(this, &EXColorState::sigColorSpaceChanged, slider, [this, slider](const KoColorSpace *) {
-        slider->setColorConverter(m_koColorConverter);
+        slider->setColorConverter(m_colorConverter);
     });
     connect(this, &EXColorState::sigPrimaryChannelIndexChanged, slider, [channelIndex, slider](quint32 index) {
         slider->setSelected(channelIndex == index);
@@ -320,5 +327,17 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
     });
     connect(this, &EXColorState::sigDynamicRangeChanged, slider, [slider](float dynamicRange) {
         slider->setDynamicRange(dynamicRange);
+    });
+}
+
+void EXColorState::connectDynamicRangeSlider(EXDynamicRangeSlider *slider)
+{
+    slider->setDynamicRange(m_dynamicRange);
+    slider->setVisible(hdrSupported());
+
+    connect(slider, &EXDynamicRangeSlider::sigDynamicRangeChanged, this, &EXColorState::setDynamicRange);
+    connect(this, &EXColorState::sigDynamicRangeChanged, slider, &EXDynamicRangeSlider::setDynamicRange);
+    connect(this, &EXColorState::sigColorSpaceChanged, slider, [this, slider](const KoColorSpace *) {
+        slider->setVisible(hdrSupported());
     });
 }

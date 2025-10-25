@@ -10,14 +10,23 @@
 #include <KoColor.h>
 #include <KoColorDisplayRendererInterface.h>
 #include <KoColorSpace.h>
+#include <kis_display_color_converter.h>
 
 #include "EXColorModel.h"
+#include "EXEditable.h"
 #include "EXKoColorConverter.h"
-
-class KisDisplayColorConverter;
 
 namespace ExtendedUtils
 {
+void loadImageIntoEditableWidget(EXEditableImage *editable,
+                                 int width,
+                                 int height,
+                                 bool useParallel,
+                                 const KoColorSpace *generationColorSpace,
+                                 const EXColorConverterSP colorConverter,
+                                 const KisDisplayColorConverter *displayConverter,
+                                 std::function<QVector4D(float, float)> pixelGet);
+
 QImage generateGradient(int width,
                         int height,
                         bool useParallel,
@@ -29,7 +38,7 @@ KisGLImageF16 generateGLGradient(int width,
                                  int height,
                                  const EXColorConverterSP colorConverter,
                                  const KoColorSpace *generationColorSpace,
-                                 KisDisplayColorConverter *displayColorConverter,
+                                 const KisDisplayColorConverter *displayColorConverter,
                                  std::function<QVector4D(float, float)> pixelGet,
                                  bool useParallel = true);
 

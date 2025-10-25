@@ -1,4 +1,4 @@
-#include "EXEditable.h"
+#include <QPainter>
 
 #include <KisDisplayConfig.h>
 #include <KisSurfaceColorSpaceWrapper.h>
@@ -8,12 +8,18 @@
 #include <KoColorSpaceRegistry.h>
 #include <kis_display_color_converter.h>
 
-EXEditableGLImage::EXEditableGLImage(QWidget *parent)
+#include "EXEditable.h"
+
+EXEditableImage::EXEditableImage(QWidget *parent)
     : KisGLImageWidget(KisSurfaceColorSpaceWrapper::DefaultColorSpace, parent)
+    , m_displayColorConverter(nullptr)
+    , m_displayRenderer(nullptr)
+    , m_useGLImage(false)
+    , m_stretch(true)
 {
 }
 
-void EXEditableGLImage::mousePressEvent(QMouseEvent *event)
+void EXEditableImage::mousePressEvent(QMouseEvent *event)
 {
     m_editStart = event->pos();
     startEdit(event, event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::AltModifier));
@@ -21,7 +27,7 @@ void EXEditableGLImage::mousePressEvent(QMouseEvent *event)
     Q_EMIT sigValueChangeStarted();
 }
 
-void EXEditableGLImage::mouseMoveEvent(QMouseEvent *event)
+void EXEditableImage::mouseMoveEvent(QMouseEvent *event)
 {
     auto modifiers = event->modifiers();
     float factor = 1.0;
@@ -40,13 +46,13 @@ void EXEditableGLImage::mouseMoveEvent(QMouseEvent *event)
     Q_EMIT sigValueChanging();
 }
 
-void EXEditableGLImage::mouseReleaseEvent(QMouseEvent *event)
+void EXEditableImage::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_UNUSED(event);
     Q_EMIT sigValueFinalized();
 }
 
-void EXEditableGLImage::setDisplayColorConverter(KisDisplayColorConverter *converter)
+void EXEditableImage::setDisplayColorConverter(KisDisplayColorConverter *converter)
 {
     if (m_displayColorConverter == converter) {
         return;
@@ -60,17 +66,17 @@ void EXEditableGLImage::setDisplayColorConverter(KisDisplayColorConverter *conve
     m_displayRenderer = m_displayColorConverter ? m_displayColorConverter->displayRendererInterface() : nullptr;
 }
 
-KisDisplayColorConverter *EXEditableGLImage::displayColorConverter() const
+KisDisplayColorConverter *EXEditableImage::displayColorConverter() const
 {
     return m_displayColorConverter;
 }
 
-KoColorDisplayRendererInterface *EXEditableGLImage::displayRenderer() const
+KoColorDisplayRendererInterface *EXEditableImage::displayRenderer() const
 {
     return m_displayRenderer;
 }
 
-const KoColorSpace *EXEditableGLImage::generationColorSpace(const KoColorSpace *preferredColorSpace) const
+const KoColorSpace *EXEditableImage::generationColorSpace(const KoColorSpace *preferredColorSpace) const
 {
     KoColorSpaceRegistry *registry = KoColorSpaceRegistry::instance();
     const KoColorProfile *outputProfile =
@@ -115,4 +121,43 @@ const KoColorSpace *EXEditableGLImage::generationColorSpace(const KoColorSpace *
     }
 
     return result;
+}
+
+void EXEditableImage::setStretch(bool stretch)
+{
+    KisGLImageWidget::setStretch(stretch);
+    m_stretch = stretch;
+}
+
+void EXEditableImage::loadQImage(const QImage &image)
+{
+    m_useGLImage = false;
+    m_cachedQImage = image;
+}
+
+void EXEditableImage::loadGLImage(const KisGLImageF16 &image)
+{
+    m_useGLImage = true;
+    KisGLImageWidget::loadImage(image);
+}
+
+void EXEditableImage::paintEvent(QPaintEvent *event)
+{
+    if (m_useGLImage) {
+        KisGLImageWidget::paintEvent(event);
+    } else {
+        QWidget::paintEvent(event);
+        QPainter painter(this);
+        if (m_stretch) {
+            painter.drawImage(rect(), m_cachedQImage);
+        } else {
+            QSize imageSize = m_cachedQImage.size();
+            QPoint center = rect().center();
+            QRect drawRect(center.x() - imageSize.width() / 2,
+                           center.y() - imageSize.height() / 2,
+                           imageSize.width(),
+                           imageSize.height());
+            painter.drawImage(drawRect, m_cachedQImage);
+        }
+    }
 }

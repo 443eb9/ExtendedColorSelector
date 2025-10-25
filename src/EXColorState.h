@@ -18,6 +18,7 @@
 #include "EXChannelPlane.h"
 #include "EXChannelSlider.h"
 #include "EXColorModel.h"
+#include "EXDynamicRangeSlider.h"
 #include "EXKoColorConverter.h"
 
 class EXColorState : public QObject, public KisShared
@@ -43,7 +44,7 @@ public:
     void setColorSpace(const KoColorSpace *colorSpace);
     void setDynamicRange(float dynamicRange);
     float dynamicRange() const;
-    bool hasHardwareHDR() const;
+    bool hdrSupported() const;
 
     void setColorModel(ColorModelId model);
     const ColorModelSP colorModel() const;
@@ -55,6 +56,7 @@ public:
 
     void connectChannelPlane(EXChannelPlane *plane);
     void connectChannelSlider(EXChannelSlider *slider);
+    void connectDynamicRangeSlider(EXDynamicRangeSlider *slider);
 
     static EXColorState *instance();
 
@@ -76,7 +78,7 @@ private:
     KisCanvasResourceProvider *m_resourceProvider;
     KoColorDisplayRendererInterface *m_dri;
     KisDisplayColorConverter *m_dcc;
-    EXColorConverterSP m_koColorConverter;
+    EXColorConverterSP m_colorConverter;
     bool m_blockColorSync;
     bool m_useLayerColorSpace;
     float m_dynamicRange;

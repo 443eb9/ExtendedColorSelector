@@ -38,8 +38,7 @@ public:
 
     QSize sizeHint() const override;
 
-    void setStretchEnabled(bool stretch);
-    bool stretchEnabled() const { return m_stretch; }
+    void setStretch(bool stretch);
 
 public Q_SLOTS:
 

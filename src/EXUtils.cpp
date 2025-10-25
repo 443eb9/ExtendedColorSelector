@@ -18,6 +18,42 @@
 
 namespace ExtendedUtils
 {
+void loadImageIntoEditableWidget(EXEditableImage *editable,
+                                 int width,
+                                 int height,
+                                 bool useParallel,
+                                 const KoColorSpace *generationColorSpace,
+                                 const EXColorConverterSP colorConverter,
+                                 const KisDisplayColorConverter *displayConverter,
+                                 std::function<QVector4D(float, float)> pixelGet)
+{
+        QImage image = generateGradient(width,
+                                        height,
+                                        useParallel,
+                                        colorConverter,
+                                        displayConverter->displayRendererInterface(),
+                                        pixelGet);
+        editable->loadQImage(image);
+    // if (editable->useGLImage()) {
+    //     KisGLImageF16 image = generateGLGradient(width,
+    //                                              height,
+    //                                              colorConverter,
+    //                                              generationColorSpace,
+    //                                              displayConverter,
+    //                                              pixelGet,
+    //                                              useParallel);
+    //     editable->loadGLImage(image);
+    // } else {
+    //     QImage image = generateGradient(width,
+    //                                     height,
+    //                                     useParallel,
+    //                                     colorConverter,
+    //                                     displayConverter->displayRendererInterface(),
+    //                                     pixelGet);
+    //     editable->loadQImage(image);
+    // }
+}
+
 QImage generateGradient(int width,
                         int height,
                         bool useParallel,
@@ -61,7 +97,7 @@ KisGLImageF16 generateGLGradient(int width,
                                  int height,
                                  const EXColorConverterSP colorConverter,
                                  const KoColorSpace *generationColorSpace,
-                                 KisDisplayColorConverter *displayColorConverter,
+                                 const KisDisplayColorConverter *displayColorConverter,
                                  std::function<QVector4D(float, float)> pixelGet,
                                  bool useParallel)
 {
@@ -75,26 +111,34 @@ KisGLImageF16 generateGLGradient(int width,
 
     quint8 *deviceBytePtr = device->data();
     const qsizetype pixelSize = generationColorSpace->pixelSize();
-    const qsizetype channelStride = generationColorSpace->channelCount();
     const qsizetype rowStrideBytes = pixelSize * width;
 
     const KoColorSpace *converterSpace = colorConverter->colorSpace();
     const int converterChannelCount = converterSpace->channelCount();
 
-    const float invWidth = width > 1 ? 1.0f / (width - 1) : 0.0f;
-    const float invHeight = height > 1 ? 1.0f / (height - 1) : 0.0f;
+    const float invWidthMinusOne = width > 1 ? 1.0f / (width - 1) : 0.0f;
+    const float invHeightMinusOne = height > 1 ? 1.0f / (height - 1) : 0.0f;
+    const bool parallelRows = useParallel && height > 1;
+
+    QVector<int> rowIndices;
+    if (parallelRows) {
+        rowIndices.resize(height);
+        std::iota(rowIndices.begin(), rowIndices.end(), 0);
+    }
 
     auto processRow = [&](int y) {
-        const float ny = height > 1 ? y * invHeight : 0.0f;
         quint8 *rowBytePtr = deviceBytePtr + rowStrideBytes * y;
 
         KoColor localSrc(converterSpace);
         KoColor localDst(generationColorSpace);
-        QVector<float> tempChannels(converterChannelCount);
+        static thread_local QVector<float> tempChannelsStorage;
+        tempChannelsStorage.resize(converterChannelCount);
+        QVector<float> &tempChannels = tempChannelsStorage;
+        const float v = y * invHeightMinusOne;
 
         for (int x = 0; x < width; ++x) {
-            const float nx = width > 1 ? x * invWidth : 0.0f;
-            const QVector4D displayChannels = pixelGet(nx, ny);
+            const float u = x * invWidthMinusOne;
+            const QVector4D displayChannels = pixelGet(u, v);
 
             colorConverter->displayChannelsToKoColor(localSrc.data(), displayChannels, tempChannels);
             localDst.fromKoColor(localSrc);
@@ -104,33 +148,23 @@ KisGLImageF16 generateGLGradient(int width,
         }
     };
 
-    if (useParallel && height > 1) {
-        QVector<int> rows(height);
-        std::iota(rows.begin(), rows.end(), 0);
-        QtConcurrent::blockingMap(rows, processRow);
+    if (parallelRows) {
+        QtConcurrent::blockingMap(rowIndices, processRow);
     } else {
         for (int y = 0; y < height; ++y) {
             processRow(y);
         }
     }
 
-    displayColorConverter->applyDisplayFilteringF32(device, Float32BitsColorDepthID);
+    displayColorConverter->applyDisplayFilteringF32(device, Float16BitsColorDepthID);
 
     KisGLImageF16 image(QSize(width, height));
-    half *imagePtr = image.data();
-    const float *devicePtr = reinterpret_cast<const float *>(device->data());
+    const KoColorSpace *outputSpace = device->colorSpace();
+    const int outputChannels = outputSpace ? outputSpace->channelCount() : 0;
+    Q_ASSERT(outputChannels == 4);
 
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            imagePtr[0] = devicePtr[0];
-            imagePtr[1] = devicePtr[1];
-            imagePtr[2] = devicePtr[2];
-            imagePtr[3] = devicePtr[3];
-
-            devicePtr += channelStride;
-            imagePtr += 4;
-        }
-    }
+    const size_t bytesToCopy = static_cast<size_t>(width) * height * outputChannels * sizeof(half);
+    std::memcpy(image.data(), device->constData(), bytesToCopy);
 
     return image;
 }

@@ -7,26 +7,22 @@
 #include <QPair>
 #include <QRadioButton>
 #include <QVBoxLayout>
-#include <QVector>
 #include <QVector3D>
 #include <QVector4D>
+#include <QVector>
 #include <QWidget>
-
-#include <functional>
 
 #include "KisGLImageF16.h"
 #include <KoColorDisplayRendererInterface.h>
+#include <KoColorSpace.h>
 #include <kis_canvas2.h>
+#include <kis_display_color_converter.h>
 
 #include "EXColorModel.h"
 #include "EXEditable.h"
 #include "EXKoColorConverter.h"
 
-class KisDisplayColorConverter;
-
-class KoColorSpace;
-
-class EXChannelSliderBar : public EXEditableGLImage
+class EXChannelSliderBar : public EXEditableImage
 {
     Q_OBJECT
 
@@ -47,8 +43,6 @@ public:
     float currentWidgetCoord();
 
     void setCanvas(KisCanvas2 *canvas);
-    void setDynamicRange(float dynamicRange);
-    float dynamicRange() const { return m_dynamicRange; }
 
 private:
     int m_channelIndex;
@@ -83,6 +77,7 @@ public:
     void setColorConverter(EXColorConverterSP converter);
     void setColorful(bool colorful);
     void setDynamicRange(float dynamicRange);
+    void setUseHdr(bool use);
     QPair<ColorModelSP, quint32> colorModelAndChannelIndex() const;
 
     QVector3D colorAtCurrentModel() const;

@@ -17,7 +17,7 @@
 #include "EXShape.h"
 #include "KisGLImageF16.h"
 
-class EXChannelPlane : public EXEditableGLImage
+class EXChannelPlane : public EXEditableImage
 {
     Q_OBJECT
 
@@ -36,6 +36,7 @@ public:
     void setShape(EXChannelPlaneShapeSP shape);
     void setSanitizeOutOfGamut(bool sanitize, QVector3D outOfGamutColor = QVector3D());
     void setDynamicRange(float dynamicRange);
+    void setUseHdr(bool use);
 
     ColorModelSP colorModel() const;
 

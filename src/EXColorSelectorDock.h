@@ -10,18 +10,17 @@
 #include <kis_canvas2.h>
 #include <kis_color_space_selector.h>
 #include <kis_mainwindow_observer.h>
+#include <kis_slider_spin_box.h>
 
 #include "EXChannelPlane.h"
 #include "EXChannelSlider.h"
 #include "EXColorModelSwitchers.h"
 #include "EXColorPatchPopup.h"
 #include "EXColorState.h"
+#include "EXDynamicRangeSlider.h"
 #include "EXPortableColorSelector.h"
 #include "EXSettingsDialog.h"
 #include "EXSettingsState.h"
-#include "EXDynamicRangeSlider.h"
-
-class KisSliderSpinBox;
 
 class EXColorSelectorDock : public QDockWidget, public KisMainwindowObserver
 {

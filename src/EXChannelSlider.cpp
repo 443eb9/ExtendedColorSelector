@@ -1,9 +1,9 @@
 #include <QButtonGroup>
 #include <QHBoxLayout>
 #include <QMouseEvent>
+#include <QPainter>
 #include <QVBoxLayout>
 #include <QVector4D>
-#include <QPainter>
 #include <qmath.h>
 
 #include <KoColorSpace.h>
@@ -195,10 +195,14 @@ void EXChannelSlider::setColorful(bool colorful)
 
 void EXChannelSlider::setDynamicRange(float dynamicRange)
 {
-    if (!m_bar) {
-        return;
-    }
-    m_bar->setDynamicRange(dynamicRange);
+    m_bar->m_dynamicRange = dynamicRange;
+    m_bar->updateImage();
+}
+
+void EXChannelSlider::setUseHdr(bool use)
+{
+    m_bar->setUseGLImage(use);
+    m_bar->updateImage();
 }
 
 QPair<ColorModelSP, quint32> EXChannelSlider::colorModelAndChannelIndex() const
@@ -217,7 +221,7 @@ EXChannelSliderBar *EXChannelSlider::bar() const
 }
 
 EXChannelSliderBar::EXChannelSliderBar(int channelIndex, ColorModelSP colorModel, QWidget *parent)
-    : EXEditableGLImage(parent)
+    : EXEditableImage(parent)
     , m_channelIndex(channelIndex)
     , m_colorAtCurrentModel(QVector3D())
     , m_converter(nullptr)
@@ -280,7 +284,6 @@ void EXChannelSliderBar::updateImage()
         return colorWithAlpha;
     };
 
-    const int gradientWidth = qMax(1, width());
     const KoColorSpace *generationCS = generationColorSpace(m_converter ? m_converter->colorSpace() : nullptr);
 
     if (!generationCS) {
@@ -288,13 +291,14 @@ void EXChannelSliderBar::updateImage()
         return;
     }
 
-    KisGLImageF16 image = ExtendedUtils::generateGLGradient(gradientWidth,
-                                                            1,
-                                                            m_converter,
-                                                            generationCS,
-                                                            displayColorConverter(),
-                                                            pixelGet);
-    loadImage(image);
+    ExtendedUtils::loadImageIntoEditableWidget(this,
+                                               width(),
+                                               1,
+                                               true,
+                                               generationCS,
+                                               m_converter,
+                                               displayColorConverter(),
+                                               pixelGet);
 }
 
 void EXChannelSliderBar::resizeEvent(QResizeEvent *event)
@@ -305,7 +309,7 @@ void EXChannelSliderBar::resizeEvent(QResizeEvent *event)
 
 void EXChannelSliderBar::paintEvent(QPaintEvent *event)
 {
-    KisGLImageWidget::paintEvent(event);
+    EXEditableImage::paintEvent(event);
 
     if (!m_converter || !displayRenderer() || !displayColorConverter()) {
         return;
@@ -320,8 +324,8 @@ void EXChannelSliderBar::paintEvent(QPaintEvent *event)
 
     const QVector3D converterSpaceColor = m_colorModel->transferTo(converterModel, m_colorAtCurrentModel);
     const QVector4D converterSpaceColorWithAlpha(converterSpaceColor * m_dynamicRange, 1.0f);
-    auto contrastColor = ExtendedUtils::getContrastingColor(displayRenderer()->toQColor(
-        m_converter->displayChannelsToKoColor(converterSpaceColorWithAlpha)));
+    auto contrastColor = ExtendedUtils::getContrastingColor(
+        displayRenderer()->toQColor(m_converter->displayChannelsToKoColor(converterSpaceColorWithAlpha)));
     painter.setPen(QPen(contrastColor, 1));
     int x = m_colorAtCurrentModel[m_channelIndex] * width();
     painter.drawRect(x - 1, 0, 2, height());
@@ -340,7 +344,7 @@ void EXChannelSliderBar::startEdit(QMouseEvent *event, bool isShift)
 
 void EXChannelSliderBar::mouseReleaseEvent(QMouseEvent *event)
 {
-    EXEditableGLImage::mouseReleaseEvent(event);
+    EXEditableImage::mouseReleaseEvent(event);
     Q_EMIT sigValueFinalized();
 }
 
@@ -366,18 +370,6 @@ void EXChannelSliderBar::shift(QMouseEvent *event, QVector2D delta)
 
     m_colorAtCurrentModel[m_channelIndex] = value;
     Q_EMIT sigValueChanging();
-}
-
-void EXChannelSliderBar::setDynamicRange(float dynamicRange)
-{
-    float clampedRange = qMax(0.0f, dynamicRange);
-    if (qAbs(m_dynamicRange - clampedRange) < 1e-6f) {
-        return;
-    }
-
-    m_dynamicRange = clampedRange;
-    updateImage();
-    update();
 }
 
 float EXChannelSliderBar::currentWidgetCoord()

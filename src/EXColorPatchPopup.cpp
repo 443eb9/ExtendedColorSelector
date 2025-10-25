@@ -32,13 +32,13 @@ void EXColorPatchPopup::recordColor(QColor color)
     m_lastColorBox->setStyleSheet(QString("background-color: %1").arg(m_lastColor.name()));
 }
 
-void EXColorPatchPopup::connectToWidget(const EXEditableGLImage *widget)
+void EXColorPatchPopup::connectToWidget(const EXEditableImage *widget)
 {
     if (!widget) {
         return;
     }
 
-    connect(widget, &EXEditableGLImage::sigValueChangeStarted, widget, [this, widget]() {
+    connect(widget, &EXEditableImage::sigValueChangeStarted, widget, [this, widget]() {
         move(widget->mapToGlobal(QPoint(0, 0)) - QPoint(width(), 0));
         show();
     });

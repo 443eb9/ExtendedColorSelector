@@ -57,7 +57,7 @@ KisGLImageWidget::KisGLImageWidget(const KisSurfaceColorSpaceWrapper &colorSpace
     setUpdateBehavior(QOpenGLWidget::NoPartialUpdate);
 }
 
-void KisGLImageWidget::setStretchEnabled(bool stretch)
+void KisGLImageWidget::setStretch(bool stretch)
 {
     if (m_stretch == stretch) {
         return;
