@@ -37,6 +37,23 @@ public:
     virtual QVector3D toXyz(const QVector3D &color) const = 0;
     virtual QVector3D fromXyz(const QVector3D &color) const = 0;
 
+    virtual bool isDesaturatable() const
+    {
+        return false;
+    }
+
+    virtual float desaturate(const QVector3D &color) const
+    {
+        Q_UNUSED(color);
+        return 0.0f;
+    }
+
+    virtual QVector3D fromDesaturated(float desaturated) const
+    {
+        Q_UNUSED(desaturated);
+        return QVector3D();
+    }
+
     virtual void resolveReference(QVector3D &color, const QVector3D &reference) const
     {
         Q_UNUSED(color);
@@ -120,6 +137,8 @@ public:
     {
         return true;
     }
+
+    static ColorModelSP DesaturateModel;
 };
 
 class SRGBModel : public ColorModel
@@ -127,6 +146,12 @@ class SRGBModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    bool isDesaturatable() const override
+    {
+        return true;
+    }
+    float desaturate(const QVector3D &color) const override;
+    QVector3D fromDesaturated(float desaturated) const override;
 
     ColorModelId id() const override
     {
@@ -159,6 +184,12 @@ class HSVModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    bool isDesaturatable() const override
+    {
+        return true;
+    }
+    float desaturate(const QVector3D &color) const override;
+    QVector3D fromDesaturated(float desaturated) const override;
     void resolveReference(QVector3D &color, const QVector3D &reference) const override;
     void makeColorful(QVector3D &color, int channelIndex) const override;
 
@@ -203,6 +234,12 @@ class HSLModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    bool isDesaturatable() const override
+    {
+        return true;
+    }
+    float desaturate(const QVector3D &color) const override;
+    QVector3D fromDesaturated(float desaturated) const override;
     void resolveReference(QVector3D &color, const QVector3D &reference) const override;
     void makeColorful(QVector3D &color, int channelIndex) const override;
 
@@ -247,6 +284,12 @@ class LinearRGBModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    bool isDesaturatable() const override
+    {
+        return true;
+    }
+    float desaturate(const QVector3D &color) const override;
+    QVector3D fromDesaturated(float desaturated) const override;
 
     ColorModelId id() const override
     {
@@ -311,6 +354,12 @@ class LABModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    bool isDesaturatable() const override
+    {
+        return true;
+    }
+    float desaturate(const QVector3D &color) const override;
+    QVector3D fromDesaturated(float desaturated) const override;
     void resolveReference(QVector3D &color, const QVector3D &reference) const override;
 
     ColorModelId id() const override
@@ -382,6 +431,12 @@ class OKLABModel : public ColorModel
 public:
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    bool isDesaturatable() const override
+    {
+        return true;
+    }
+    float desaturate(const QVector3D &color) const override;
+    QVector3D fromDesaturated(float desaturated) const override;
     void resolveReference(QVector3D &color, const QVector3D &reference) const override;
 
     ColorModelId id() const override

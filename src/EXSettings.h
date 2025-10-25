@@ -59,6 +59,7 @@ public:
     int currentColorModel;
     bool useLayerColorSpace;
     const KoColorSpace *customColorSpace;
+    ColorModelId grayModelDesaturateModel;
 
 private:
     KConfigGroup m_configGroup;

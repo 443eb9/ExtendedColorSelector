@@ -1,5 +1,6 @@
 #include <QButtonGroup>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QGroupBox>
@@ -316,6 +317,27 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
         Q_EMIT m_settingsState->sigSettingsChanged();
     });
 
+    auto grayModelDesaturateLayout = new QHBoxLayout();
+    auto grayModelDesaturateLabel = new QLabel("Gray Model Desaturate With");
+    auto grayModelDesaturateBox = new QComboBox();
+    for (const auto &modelId : ColorModelFactory::AllModels) {
+        auto model = ColorModelFactory::fromId(modelId);
+        if (model->isDesaturatable()) {
+            grayModelDesaturateBox->addItem(model->displayName(), static_cast<int>(modelId));
+        }
+    }
+    grayModelDesaturateBox->setCurrentIndex(
+        grayModelDesaturateBox->findData(static_cast<int>(settings.grayModelDesaturateModel)));
+    grayModelDesaturateLayout->addWidget(grayModelDesaturateLabel);
+    grayModelDesaturateLayout->addWidget(grayModelDesaturateBox);
+    connect(grayModelDesaturateBox,
+            QOverload<int>::of(&QComboBox::currentIndexChanged),
+            [this, &settings, grayModelDesaturateBox](int index) {
+                settings.grayModelDesaturateModel =
+                    static_cast<ColorModelId>(grayModelDesaturateBox->itemData(index).toInt());
+                Q_EMIT m_settingsState->sigSettingsChanged();
+            });
+
     auto pSettingsGroup = new QGroupBox("Portable Color Selector");
     auto pSettingsLayout = new QVBoxLayout();
     pSettingsGroup->setLayout(pSettingsLayout);
@@ -359,6 +381,7 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
 
     mainLayout->addWidget(recordLastColorWhenMouseReleaseBox);
     mainLayout->addWidget(channelSpinBoxesEnabled);
+    mainLayout->addLayout(grayModelDesaturateLayout);
     mainLayout->addWidget(outOfGamutColorPicker);
     mainLayout->addWidget(pSettingsGroup);
     mainLayout->addStretch(1);

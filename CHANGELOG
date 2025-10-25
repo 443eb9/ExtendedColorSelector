@@ -1,6 +1,7 @@
 # Unreleased
 
 - Added `Normal` color model for normal map painting.
+- Allow use different color models for gray model. (`SRGB`, `HSV`, `HSL`, `LinearRGB`, `LAB`, `OKLAB`)
 
 # v0.6.0
 

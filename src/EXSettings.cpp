@@ -88,6 +88,8 @@ EXGlobalSettings::EXGlobalSettings()
     } else {
         customColorSpace = KoColorSpaceRegistry::instance()->colorSpace(customColorModel, customColorDepth);
     }
+    grayModelDesaturateModel = static_cast<ColorModelId>(
+        m_configGroup.readEntry("grayModelDesaturateModel", static_cast<int>(ColorModelId::Oklab)));
 }
 
 void EXGlobalSettings::writeAll()
@@ -107,10 +109,11 @@ void EXGlobalSettings::writeAll()
     m_configGroup.writeEntry("pEnableColorModelSwitcher", pEnableColorModelSwitcher);
     m_configGroup.writeEntry("currentColorModel", currentColorModel);
     m_configGroup.writeEntry("useLayerColorSpace", useLayerColorSpace);
-
     if (customColorSpace) {
         m_configGroup.writeEntry("customColorModel", customColorSpace->colorModelId().id());
         m_configGroup.writeEntry("customColorDepth", customColorSpace->colorDepthId().id());
     }
+    m_configGroup.writeEntry("grayModelDesaturateModel", static_cast<int>(grayModelDesaturateModel));
+
     m_configGroup.sync();
 }

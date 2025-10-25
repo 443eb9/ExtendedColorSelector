@@ -17,6 +17,11 @@ EXSettingsState::EXSettingsState()
     for (const auto &colorModelId : globalSettings.displayOrder) {
         settings.append(EXPerColorModelSettings(ColorModelFactory::fromId(colorModelId)->displayName()));
     }
+
+    GrayModel::DesaturateModel = ColorModelFactory::fromId(globalSettings.grayModelDesaturateModel);
+    connect(this, &EXSettingsState::sigSettingsChanged, this, [this]() {
+        GrayModel::DesaturateModel = ColorModelFactory::fromId(globalSettings.grayModelDesaturateModel);
+    });
 }
 
 void EXSettingsState::connectChannelPlane(EXChannelPlane *plane)
