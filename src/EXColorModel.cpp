@@ -31,7 +31,8 @@ QVector3D EXColorModel::transferTo(const EXColorModel *toModel, const QVector3D 
     return toModel->fromXyz(toXyz(color));
 }
 
-QVector3D EXColorModel::transferTo(const EXColorModel *toModel, const QVector3D &color, const QVector3D &reference) const
+QVector3D
+EXColorModel::transferTo(const EXColorModel *toModel, const QVector3D &color, const QVector3D &reference) const
 {
     if (toModel->id() == id()) {
         return color;
@@ -47,6 +48,7 @@ const float CIE_EPSILON = 216.0 / 24389.0;
 const float CIE_KAPPA = 24389.0 / 27.0;
 
 ColorModelSP GrayModel::DesaturateModel = new OKLABModel();
+ColorModelSP SRGBModel::IntermediateModelForHsvAndHsl = new SRGBModel();
 
 float gammaFunction(float x)
 {
@@ -172,7 +174,7 @@ QVector3D hwbToRgb(const QVector3D &color)
 
 QVector3D HSVModel::fromXyz(const QVector3D &color) const
 {
-    QVector3D hwb = srgbToHwb(SRGBModel().fromXyz(color));
+    QVector3D hwb = srgbToHwb(SRGBModel::IntermediateModelForHsvAndHsl->fromXyz(color));
     float value = 1. - hwb[2];
     float saturation = value != 0. ? 1. - (hwb[1] / value) : 0.;
     return QVector3D(hwb[0], saturation, value);
@@ -180,7 +182,8 @@ QVector3D HSVModel::fromXyz(const QVector3D &color) const
 
 QVector3D HSVModel::toXyz(const QVector3D &color) const
 {
-    return SRGBModel().toXyz(hwbToRgb(QVector3D(color[0], (1. - color[1]) * color[2], 1. - color[2])));
+    return SRGBModel::IntermediateModelForHsvAndHsl->toXyz(
+        hwbToRgb(QVector3D(color[0], (1. - color[1]) * color[2], 1. - color[2])));
 }
 
 float HSVModel::desaturate(const QVector3D &color) const

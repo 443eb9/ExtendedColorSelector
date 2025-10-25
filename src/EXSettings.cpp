@@ -90,6 +90,7 @@ EXGlobalSettings::EXGlobalSettings()
     }
     grayModelDesaturateModel = static_cast<ColorModelId>(
         m_configGroup.readEntry("grayModelDesaturateModel", static_cast<int>(ColorModelId::Oklab)));
+    alwaysUseSrgbModelForHsvAndHsl = m_configGroup.readEntry("alwaysUseSrgbModelForHsvAndHsl", false);
 }
 
 void EXGlobalSettings::writeAll()
@@ -114,6 +115,7 @@ void EXGlobalSettings::writeAll()
         m_configGroup.writeEntry("customColorDepth", customColorSpace->colorDepthId().id());
     }
     m_configGroup.writeEntry("grayModelDesaturateModel", static_cast<int>(grayModelDesaturateModel));
+    m_configGroup.writeEntry("alwaysUseSrgbModelForHsvAndHsl", alwaysUseSrgbModelForHsvAndHsl);
 
     m_configGroup.sync();
 }

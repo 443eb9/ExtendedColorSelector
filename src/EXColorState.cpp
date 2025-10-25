@@ -238,6 +238,13 @@ void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
     m_currentColorSpace = colorSpace;
     m_colorConverter = new EXKoColorConverter(colorSpace);
 
+    if (EXSettingsState::instance()->globalSettings.alwaysUseSrgbModelForHsvAndHsl
+        || !colorSpace->profile()->isLinear()) {
+        SRGBModel::IntermediateModelForHsvAndHsl = ColorModelFactory::fromId(ColorModelId::Srgb);
+    } else {
+        SRGBModel::IntermediateModelForHsvAndHsl = ColorModelFactory::fromId(ColorModelId::LinearRgb);
+    }
+
     syncFromKrita();
     Q_EMIT sigColorSpaceChanged(m_currentColorSpace);
 }

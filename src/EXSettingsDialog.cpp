@@ -338,6 +338,14 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
                 Q_EMIT m_settingsState->sigSettingsChanged();
             });
 
+    auto alwaysUseSrgbModelForHsvAndHslBox =
+        new QCheckBox("Always Use sRGB Model For HSV and HSL (Reopen document required)");
+    alwaysUseSrgbModelForHsvAndHslBox->setChecked(settings.alwaysUseSrgbModelForHsvAndHsl);
+    connect(alwaysUseSrgbModelForHsvAndHslBox, &QCheckBox::clicked, [this, &settings](bool checked) {
+        settings.alwaysUseSrgbModelForHsvAndHsl = checked;
+        Q_EMIT m_settingsState->sigSettingsChanged();
+    });
+
     auto pSettingsGroup = new QGroupBox("Portable Color Selector");
     auto pSettingsLayout = new QVBoxLayout();
     pSettingsGroup->setLayout(pSettingsLayout);
@@ -382,6 +390,7 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
     mainLayout->addWidget(recordLastColorWhenMouseReleaseBox);
     mainLayout->addWidget(channelSpinBoxesEnabled);
     mainLayout->addLayout(grayModelDesaturateLayout);
+    mainLayout->addWidget(alwaysUseSrgbModelForHsvAndHslBox);
     mainLayout->addWidget(outOfGamutColorPicker);
     mainLayout->addWidget(pSettingsGroup);
     mainLayout->addStretch(1);

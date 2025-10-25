@@ -177,6 +177,8 @@ public:
     {
         return true;
     }
+
+    static ColorModelSP IntermediateModelForHsvAndHsl; // Can be either LinearRGBModel or SRGBModel
 };
 
 class HSVModel : public EXColorModel

@@ -60,6 +60,7 @@ public:
     bool useLayerColorSpace;
     const KoColorSpace *customColorSpace;
     ColorModelId grayModelDesaturateModel;
+    bool alwaysUseSrgbModelForHsvAndHsl;
 
 private:
     KConfigGroup m_configGroup;
