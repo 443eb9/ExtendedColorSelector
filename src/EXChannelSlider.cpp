@@ -252,13 +252,11 @@ void EXChannelSliderBar::setCanvas(KisCanvas2 *canvas)
 void EXChannelSliderBar::updateImage()
 {
     if (!m_converter || !m_colorModel || !displayColorConverter() || !displayRenderer()) {
-        loadImage(KisGLImageF16());
         return;
     }
 
     const ColorModelSP converterModel = m_converter->colorModel();
     if (!converterModel) {
-        loadImage(KisGLImageF16());
         return;
     }
 
@@ -299,6 +297,7 @@ void EXChannelSliderBar::updateImage()
                                                m_converter,
                                                displayColorConverter(),
                                                pixelGet);
+    update();
 }
 
 void EXChannelSliderBar::resizeEvent(QResizeEvent *event)
