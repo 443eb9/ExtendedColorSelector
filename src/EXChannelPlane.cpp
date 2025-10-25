@@ -63,6 +63,8 @@ void EXChannelPlane::setColor(QVector3D color, ColorModelSP colorModel)
     if (m_lastPrimaryChannelValue != color[m_primaryChannelIndex]) {
         m_lastPrimaryChannelValue = color[m_primaryChannelIndex];
         updateImage();
+    } else {
+        update();
     }
 }
 
