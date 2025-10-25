@@ -1,12 +1,12 @@
 #include <QMouseEvent>
 #include <QPainter>
+#include <QRect>
 #include <QVector4D>
 #include <qmath.h>
 
 #include <KoColor.h>
 #include <KoColorDisplayRendererInterface.h>
 #include <KoColorSpace.h>
-#include <kis_canvas_resource_provider.h>
 #include <kis_display_color_converter.h>
 
 #include "EXChannelPlane.h"
@@ -15,21 +15,30 @@
 #include "EXUtils.h"
 
 EXChannelPlane::EXChannelPlane(QWidget *parent)
-    : EXEditable(parent)
+    : EXEditableGLImage(parent)
     , m_shape(nullptr)
-    , m_dri(nullptr)
     , m_lastPrimaryChannelValue(-1.0f)
     , m_primaryChannelIndex(0)
+    , m_dynamicRange(1.0f)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);
+    setStretchEnabled(false);
 }
 
 void EXChannelPlane::setCanvas(KisCanvas2 *canvas)
 {
-    if (canvas) {
-        m_dri = canvas->displayColorConverter()->displayRendererInterface();
+    setDisplayColorConverter(canvas ? canvas->displayColorConverter() : nullptr);
+
+    if (displayColorConverter()) {
+        connect(displayColorConverter(),
+                &KisDisplayColorConverter::displayConfigurationChanged,
+                this,
+                &EXChannelPlane::updateImage,
+                Qt::UniqueConnection);
     }
+
+    updateImage();
 }
 
 void EXChannelPlane::setColorModel(ColorModelSP colorModel)
@@ -88,6 +97,18 @@ void EXChannelPlane::setSanitizeOutOfGamut(bool sanitize, QVector3D outOfGamutCo
     m_sanitizeOutOfGamut = sanitize;
     m_outOfGamutColor = outOfGamutColor;
     updateImage();
+}
+
+void EXChannelPlane::setDynamicRange(float dynamicRange)
+{
+    float clampedRange = qMax(0.0f, dynamicRange);
+    if (qAbs(m_dynamicRange - clampedRange) < 1e-6f) {
+        return;
+    }
+
+    m_dynamicRange = clampedRange;
+    updateImage();
+    update();
 }
 
 ColorModelSP EXChannelPlane::colorModel() const
@@ -154,27 +175,27 @@ void EXChannelPlane::updateNormalizedRing()
 
 void EXChannelPlane::resizeEvent(QResizeEvent *event)
 {
-    QWidget::resizeEvent(event);
+    KisGLImageWidget::resizeEvent(event);
     updateNormalizedRing();
     updateImage();
 }
 
 void EXChannelPlane::paintEvent(QPaintEvent *event)
 {
-    if (m_image.isNull() || !m_shape) {
+    KisGLImageWidget::paintEvent(event);
+
+    if (!m_shape || !m_converter || !displayRenderer()) {
         return;
     }
 
-    QWidget::paintEvent(event);
     QPainter painter(this);
-
-    auto offset = (QSize(width(), height()) - m_image.size()) * 0.5;
-    painter.drawImage(offset.width(), offset.height(), m_image);
 
     QVector2D planeValues = m_secondaryChannelValues;
 
-    auto contrastColor = ExtendedUtils::getContrastingColor(m_dri->toQColor(
-        m_converter->displayChannelsToKoColor(m_colorModel->transferTo(m_converter->colorModel(), m_color))));
+    QVector3D displayColor = m_colorModel->transferTo(m_converter->colorModel(), m_color);
+    displayColor *= m_dynamicRange;
+    auto contrastColor = ExtendedUtils::getContrastingColor(
+        displayRenderer()->toQColor(m_converter->displayChannelsToKoColor(QVector4D(displayColor, 1.0f))));
     painter.setPen(QPen(contrastColor, 1));
 
     if (!m_colorModel->isSrgbBased() && m_clipToSrgbGamut) {
@@ -202,8 +223,13 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
 
 void EXChannelPlane::updateImage()
 {
-    if (!m_dri || !m_shape || !m_converter) {
-        m_image = QImage();
+    if (!displayRenderer() || !m_shape || !m_converter || !displayColorConverter()) {
+        loadImage(KisGLImageF16());
+        return;
+    }
+
+    if (!m_colorModel) {
+        loadImage(KisGLImageF16());
         return;
     }
 
@@ -256,6 +282,7 @@ void EXChannelPlane::updateImage()
         if (!m_colorModel->isSrgbBased() && m_sanitizeOutOfGamut) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor);
         }
+        color *= m_dynamicRange;
         auto colorWithAlpha = color.toVector4D();
         colorWithAlpha[alphaPos] = 1.0f;
         return colorWithAlpha;
@@ -296,21 +323,41 @@ void EXChannelPlane::updateImage()
         if (!m_colorModel->isSrgbBased() && m_sanitizeOutOfGamut) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor);
         }
+        color *= m_dynamicRange;
         auto colorWithAlpha = color.toVector4D();
         colorWithAlpha[alphaPos] = 1.0f;
         return colorWithAlpha;
     };
 
+    const int dimension = qMax(1, qMin(width(), height()));
+    const KoColorSpace *generationCS = generationColorSpace(m_converter ? m_converter->colorSpace() : nullptr);
+
+    if (!generationCS) {
+        loadImage(KisGLImageF16());
+        return;
+    }
+
+    KisGLImageF16 image;
     switch (m_colorModel->channelCount()) {
     case 2:
-        m_image = ExtendedUtils::generateGradient(size(), size(), true, m_converter, m_dri, pixelGet2);
+        image = ExtendedUtils::generateGLGradient(dimension,
+                                                  dimension,
+                                                  m_converter,
+                                                  generationCS,
+                                                  displayColorConverter(),
+                                                  pixelGet2);
         break;
     case 3:
-        m_image = ExtendedUtils::generateGradient(size(), size(), true, m_converter, m_dri, pixelGet3);
+        image = ExtendedUtils::generateGLGradient(dimension,
+                                                  dimension,
+                                                  m_converter,
+                                                  generationCS,
+                                                  displayColorConverter(),
+                                                  pixelGet3);
         break;
     }
 
-    update();
+    loadImage(image);
 }
 
 void EXChannelPlane::startEdit(QMouseEvent *event, bool isShift)
@@ -437,12 +484,12 @@ void EXChannelPlane::handleCursorEdit(const QPointF &widgetCoord)
 
 void EXChannelPlane::offsetWidgetCoord(QPointF &widgetCoord)
 {
-    auto offset = (QSize(width(), height()) - m_image.size()) * 0.5;
+    auto offset = (QSize(width() - size(), height() - size())) * 0.5;
     widgetCoord += QPointF(offset.width(), offset.height()) / size();
 }
 
 void EXChannelPlane::unoffsetWidgetCoord(QPointF &widgetCoord)
 {
-    auto offset = (QSize(width(), height()) - m_image.size()) * 0.5;
+    auto offset = (QSize(width() - size(), height() - size())) * 0.5;
     widgetCoord -= QPointF(offset.width(), offset.height()) / size();
 }

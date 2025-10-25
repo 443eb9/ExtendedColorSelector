@@ -1,7 +1,12 @@
 #ifndef EXCHANNELPLANE_H
 #define EXCHANNELPLANE_H
 
+#include <QPointF>
+#include <QVector2D>
+#include <QVector3D>
+#include <QVector4D>
 #include <QWidget>
+#include <functional>
 
 #include <KoColorDisplayRendererInterface.h>
 #include <kis_canvas2.h>
@@ -10,8 +15,9 @@
 #include "EXEditable.h"
 #include "EXKoColorConverter.h"
 #include "EXShape.h"
+#include "KisGLImageF16.h"
 
-class EXChannelPlane : public EXEditable
+class EXChannelPlane : public EXEditableGLImage
 {
     Q_OBJECT
 
@@ -29,6 +35,7 @@ public:
     void setColorConverter(EXColorConverterSP colorConverter);
     void setShape(EXChannelPlaneShapeSP shape);
     void setSanitizeOutOfGamut(bool sanitize, QVector3D outOfGamutColor = QVector3D());
+    void setDynamicRange(float dynamicRange);
 
     ColorModelSP colorModel() const;
 
@@ -44,11 +51,8 @@ private:
 
     EditMode m_editMode;
     QPointF m_editStartWidgetCoordPx;
-    QColor m_imageColor;
     EXChannelPlaneShapeSP m_shape;
     EXPrimaryChannelRing m_unnormalizedRing;
-    QImage m_image;
-    KoColorDisplayRendererInterface *m_dri;
 
     float m_lastPrimaryChannelValue;
 
@@ -61,6 +65,7 @@ private:
     EXColorConverterSP m_converter;
     bool m_sanitizeOutOfGamut;
     QVector3D m_outOfGamutColor;
+    float m_dynamicRange;
 
     void handleCursorEdit(const QPointF &widgetCoord);
     void sendPlaneColor(const QPointF &widgetCoord);

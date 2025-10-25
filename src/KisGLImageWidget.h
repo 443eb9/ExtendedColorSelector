@@ -1,0 +1,65 @@
+/*
+ *  SPDX-FileCopyrightText: 2019 Dmitry Kazakov <dimula73@gmail.com>
+ *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#ifndef KISGLIMAGEWIDGET_H
+#define KISGLIMAGEWIDGET_H
+
+#include <QOpenGLWidget>
+#include <QOpenGLFunctions>
+#include <QOpenGLTexture>
+#include <QOpenGLShaderProgram>
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLBuffer>
+#include <QScopedPointer>
+#include <QRect>
+#include <KisGLImageF16.h>
+#include <KisSurfaceColorSpaceWrapper.h>
+
+class KisGLImageWidget : public QOpenGLWidget, protected QOpenGLFunctions
+{
+    Q_OBJECT
+public:
+    KisGLImageWidget(QWidget *parent = nullptr);
+    KisGLImageWidget(const KisSurfaceColorSpaceWrapper &colorSpace,
+                     QWidget *parent = nullptr);
+
+    ~KisGLImageWidget();
+
+    void initializeGL() override;
+    void paintGL() override;
+
+    void loadImage(const KisGLImageF16 &image);
+
+    void paintEvent(QPaintEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
+
+    QSize sizeHint() const override;
+
+    void setStretchEnabled(bool stretch);
+    bool stretchEnabled() const { return m_stretch; }
+
+public Q_SLOTS:
+
+private Q_SLOTS:
+    void slotOpenGLContextDestroyed();
+
+private:
+    void updateVerticesBuffer(const QRect &rect);
+
+private:
+    KisGLImageF16 m_sourceImage;
+
+    QScopedPointer<QOpenGLShaderProgram> m_shader;
+    QOpenGLVertexArrayObject m_vao;
+    QOpenGLBuffer m_verticesBuffer;
+    QOpenGLBuffer m_textureVerticesBuffer;
+    QOpenGLTexture m_texture;
+
+    bool m_havePendingTextureUpdate = false;
+    bool m_stretch = true;
+};
+
+#endif // KISGLIMAGEWIDGET_H

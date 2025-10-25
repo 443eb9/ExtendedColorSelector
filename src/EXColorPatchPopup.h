@@ -18,7 +18,7 @@ public:
 
     void updateColor(QColor color);
     void recordColor(QColor color);
-    void connectToWidget(const EXEditable *widget);
+    void connectToWidget(const EXEditableGLImage *widget);
 
 private:
     QFrame *m_currentColorBox;

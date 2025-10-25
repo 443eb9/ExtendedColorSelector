@@ -1,9 +1,20 @@
+#include <QPoint>
+#include <QRect>
+#include <QSize>
+#include <QVector>
 #include <QtConcurrent>
+#include <cstring>
+#include <numeric>
 #include <qmath.h>
 
 #include "EXColorModel.h"
 #include "EXKoColorConverter.h"
 #include "EXUtils.h"
+
+#include <KoColorModelStandardIds.h>
+
+#include "kis_fixed_paint_device.h"
+#include <kis_display_color_converter.h>
 
 namespace ExtendedUtils
 {
@@ -44,6 +55,84 @@ QImage generateGradient(int width,
     }
 
     return dri->toQImage(colorSpace, raw.data(), QSize(deviceWidth, deviceHeight), false);
+}
+
+KisGLImageF16 generateGLGradient(int width,
+                                 int height,
+                                 const EXColorConverterSP colorConverter,
+                                 const KoColorSpace *generationColorSpace,
+                                 KisDisplayColorConverter *displayColorConverter,
+                                 std::function<QVector4D(float, float)> pixelGet,
+                                 bool useParallel)
+{
+    if (width <= 0 || height <= 0 || !colorConverter || !generationColorSpace || !displayColorConverter) {
+        return KisGLImageF16();
+    }
+
+    KisFixedPaintDeviceSP device = new KisFixedPaintDevice(generationColorSpace);
+    device->setRect(QRect(QPoint(), QSize(width, height)));
+    device->reallocateBufferWithoutInitialization();
+
+    quint8 *deviceBytePtr = device->data();
+    const qsizetype pixelSize = generationColorSpace->pixelSize();
+    const qsizetype channelStride = generationColorSpace->channelCount();
+    const qsizetype rowStrideBytes = pixelSize * width;
+
+    const KoColorSpace *converterSpace = colorConverter->colorSpace();
+    const int converterChannelCount = converterSpace->channelCount();
+
+    const float invWidth = width > 1 ? 1.0f / (width - 1) : 0.0f;
+    const float invHeight = height > 1 ? 1.0f / (height - 1) : 0.0f;
+
+    auto processRow = [&](int y) {
+        const float ny = height > 1 ? y * invHeight : 0.0f;
+        quint8 *rowBytePtr = deviceBytePtr + rowStrideBytes * y;
+
+        KoColor localSrc(converterSpace);
+        KoColor localDst(generationColorSpace);
+        QVector<float> tempChannels(converterChannelCount);
+
+        for (int x = 0; x < width; ++x) {
+            const float nx = width > 1 ? x * invWidth : 0.0f;
+            const QVector4D displayChannels = pixelGet(nx, ny);
+
+            colorConverter->displayChannelsToKoColor(localSrc.data(), displayChannels, tempChannels);
+            localDst.fromKoColor(localSrc);
+
+            std::memcpy(rowBytePtr, localDst.data(), static_cast<size_t>(pixelSize));
+            rowBytePtr += pixelSize;
+        }
+    };
+
+    if (useParallel && height > 1) {
+        QVector<int> rows(height);
+        std::iota(rows.begin(), rows.end(), 0);
+        QtConcurrent::blockingMap(rows, processRow);
+    } else {
+        for (int y = 0; y < height; ++y) {
+            processRow(y);
+        }
+    }
+
+    displayColorConverter->applyDisplayFilteringF32(device, Float32BitsColorDepthID);
+
+    KisGLImageF16 image(QSize(width, height));
+    half *imagePtr = image.data();
+    const float *devicePtr = reinterpret_cast<const float *>(device->data());
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            imagePtr[0] = devicePtr[0];
+            imagePtr[1] = devicePtr[1];
+            imagePtr[2] = devicePtr[2];
+            imagePtr[3] = devicePtr[3];
+
+            devicePtr += channelStride;
+            imagePtr += 4;
+        }
+    }
+
+    return image;
 }
 
 void sanitizeOutOfGamutColor(QVector3D &color, const QVector3D &outOfGamutColor)

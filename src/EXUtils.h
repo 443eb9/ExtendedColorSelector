@@ -4,13 +4,17 @@
 #include <QImage>
 #include <QVector3D>
 #include <QVector>
+#include <functional>
 
+#include "KisGLImageF16.h"
 #include <KoColor.h>
 #include <KoColorDisplayRendererInterface.h>
 #include <KoColorSpace.h>
 
 #include "EXColorModel.h"
 #include "EXKoColorConverter.h"
+
+class KisDisplayColorConverter;
 
 namespace ExtendedUtils
 {
@@ -20,6 +24,14 @@ QImage generateGradient(int width,
                         const EXColorConverterSP colorConverter,
                         const KoColorDisplayRendererInterface *dri,
                         std::function<QVector4D(float, float)> pixelGet);
+
+KisGLImageF16 generateGLGradient(int width,
+                                 int height,
+                                 const EXColorConverterSP colorConverter,
+                                 const KoColorSpace *generationColorSpace,
+                                 KisDisplayColorConverter *displayColorConverter,
+                                 std::function<QVector4D(float, float)> pixelGet,
+                                 bool useParallel = true);
 
 void sanitizeOutOfGamutColor(QVector3D &color, const QVector3D &outOfGamutColor);
 void saturateColor(QVector3D &color);

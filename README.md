@@ -5,6 +5,8 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 ## Features
 
 - Supports color picking in 11 color models. (`Gray`, `SRGB`, `HSV`, `HSL`, `LinearRGB`, `XYZ`, `Lab`, `OkLab`, `OkLch`, `OkHsv`, `OkHsl`, `Normal`(Normal map))
+- Support HDR color picking.
+- Integrated with color management from Krita. Display the correct color under specific color profile.
 - Fully modular, and highly customizable.
   - Three wheel shapes: square, triangle, and circle.
   - Channel sliders and ring to modify the third channel.
@@ -14,7 +16,6 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 - Portable color selector. Open the selector at anywhere on canvas using shortcut.
 - `Shift` and `Alt` modifiers to shift slowly.
 - Out of gamut hinting.
-- Integrated with color management from Krita. Display the correct color under specific color profile.
 
 ## Known issues
 

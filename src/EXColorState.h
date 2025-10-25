@@ -41,6 +41,8 @@ public:
     const ColorModelSP kritaColorModel() const;
     const EXColorConverterSP koColorConverter() const;
     void setColorSpace(const KoColorSpace *colorSpace);
+    void setDynamicRange(float dynamicRange);
+    float dynamicRange() const { return m_dynamicRange; }
 
     void setColorModel(ColorModelId model);
     const ColorModelSP colorModel() const;
@@ -61,6 +63,7 @@ Q_SIGNALS:
     void sigPrimaryChannelIndexChanged(quint32 index);
     void sigColorModelChanged(ColorModelId id);
     void sigColorSpaceChanged(const KoColorSpace *colorSpace);
+    void sigDynamicRangeChanged(float dynamicRange);
 
 public Q_SLOTS:
     void onDisplayConfigChanged();
@@ -76,6 +79,7 @@ private:
     EXColorConverterSP m_koColorConverter;
     bool m_blockColorSync;
     bool m_useLayerColorSpace;
+    float m_dynamicRange;
 };
 
 typedef KisSharedPtr<EXColorState> EXColorStateSP;

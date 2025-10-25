@@ -1,17 +1,23 @@
-#ifndef EXEDITABLE_H
-#define EXEDITABLE_H
+#ifndef EXEDITABLEGLIMAGE_H
+#define EXEDITABLEGLIMAGE_H
 
 #include <QMouseEvent>
 #include <QPointF>
-#include <QWidget>
+#include <QVector2D>
 
-class EXEditable : public QWidget
+#include "KisGLImageWidget.h"
+
+class KisDisplayColorConverter;
+class KoColorDisplayRendererInterface;
+class KoColorSpace;
+
+class EXEditableGLImage : public KisGLImageWidget
 {
     Q_OBJECT
 
 public:
-    EXEditable(QWidget *parent = nullptr);
-    ~EXEditable() override = default;
+    explicit EXEditableGLImage(QWidget *parent = nullptr);
+    ~EXEditableGLImage() override = default;
 
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
@@ -25,8 +31,16 @@ Q_SIGNALS:
     void sigValueChanging();
     void sigValueFinalized();
 
+protected:
+    void setDisplayColorConverter(KisDisplayColorConverter *converter);
+    KisDisplayColorConverter *displayColorConverter() const;
+    KoColorDisplayRendererInterface *displayRenderer() const;
+    const KoColorSpace *generationColorSpace(const KoColorSpace *preferredColorSpace = nullptr) const;
+
 private:
     QPointF m_editStart;
+    KisDisplayColorConverter *m_displayColorConverter = nullptr;
+    KoColorDisplayRendererInterface *m_displayRenderer = nullptr;
 };
 
-#endif // EXEDITABLE_H
+#endif // EXEDITABLEGLIMAGE_H

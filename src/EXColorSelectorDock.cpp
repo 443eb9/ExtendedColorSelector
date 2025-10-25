@@ -1,19 +1,25 @@
+#include <QHBoxLayout>
+#include <QPushButton>
 #include <QVBoxLayout>
 
 #include <KisViewManager.h>
 #include <KoColorDisplayRendererInterface.h>
+#include <QtMath>
 #include <kis_canvas_resource_provider.h>
 #include <kis_display_color_converter.h>
 #include <kis_icon_utils.h>
+#include <opengl/KisOpenGLModeProber.h>
 
 #include "EXColorModel.h"
 #include "EXColorSelectorDock.h"
+#include "kis_slider_spin_box.h"
 
 EXColorSelectorDock::EXColorSelectorDock()
     : QDockWidget("Extended Color Selector")
     , m_canvas(nullptr)
     , m_colorState(EXColorState::instance())
     , m_settingsState(EXSettingsState::instance())
+    , m_hasHardwareHDR(KisOpenGLModeProber::instance()->useHDRMode())
 {
     m_canvas = nullptr;
     auto mainLayout = new QVBoxLayout();
@@ -66,6 +72,14 @@ EXColorSelectorDock::EXColorSelectorDock()
     m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
 
     mainLayout->addWidget(m_plane);
+
+    m_dynamicRangeSlider = new EXDynamicRangeSlider(this);
+    mainLayout->addWidget(m_dynamicRangeSlider, 0);
+    m_dynamicRangeSlider->setEnabled(m_hasHardwareHDR);
+    connect(m_dynamicRangeSlider, &EXDynamicRangeSlider::sigDynamicRangeChanged, this, [this](float range) {
+        m_colorState->setDynamicRange(range);
+    });
+
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);
     mainLayout->addStretch(1);

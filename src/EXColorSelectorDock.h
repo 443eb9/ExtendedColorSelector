@@ -19,6 +19,9 @@
 #include "EXPortableColorSelector.h"
 #include "EXSettingsDialog.h"
 #include "EXSettingsState.h"
+#include "EXDynamicRangeSlider.h"
+
+class KisSliderSpinBox;
 
 class EXColorSelectorDock : public QDockWidget, public KisMainwindowObserver
 {
@@ -50,6 +53,8 @@ private:
     KisPopupButton *m_colorSpaceSelectorButton;
     KisColorSpaceSelector *m_colorSpaceSelector;
     QPushButton *m_useLayerColorSpaceButton;
+    EXDynamicRangeSlider *m_dynamicRangeSlider;
+    bool m_hasHardwareHDR = false;
 
     void updateSliders();
 

@@ -1,5 +1,6 @@
 #include <kis_canvas2.h>
 #include <kis_display_color_converter.h>
+#include <QtMath>
 
 #include "EXColorState.h"
 #include "EXSettingsState.h"
@@ -27,6 +28,7 @@ EXColorState::EXColorState()
     , m_koColorConverter(nullptr)
     , m_blockColorSync(false)
     , m_useLayerColorSpace(false)
+    , m_dynamicRange(1.0f)
 {
 }
 
@@ -63,6 +65,7 @@ void EXColorState::sendToKrita()
 {
     QVector3D currentColor = m_colorModel->transferTo(kritaColorModel(), m_color);
     ExtendedUtils::saturateColor(currentColor);
+    currentColor *= m_dynamicRange;
 
     m_blockColorSync = true;
     m_resourceProvider->setFGColor(m_koColorConverter->displayChannelsToKoColor(QVector4D(currentColor, 1.0f)));
@@ -163,6 +166,7 @@ QVector3D EXColorState::color() const
 KoColor EXColorState::koColor() const
 {
     auto kritaColor = m_colorModel->transferTo(kritaColorModel(), m_color);
+    kritaColor *= m_dynamicRange;
     return m_koColorConverter->displayChannelsToKoColor(QVector4D(kritaColor, 1.0f));
 }
 
@@ -190,6 +194,21 @@ const ColorModelSP EXColorState::kritaColorModel() const
 const EXColorConverterSP EXColorState::koColorConverter() const
 {
     return m_koColorConverter;
+}
+
+void EXColorState::setDynamicRange(float dynamicRange)
+{
+    float clampedRange = qMax(0.0f, dynamicRange);
+    if (qAbs(m_dynamicRange - clampedRange) < 1e-6f) {
+        return;
+    }
+
+    m_dynamicRange = clampedRange;
+    Q_EMIT sigDynamicRangeChanged(m_dynamicRange);
+
+    if (m_resourceProvider) {
+        sendToKrita();
+    }
 }
 
 void EXColorState::setUseLayerColorSpace(bool use)
@@ -233,6 +252,7 @@ void EXColorState::connectChannelPlane(EXChannelPlane *plane)
     plane->setColorModel(m_colorModel);
     plane->setColor(m_color, m_colorModel);
     plane->setColorConverter(m_koColorConverter);
+    plane->setDynamicRange(m_dynamicRange);
     connect(plane, &EXChannelPlane::sigPrimaryChannelValueSelected, this, &EXColorState::setPrimaryChannelValue);
     connect(plane, &EXChannelPlane::sigSecondaryChannelsValueSelected, this, &EXColorState::setSecondaryChannelValues);
     connect(plane, &EXChannelPlane::sigValueFinalized, this, &EXColorState::sendToKrita);
@@ -249,6 +269,9 @@ void EXColorState::connectChannelPlane(EXChannelPlane *plane)
     connect(this, &EXColorState::sigPrimaryChannelIndexChanged, plane, [plane](quint32 index) {
         plane->setPrimaryChannelIndex(index);
     });
+    connect(this, &EXColorState::sigDynamicRangeChanged, plane, [plane](float dynamicRange) {
+        plane->setDynamicRange(dynamicRange);
+    });
 }
 
 void EXColorState::connectChannelSlider(EXChannelSlider *slider)
@@ -260,6 +283,7 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
     slider->setColor(m_color, m_colorModel);
     slider->setActive(colorModel->id() == m_colorModel->id());
     slider->setSelected(channelIndex == m_primaryChannelIndex);
+    slider->setDynamicRange(m_dynamicRange);
 
     connect(slider->bar(), &EXChannelSliderBar::sigValueChanging, this, [this, colorModel, slider]() {
         setColor(colorModel->transferTo(m_colorModel.data(), slider->colorAtCurrentModel(), m_color));
@@ -280,5 +304,8 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
     });
     connect(slider, &EXChannelSlider::sigSelected, this, [this, channelIndex]() {
         setPrimaryChannelIndex(channelIndex);
+    });
+    connect(this, &EXColorState::sigDynamicRangeChanged, slider, [slider](float dynamicRange) {
+        slider->setDynamicRange(dynamicRange);
     });
 }

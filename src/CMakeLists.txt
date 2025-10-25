@@ -8,6 +8,7 @@ set(
     EXColorSelectorDock.cpp
     EXColorSelectorPlugin.cpp
     EXColorState.cpp
+    EXDynamicRangeSlider.cpp
     EXEditable.cpp
     EXGamutClipping.cpp
     EXKoColorConverter.cpp
@@ -17,17 +18,25 @@ set(
     EXSettingsState.cpp
     EXShape.cpp
     EXUtils.cpp
+    KisGLImageF16.cpp
+    KisGLImageWidget.cpp
     OptionalColorPicker.cpp
 )
 
-qt5_add_resources(extendedcolorselector_RESOURCES resources.qrc)
+set(CMAKE_VERBOSE_MAKEFILE ON)
+
+qt5_add_resources(extendedcolorselector_RESOURCES resources.qrc kis_gl_image_widget.qrc)
 
 kis_add_library(extendedcolorselector MODULE ${extendedcolorselector_SOURCES} ${extendedcolorselector_RESOURCES})
 
 generate_export_header(extendedcolorselector BASE_NAME extendedcolorselector)
 
-# target_compile_features(extendedcolorselector PRIVATE cxx_std_20)
-target_link_libraries(extendedcolorselector PRIVATE kritaui)
+if(QT_MAJOR_VERSION STREQUAL "6")
+    target_link_libraries(extendedcolorselector kritaui Qt6::OpenGLWidgets)
+else()
+    target_link_libraries(extendedcolorselector PRIVATE kritaui)
+endif()
+
 target_include_directories(extendedcolorselector PRIVATE
     ${CMAKE_SOURCE_DIR}/libs
 )

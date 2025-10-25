@@ -3,6 +3,7 @@
 - Added `Normal` color model for normal map painting.
 - Allow use different color models for gray model. (`SRGB`, `HSV`, `HSL`, `LinearRGB`, `LAB`, `OKLAB`)
 - Fixed sliders count don't match the channel count.
+- HDR color picking.
 
 # v0.6.0
 
