@@ -104,11 +104,6 @@ void EXColorState::setCanvas(KisCanvas2 *canvas)
     }
 }
 
-qreal EXColorState::primaryChannelValue() const
-{
-    return m_color[m_primaryChannelIndex];
-}
-
 void EXColorState::setPrimaryChannelValue(float value)
 {
     m_color[m_primaryChannelIndex] = value;
@@ -133,34 +128,27 @@ void EXColorState::setPrimaryChannelIndex(quint32 index)
     Q_EMIT sigPrimaryChannelIndexChanged(index);
 }
 
-QVector2D EXColorState::secondaryChannelValues() const
-{
-    switch (m_primaryChannelIndex) {
-    case 0:
-        return QVector2D(m_color[1], m_color[2]);
-    case 1:
-        return QVector2D(m_color[0], m_color[2]);
-    case 2:
-        return QVector2D(m_color[0], m_color[1]);
-    default:
-        return QVector2D();
-    }
-}
-
 void EXColorState::setSecondaryChannelValues(const QVector2D &values)
 {
-    switch (m_primaryChannelIndex) {
-    case 0:
-        m_color[1] = values.x();
-        m_color[2] = values.y();
-        break;
-    case 1:
-        m_color[0] = values.x();
-        m_color[2] = values.y();
-        break;
+    switch (m_colorModel->channelCount()) {
     case 2:
-        m_color[0] = values.x();
-        m_color[1] = values.y();
+        m_color = values.toVector3D();
+        break;
+    case 3:
+        switch (m_primaryChannelIndex) {
+        case 0:
+            m_color[1] = values.x();
+            m_color[2] = values.y();
+            break;
+        case 1:
+            m_color[0] = values.x();
+            m_color[2] = values.y();
+            break;
+        case 2:
+            m_color[0] = values.x();
+            m_color[1] = values.y();
+            break;
+        }
         break;
     }
 

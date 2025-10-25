@@ -192,7 +192,11 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(EXSettingsStateSP s
         pageLayout->addWidget(slidersEnabled);
         pageLayout->addWidget(extraSlidersLabel);
         pageLayout->addWidget(extraSlidersList);
-        pageLayout->addWidget(colorfulPrimaryChannel);
+        if (colorModel->colorfulableChannelIndexBits() != 0) {
+            pageLayout->addWidget(colorfulPrimaryChannel);
+        } else {
+            colorfulPrimaryChannel->deleteLater();
+        }
         if (colorModel->isSrgbBased()) {
             clipGamutBox->deleteLater();
         } else {
@@ -200,8 +204,13 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(EXSettingsStateSP s
         }
         pageLayout->addLayout(shapeButtonsAndRotLayout);
         pageLayout->addLayout(axesSettingsLayout);
-        pageLayout->addWidget(ringEnabled);
-        pageLayout->addLayout(ringSettingsLayouts);
+        if (colorModel->channelCount() == 3) {
+            pageLayout->addWidget(ringEnabled);
+            pageLayout->addLayout(ringSettingsLayouts);
+        } else {
+            ringEnabled->deleteLater();
+            ringSettingsLayouts->deleteLater();
+        }
         pageLayout->addStretch(1);
         pages->addWidget(page);
 

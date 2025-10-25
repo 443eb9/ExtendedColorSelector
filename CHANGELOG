@@ -1,5 +1,7 @@
 # Unreleased
 
+- Added `Normal` color model for normal map painting.
+
 # v0.6.0
 
 - Fixed toggling color model isn't working.

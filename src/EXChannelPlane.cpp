@@ -49,15 +49,23 @@ void EXChannelPlane::setPrimaryChannelIndex(int index)
 void EXChannelPlane::setColor(QVector3D color)
 {
     m_color = color;
-    switch (m_primaryChannelIndex) {
-    case 0:
-        m_secondaryChannelValues = QVector2D(m_color[1], m_color[2]);
-        break;
-    case 1:
-        m_secondaryChannelValues = QVector2D(m_color[0], m_color[2]);
-        break;
+
+    switch (m_colorModel->channelCount()) {
     case 2:
-        m_secondaryChannelValues = QVector2D(m_color[0], m_color[1]);
+        m_secondaryChannelValues = color.toVector2D();
+        break;
+    case 3:
+        switch (m_primaryChannelIndex) {
+        case 0:
+            m_secondaryChannelValues = QVector2D(m_color[1], m_color[2]);
+            break;
+        case 1:
+            m_secondaryChannelValues = QVector2D(m_color[0], m_color[2]);
+            break;
+        case 2:
+            m_secondaryChannelValues = QVector2D(m_color[0], m_color[1]);
+            break;
+        }
         break;
     }
 
@@ -136,7 +144,6 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
     auto offset = (QSize(width(), height()) - m_image.size()) * 0.5;
     painter.drawImage(offset.width(), offset.height(), m_image);
 
-    int size = this->size();
     QVector2D planeValues = m_secondaryChannelValues;
 
     // auto contrastColor =
@@ -151,7 +158,10 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
                                                                         planeValues);
     }
 
-    if (planeValues.x() >= 0.0f && planeValues.x() <= 1.0f && planeValues.y() >= 0.0f && planeValues.y() <= 1.0f) {
+    int size = this->size();
+    const float epsilon = 1e-5f;
+    if (planeValues.x() > -epsilon && planeValues.x() < 1.0f + epsilon && planeValues.y() > -epsilon
+        && planeValues.y() < 1.0f + epsilon) {
         QPointF widgetCoord = m_shape->shapeToWidget01(QPointF(planeValues.x(), planeValues.y()));
         offsetWidgetCoord(widgetCoord);
         painter.drawArc(QRectF(widgetCoord.x() * size - 4, widgetCoord.y() * size - 4, 8, 8), 0, 360 * 16);
@@ -173,7 +183,7 @@ void EXChannelPlane::updateImage()
 
     int alphaPos = m_converter->colorSpace()->alphaPos();
 
-    auto pixelGet = [this, alphaPos](float x, float y) -> QVector4D {
+    auto pixelGet3 = [this, alphaPos](float x, float y) -> QVector4D {
         QVector3D color;
         QPointF widgetCoord = QPointF(x * 2 - 1, (1 - y) * 2 - 1);
         float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
@@ -224,7 +234,56 @@ void EXChannelPlane::updateImage()
         colorWithAlpha[alphaPos] = 1.0f;
         return colorWithAlpha;
     };
-    m_image = ExtendedUtils::generateGradient(size(), size(), true, m_converter, m_dri, pixelGet);
+
+    auto pixelGet2 = [this, alphaPos](float x, float y) -> QVector4D {
+        QVector3D color;
+        QPointF widgetCoord = QPointF(x * 2 - 1, (1 - y) * 2 - 1);
+        float dist = qSqrt(widgetCoord.x() * widgetCoord.x() + widgetCoord.y() * widgetCoord.y());
+
+        if (m_shape->ring.thickness > 0 && dist > m_shape->ring.boundaryDiameter() && dist < 1) {
+            float ringValue = m_shape->ring.getRingValue(QPointF(x, y));
+            color = m_color;
+            color[m_primaryChannelIndex] = ringValue;
+            if (m_colorfulRing) {
+                m_colorModel->makeColorful(color, m_primaryChannelIndex);
+            }
+        } else {
+            QPointF shapeCoord;
+            bool isInShape = m_shape->widgetCenteredToShape(widgetCoord, shapeCoord);
+            if (!isInShape) {
+                return QVector4D();
+            }
+
+            QVector2D axes(shapeCoord);
+            if (m_clipToSrgbGamut) {
+                axes = EXGamutClipping::instance()->mapAxesToLimited(m_colorModel->id(),
+                                                                     m_primaryChannelIndex,
+                                                                     m_color[m_primaryChannelIndex],
+                                                                     axes);
+            }
+
+            color[0] = axes.x();
+            color[1] = axes.y();
+        }
+
+        color = m_colorModel->transferTo(m_converter->colorModel(), color);
+        if (!m_colorModel->isSrgbBased() && m_sanitizeOutOfGamut) {
+            ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor);
+        }
+        auto colorWithAlpha = color.toVector4D();
+        colorWithAlpha[alphaPos] = 1.0f;
+        return colorWithAlpha;
+    };
+
+    switch (m_colorModel->channelCount()) {
+    case 2:
+        m_image = ExtendedUtils::generateGradient(size(), size(), true, m_converter, m_dri, pixelGet2);
+        break;
+    case 3:
+        m_image = ExtendedUtils::generateGradient(size(), size(), true, m_converter, m_dri, pixelGet3);
+        break;
+    }
+
     update();
 }
 

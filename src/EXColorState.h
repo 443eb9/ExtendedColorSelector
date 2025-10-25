@@ -28,9 +28,7 @@ public:
     EXColorState();
     ~EXColorState() override = default;
 
-    qreal primaryChannelValue() const;
     void setPrimaryChannelValue(float value);
-    QVector2D secondaryChannelValues() const;
     void setSecondaryChannelValues(const QVector2D &values);
     quint32 primaryChannelIndex() const;
     void setPrimaryChannelIndex(quint32 index);

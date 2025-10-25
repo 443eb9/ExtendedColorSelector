@@ -26,6 +26,7 @@ enum ColorModelId {
     Oklch = 9,
     Okhsv = 10,
     Okhsl = 11,
+    Normal = 12,
 };
 
 class ColorModel : public KisShared
@@ -107,7 +108,7 @@ public:
 
     std::array<QString, 3> channelNames() const override
     {
-        return {"V", " ", " "};
+        return {"V", "", ""};
     }
 
     std::array<QVector3D, 2> channelRanges() const override
@@ -534,6 +535,48 @@ public:
     }
 };
 
+class NormalModel : public ColorModel
+{
+public:
+    QVector3D toXyz(const QVector3D &color) const override;
+    QVector3D fromXyz(const QVector3D &color) const override;
+
+    ColorModelId id() const override
+    {
+        return ColorModelId::Normal;
+    }
+
+    QString displayName() const override
+    {
+        return "Normal";
+    }
+
+    quint32 channelCount() const override
+    {
+        return 2;
+    }
+
+    std::array<QString, 3> channelNames() const override
+    {
+        return {"X", "Y", ""};
+    }
+
+    std::array<QVector3D, 2> channelRanges() const override
+    {
+        return {QVector3D(-100, -100, 0), QVector3D(100, 100, 0)};
+    }
+
+    bool isSrgbBased() const override
+    {
+        return true;
+    }
+
+    int wrappableChannelIndexBits() const override
+    {
+        return 0b011;
+    }
+};
+
 class ColorModelFactory
 {
 public:
@@ -564,6 +607,8 @@ public:
             return new OKHSVModel();
         case ColorModelId::Okhsl:
             return new OKHSLModel();
+        case ColorModelId::Normal:
+            return new NormalModel();
         default:
             return nullptr;
         }

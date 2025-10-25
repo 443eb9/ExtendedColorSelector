@@ -105,6 +105,9 @@ EXChannelSlider::EXChannelSlider(int channelIndex, ColorModelSP colorModel, QBut
     }
     m_spinBox = new QDoubleSpinBox(this);
     m_bar = new EXChannelSliderBar(channelIndex, colorModel, this);
+    if (colorModel->channelCount() == 2 || m_channelIndex == 1) {
+        setActive(false);
+    }
 
     layout->addWidget(m_bar);
     layout->addWidget(m_spinBox);

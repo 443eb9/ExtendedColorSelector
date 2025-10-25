@@ -1,4 +1,6 @@
 #include <cmath>
+
+#include <QVector2D>
 #include <qmath.h>
 
 #include "EXColorModel.h"
@@ -17,7 +19,8 @@ const QVector<ColorModelId> ColorModelFactory::AllModels = {ColorModelId::Gray,
                                                             ColorModelId::Oklab,
                                                             ColorModelId::Oklch,
                                                             ColorModelId::Okhsv,
-                                                            ColorModelId::Okhsl};
+                                                            ColorModelId::Okhsl,
+                                                            ColorModelId::Normal};
 
 QVector3D ColorModel::transferTo(const ColorModel *toModel, const QVector3D &color) const
 {
@@ -483,4 +486,26 @@ void OKHSLModel::resolveReference(QVector3D &color, const QVector3D &reference) 
         color[0] = reference[0];
         color[1] = reference[1];
     }
+}
+
+QVector3D NormalModel::toXyz(const QVector3D &color) const
+{
+    auto normalXy = color.toVector2D() * 2.0f - QVector2D(1.0f, 1.0f);
+    auto lenSq = normalXy.lengthSquared();
+    if (lenSq > 1.0f) {
+        normalXy /= sqrtf(lenSq);
+        lenSq = 1.0f;
+    }
+    float z = sqrtf(qBound(0.0f, 1.0f - lenSq, 1.0f));
+    auto normal = QVector3D(normalXy.x(), normalXy.y(), z);
+    return LinearRGBModel().toXyz(normal * 0.5f + QVector3D(0.5f, 0.5f, 0.5f));
+}
+
+QVector3D NormalModel::fromXyz(const QVector3D &color) const
+{
+    auto rgb = LinearRGBModel().fromXyz(color);
+    auto normal = rgb * 2.0f - QVector3D(1.0f, 1.0f, 1.0f);
+    auto normalXy = normal.toVector2D();
+    normalXy = (normalXy + QVector2D(1.0f, 1.0f)) * 0.5f;
+    return normalXy.toVector3D();
 }
