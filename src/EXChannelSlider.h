@@ -79,6 +79,7 @@ public:
     void setDynamicRange(float dynamicRange);
     void setUseHdr(bool use);
     QPair<ColorModelSP, quint32> colorModelAndChannelIndex() const;
+    void updateImage();
 
     QVector3D colorAtCurrentModel() const;
     EXChannelSliderBar *bar() const;

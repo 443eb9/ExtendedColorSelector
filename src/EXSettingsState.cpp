@@ -51,6 +51,7 @@ void EXSettingsState::applySettingsToPlane(EXChannelPlane *plane)
     shape->ring.rotationOffset = settings.ringRotation;
     shape->ring.reversed = settings.ringReversed;
     plane->setShape(shape);
+    plane->updateImage();
 }
 
 void EXSettingsState::connectChannelSlider(EXChannelSlider *slider)
@@ -68,4 +69,5 @@ void EXSettingsState::applySettingsToSlider(EXChannelSlider *slider)
     slider->setSanitizeOutOfGamut(globalSettings.outOfGamutColorEnabled, globalSettings.outOfGamutColor);
     slider->setShowChannelSpinBoxes(globalSettings.showChannelSpinBoxes);
     slider->setColorful(settings.colorfulHueRing);
+    slider->updateImage();
 }

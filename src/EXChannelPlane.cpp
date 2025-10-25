@@ -46,13 +46,11 @@ void EXChannelPlane::setColorModel(ColorModelSP colorModel)
     m_colorModel = colorModel;
     auto channelCount = colorModel->channelCount();
     setVisible(channelCount == 2 || channelCount == 3);
-    updateImage();
 }
 
 void EXChannelPlane::setPrimaryChannelIndex(int index)
 {
     m_primaryChannelIndex = index;
-    updateImage();
 }
 
 void EXChannelPlane::setColor(QVector3D color, ColorModelSP colorModel)
@@ -63,27 +61,22 @@ void EXChannelPlane::setColor(QVector3D color, ColorModelSP colorModel)
     if (m_lastPrimaryChannelValue != color[m_primaryChannelIndex]) {
         m_lastPrimaryChannelValue = color[m_primaryChannelIndex];
         updateImage();
-    } else {
-        update();
     }
 }
 
 void EXChannelPlane::setClipToSrgbGamut(bool clip)
 {
     m_clipToSrgbGamut = clip;
-    updateImage();
 }
 
 void EXChannelPlane::setColorfulRing(bool colorful)
 {
     m_colorfulRing = colorful;
-    updateImage();
 }
 
 void EXChannelPlane::setColorConverter(EXColorConverterSP colorConverter)
 {
     m_converter = colorConverter;
-    updateImage();
 }
 
 void EXChannelPlane::setShape(EXChannelPlaneShapeSP shape)
@@ -91,27 +84,22 @@ void EXChannelPlane::setShape(EXChannelPlaneShapeSP shape)
     m_shape = shape;
     m_unnormalizedRing = shape->ring;
     updateNormalizedRing();
-    updateImage();
 }
 
 void EXChannelPlane::setSanitizeOutOfGamut(bool sanitize, QVector3D outOfGamutColor)
 {
     m_sanitizeOutOfGamut = sanitize;
     m_outOfGamutColor = outOfGamutColor;
-    updateImage();
 }
 
 void EXChannelPlane::setDynamicRange(float dynamicRange)
 {
     m_dynamicRange = dynamicRange;
-    updateImage();
-    update();
 }
 
 void EXChannelPlane::setUseHdr(bool use)
 {
     setUseGLImage(use);
-    updateImage();
 }
 
 ColorModelSP EXChannelPlane::colorModel() const

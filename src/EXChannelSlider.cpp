@@ -168,7 +168,6 @@ void EXChannelSlider::setSanitizeOutOfGamut(bool sanitize, QVector3D outOfGamutC
 {
     m_bar->m_sanitizeOutOfGamut = sanitize;
     m_bar->m_outOfGamutColor = outOfGamutColor;
-    m_bar->updateImage();
 }
 
 void EXChannelSlider::setShowChannelSpinBoxes(bool show)
@@ -184,24 +183,25 @@ void EXChannelSlider::setSelected(bool selected)
 void EXChannelSlider::setColorConverter(EXColorConverterSP converter)
 {
     m_bar->m_converter = converter;
-    m_bar->updateImage();
 }
 
 void EXChannelSlider::setColorful(bool colorful)
 {
     m_bar->m_colorful = colorful;
-    m_bar->updateImage();
 }
 
 void EXChannelSlider::setDynamicRange(float dynamicRange)
 {
     m_bar->m_dynamicRange = dynamicRange;
-    m_bar->updateImage();
 }
 
 void EXChannelSlider::setUseHdr(bool use)
 {
     m_bar->setUseGLImage(use);
+}
+
+void EXChannelSlider::updateImage()
+{
     m_bar->updateImage();
 }
 

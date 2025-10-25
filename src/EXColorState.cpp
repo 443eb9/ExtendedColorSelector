@@ -274,6 +274,7 @@ void EXColorState::connectChannelPlane(EXChannelPlane *plane)
     plane->setColorConverter(m_colorConverter);
     plane->setDynamicRange(dynamicRange());
     plane->setUseHdr(hdrSupported());
+    plane->updateImage();
 
     connect(plane, &EXChannelPlane::sigPrimaryChannelValueSelected, this, &EXColorState::setPrimaryChannelValue);
     connect(plane, &EXChannelPlane::sigSecondaryChannelsValueSelected, this, &EXColorState::setSecondaryChannelValues);
@@ -284,17 +285,21 @@ void EXColorState::connectChannelPlane(EXChannelPlane *plane)
     connect(this, &EXColorState::sigColorModelChanged, plane, [this, plane]() {
         plane->setColorModel(m_colorModel);
         plane->setColor(m_color, m_colorModel);
+        plane->updateImage();
     });
     connect(this, &EXColorState::sigColorSpaceChanged, plane, [this, plane](const KoColorSpace *) {
         plane->setColorConverter(m_colorConverter);
         plane->setDynamicRange(dynamicRange());
         plane->setUseHdr(hdrSupported());
+        plane->updateImage();
     });
     connect(this, &EXColorState::sigPrimaryChannelIndexChanged, plane, [plane](quint32 index) {
         plane->setPrimaryChannelIndex(index);
+        plane->updateImage();
     });
     connect(this, &EXColorState::sigDynamicRangeChanged, plane, [plane](float dynamicRange) {
         plane->setDynamicRange(dynamicRange);
+        plane->updateImage();
     });
 }
 
@@ -309,31 +314,40 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
     slider->setSelected(channelIndex == m_primaryChannelIndex);
     slider->setDynamicRange(dynamicRange());
     slider->setUseHdr(hdrSupported());
+    slider->updateImage();
 
     connect(slider->bar(), &EXChannelSliderBar::sigValueChanging, this, [this, colorModel, slider]() {
         setColor(colorModel->transferTo(m_colorModel.data(), slider->colorAtCurrentModel(), m_color));
     });
     connect(slider->bar(), &EXChannelSliderBar::sigValueFinalized, this, &EXColorState::sendToKrita);
+    connect(slider, &EXChannelSlider::sigSelected, this, [this, channelIndex]() {
+        setPrimaryChannelIndex(channelIndex);
+    });
+
     connect(this, &EXColorState::sigColorChanged, slider, [this, slider](QVector3D color) {
         slider->setColor(color, m_colorModel);
+        slider->updateImage();
     });
     connect(this, &EXColorState::sigColorModelChanged, slider, [this, colorModel, slider](ColorModelId modelId) {
         slider->setColor(m_color, m_colorModel);
         slider->setActive(colorModel->id() == modelId);
         slider->setUseHdr(hdrSupported());
         slider->setDynamicRange(dynamicRange());
+        slider->updateImage();
     });
     connect(this, &EXColorState::sigColorSpaceChanged, slider, [this, slider](const KoColorSpace *) {
         slider->setColorConverter(m_colorConverter);
+        slider->setDynamicRange(dynamicRange());
+        slider->setUseHdr(hdrSupported());
+        slider->updateImage();
     });
     connect(this, &EXColorState::sigPrimaryChannelIndexChanged, slider, [channelIndex, slider](quint32 index) {
         slider->setSelected(channelIndex == index);
-    });
-    connect(slider, &EXChannelSlider::sigSelected, this, [this, channelIndex]() {
-        setPrimaryChannelIndex(channelIndex);
+        slider->updateImage();
     });
     connect(this, &EXColorState::sigDynamicRangeChanged, slider, [slider](float dynamicRange) {
         slider->setDynamicRange(dynamicRange);
+        slider->updateImage();
     });
 }
 
