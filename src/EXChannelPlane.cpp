@@ -350,6 +350,8 @@ void EXChannelPlane::updateImage()
                                                    pixelGet3);
         break;
     }
+
+    update();
 }
 
 void EXChannelPlane::startEdit(QMouseEvent *event, bool isShift)

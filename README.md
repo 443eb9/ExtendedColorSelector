@@ -20,7 +20,7 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 ## Known issues
 
 - `YCbCr` color space layers/images causes crash.
-- Performance issue when altering primary channel, really lag.
+- Performance issue when altering primary channel if HDR is used, really, really, reeeeeeeeeeally lag.
 - Alias issue on visual selector image.
 - Clipping to SRGB gamut looks weird under Grayscale color space.
 

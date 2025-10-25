@@ -146,8 +146,8 @@ void EXEditableImage::paintEvent(QPaintEvent *event)
     if (m_useGLImage) {
         KisGLImageWidget::paintEvent(event);
     } else {
-        QWidget::paintEvent(event);
         QPainter painter(this);
+        painter.fillRect(rect(), palette().color(QPalette::Window));
         if (m_stretch) {
             painter.drawImage(rect(), m_cachedQImage);
         } else {
