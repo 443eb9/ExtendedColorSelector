@@ -229,28 +229,33 @@ void EXColorState::onDisplayConfigChanged()
 
 void EXColorState::connectChannelPlane(EXChannelPlane *plane)
 {
+    // Assume the color model inside the plane is always the same as we use here.
     plane->setColorModel(m_colorModel);
-    plane->setColor(m_color);
+    plane->setColor(m_color, m_colorModel);
     plane->setColorConverter(m_koColorConverter);
     connect(plane, &EXChannelPlane::sigPrimaryChannelValueSelected, this, &EXColorState::setPrimaryChannelValue);
     connect(plane, &EXChannelPlane::sigSecondaryChannelsValueSelected, this, &EXColorState::setSecondaryChannelValues);
     connect(plane, &EXChannelPlane::sigValueFinalized, this, &EXColorState::sendToKrita);
-    connect(this, &EXColorState::sigColorChanged, plane, &EXChannelPlane::setColor);
+    connect(this, &EXColorState::sigColorChanged, plane, [this, plane](QVector3D color) {
+        plane->setColor(color, m_colorModel);
+    });
     connect(this, &EXColorState::sigColorModelChanged, plane, [this, plane]() {
         plane->setColorModel(m_colorModel);
-        plane->setColor(m_color);
+        plane->setColor(m_color, m_colorModel);
     });
     connect(this, &EXColorState::sigColorSpaceChanged, plane, [this, plane](const KoColorSpace *) {
         plane->setColorConverter(m_koColorConverter);
     });
-    connect(this, &EXColorState::sigPrimaryChannelIndexChanged, plane, [this, plane](quint32 index) {
+    connect(this, &EXColorState::sigPrimaryChannelIndexChanged, plane, [plane](quint32 index) {
         plane->setPrimaryChannelIndex(index);
     });
 }
 
 void EXColorState::connectChannelSlider(EXChannelSlider *slider)
 {
-    auto [colorModel, channelIndex] = slider->colorModelAndChannelIndex();
+    auto result = slider->colorModelAndChannelIndex();
+    auto colorModel = result.first;
+    auto channelIndex = result.second;
     slider->setColorConverter(m_koColorConverter);
     slider->setColor(m_color, m_colorModel);
     slider->setActive(colorModel->id() == m_colorModel->id());
@@ -270,7 +275,7 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
     connect(this, &EXColorState::sigColorSpaceChanged, slider, [this, slider](const KoColorSpace *) {
         slider->setColorConverter(m_koColorConverter);
     });
-    connect(this, &EXColorState::sigPrimaryChannelIndexChanged, slider, [this, channelIndex, slider](quint32 index) {
+    connect(this, &EXColorState::sigPrimaryChannelIndexChanged, slider, [channelIndex, slider](quint32 index) {
         slider->setSelected(channelIndex == index);
     });
     connect(slider, &EXChannelSlider::sigSelected, this, [this, channelIndex]() {

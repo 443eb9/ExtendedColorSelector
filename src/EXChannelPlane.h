@@ -23,7 +23,7 @@ public:
     void setCanvas(KisCanvas2 *canvas);
     void setColorModel(ColorModelSP colorModel);
     void setPrimaryChannelIndex(int index);
-    void setColor(QVector3D color);
+    void setColor(QVector3D color, ColorModelSP colorModel);
     void setClipToSrgbGamut(bool clip);
     void setColorfulRing(bool colorful);
     void setColorConverter(EXColorConverterSP colorConverter);
@@ -33,8 +33,8 @@ public:
     ColorModelSP colorModel() const;
 
 Q_SIGNALS:
-    void sigPrimaryChannelValueSelected(float value);
-    void sigSecondaryChannelsValueSelected(QVector2D values);
+    void sigPrimaryChannelValueSelected(float value, QVector3D fullColor);
+    void sigSecondaryChannelsValueSelected(QVector2D values, QVector3D fullColor);
 
 private:
     enum EditMode {
@@ -67,6 +67,9 @@ private:
     void sendRingColor(const QPointF &widgetCoord);
     void offsetWidgetCoord(QPointF &widgetCoord);
     void unoffsetWidgetCoord(QPointF &widgetCoord);
+
+    void updateSecondaryChannelValues();
+    void setSecondaryChannelValues(QVector2D values);
 
     void updateNormalizedRing();
 

@@ -46,28 +46,10 @@ void EXChannelPlane::setPrimaryChannelIndex(int index)
     updateImage();
 }
 
-void EXChannelPlane::setColor(QVector3D color)
+void EXChannelPlane::setColor(QVector3D color, ColorModelSP colorModel)
 {
-    m_color = color;
-
-    switch (m_colorModel->channelCount()) {
-    case 2:
-        m_secondaryChannelValues = color.toVector2D();
-        break;
-    case 3:
-        switch (m_primaryChannelIndex) {
-        case 0:
-            m_secondaryChannelValues = QVector2D(m_color[1], m_color[2]);
-            break;
-        case 1:
-            m_secondaryChannelValues = QVector2D(m_color[0], m_color[2]);
-            break;
-        case 2:
-            m_secondaryChannelValues = QVector2D(m_color[0], m_color[1]);
-            break;
-        }
-        break;
-    }
+    m_color = colorModel->transferTo(m_colorModel, color);
+    updateSecondaryChannelValues();
 
     if (m_lastPrimaryChannelValue != color[m_primaryChannelIndex]) {
         m_lastPrimaryChannelValue = color[m_primaryChannelIndex];
@@ -113,6 +95,51 @@ ColorModelSP EXChannelPlane::colorModel() const
     return m_colorModel;
 }
 
+void EXChannelPlane::updateSecondaryChannelValues()
+{
+    switch (m_colorModel->channelCount()) {
+    case 2:
+        m_secondaryChannelValues = m_color.toVector2D();
+        break;
+    case 3:
+        switch (m_primaryChannelIndex) {
+        case 0:
+            m_secondaryChannelValues = QVector2D(m_color[1], m_color[2]);
+            break;
+        case 1:
+            m_secondaryChannelValues = QVector2D(m_color[0], m_color[2]);
+            break;
+        case 2:
+            m_secondaryChannelValues = QVector2D(m_color[0], m_color[1]);
+            break;
+        }
+        break;
+    }
+}
+
+void EXChannelPlane::setSecondaryChannelValues(QVector2D values)
+{
+    m_secondaryChannelValues = values;
+    switch (m_colorModel->channelCount()) {
+    case 2:
+        m_color = QVector3D(values.x(), values.y(), 0.0f);
+        break;
+    case 3:
+        switch (m_primaryChannelIndex) {
+        case 0:
+            m_color = QVector3D(m_color[0], values.x(), values.y());
+            break;
+        case 1:
+            m_color = QVector3D(values.x(), m_color[1], values.y());
+            break;
+        case 2:
+            m_color = QVector3D(values.x(), values.y(), m_color[2]);
+            break;
+        }
+        break;
+    }
+}
+
 void EXChannelPlane::updateNormalizedRing()
 {
     if (!m_shape) {
@@ -146,9 +173,8 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
 
     QVector2D planeValues = m_secondaryChannelValues;
 
-    // auto contrastColor =
-    //     ExtendedUtils::getContrastingColor(m_colorModel->transferTo(&SRGBModel(), m_color));
-    auto contrastColor = Qt::black; // Placeholder until m_color is properly set TODO
+    auto contrastColor = ExtendedUtils::getContrastingColor(m_dri->toQColor(
+        m_converter->displayChannelsToKoColor(m_colorModel->transferTo(m_converter->colorModel(), m_color))));
     painter.setPen(QPen(contrastColor, 1));
 
     if (!m_colorModel->isSrgbBased() && m_clipToSrgbGamut) {
@@ -374,8 +400,8 @@ void EXChannelPlane::sendPlaneColor(const QPointF &widgetCoord)
         shapeCoord = QPointF(clipped.x(), clipped.y());
     }
 
-    m_secondaryChannelValues = QVector2D(shapeCoord);
-    Q_EMIT sigSecondaryChannelsValueSelected(m_secondaryChannelValues);
+    setSecondaryChannelValues(QVector2D(shapeCoord));
+    Q_EMIT sigSecondaryChannelsValueSelected(m_secondaryChannelValues, m_color);
     update();
 }
 
@@ -387,7 +413,7 @@ void EXChannelPlane::sendRingColor(const QPointF &widgetCoord)
 
     float ringValue = m_shape->ring.getRingValue(widgetCoord);
     m_color[m_primaryChannelIndex] = ringValue;
-    Q_EMIT sigPrimaryChannelValueSelected(m_color[m_primaryChannelIndex]);
+    Q_EMIT sigPrimaryChannelValueSelected(m_color[m_primaryChannelIndex], m_color);
     update();
 }
 

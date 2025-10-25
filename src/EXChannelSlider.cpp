@@ -270,8 +270,8 @@ void EXChannelSliderBar::paintEvent(QPaintEvent *event)
     }
     painter.drawImage(QRect(0, 0, width(), height()), m_image);
 
-    // auto contrastColor = ExtendedUtils::getContrastingColor(m_colorState->qColor());
-    auto contrastColor = QColor(0, 0, 0); // TODO
+    auto contrastColor = ExtendedUtils::getContrastingColor(m_dri->toQColor(m_converter->displayChannelsToKoColor(
+        m_colorModel->transferTo(m_converter->colorModel(), m_colorAtCurrentModel))));
     painter.setPen(QPen(contrastColor, 1));
     int x = m_colorAtCurrentModel[m_channelIndex] * width();
     painter.drawRect(x - 1, 0, 2, height());
