@@ -17,22 +17,14 @@ EXSettingsState::EXSettingsState()
     for (const auto &colorModelId : globalSettings.displayOrder) {
         settings.append(EXPerColorModelSettings(ColorModelFactory::fromId(colorModelId)->displayName()));
     }
-
-    connect(this, &EXSettingsState::sigSettingsChanged, this, &EXSettingsState::updateConnectedChannelPlanes);
-    connect(this, &EXSettingsState::sigSettingsChanged, this, &EXSettingsState::updateConnectedChannelSliders);
 }
 
 void EXSettingsState::connectChannelPlane(EXChannelPlane *plane)
 {
     applySettingsToPlane(plane);
-    m_connectedChannelPlanes.append(plane);
-}
-
-void EXSettingsState::updateConnectedChannelPlanes()
-{
-    for (EXChannelPlane *plane : m_connectedChannelPlanes) {
+    connect(this, &EXSettingsState::sigSettingsChanged, plane, [this, plane]() {
         applySettingsToPlane(plane);
-    }
+    });
 }
 
 void EXSettingsState::applySettingsToPlane(EXChannelPlane *plane)
@@ -59,19 +51,9 @@ void EXSettingsState::applySettingsToPlane(EXChannelPlane *plane)
 void EXSettingsState::connectChannelSlider(EXChannelSlider *slider)
 {
     applySettingsToSlider(slider);
-    m_connectedChannelSliders.append(slider);
-}
-
-void EXSettingsState::updateConnectedChannelSliders()
-{
-    for (EXChannelSlider *slider : m_connectedChannelSliders) {
+    connect(this, &EXSettingsState::sigSettingsChanged, slider, [this, slider]() {
         applySettingsToSlider(slider);
-    }
-}
-
-void EXSettingsState::clearConnectedChannelSliders()
-{
-    m_connectedChannelSliders.clear();
+    });
 }
 
 void EXSettingsState::applySettingsToSlider(EXChannelSlider *slider)

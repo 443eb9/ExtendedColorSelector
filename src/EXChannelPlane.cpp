@@ -35,6 +35,8 @@ void EXChannelPlane::setCanvas(KisCanvas2 *canvas)
 void EXChannelPlane::setColorModel(ColorModelSP colorModel)
 {
     m_colorModel = colorModel;
+    auto channelCount = colorModel->channelCount();
+    setVisible(channelCount == 2 || channelCount == 3);
     updateImage();
 }
 

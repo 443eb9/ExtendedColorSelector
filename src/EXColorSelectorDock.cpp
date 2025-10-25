@@ -70,10 +70,6 @@ EXColorSelectorDock::EXColorSelectorDock()
     mainLayout->addWidget(m_sliders);
     mainLayout->addStretch(1);
 
-    updateSliders();
-    connect(m_colorState.data(), &EXColorState::sigColorModelChanged, this, &EXColorSelectorDock::updateSliders);
-    connect(m_settingsState.data(), &EXSettingsState::sigSettingsChanged, this, &EXColorSelectorDock::updateSliders);
-
     m_settings = new EXPerColorModelSettingsDialog(m_settingsState, this);
     m_globalSettings = new EXGlobalSettingsDialog(m_settingsState, this);
 
@@ -112,9 +108,13 @@ EXColorSelectorDock::EXColorSelectorDock()
         m_colorState->setColorSpace(customColorSpace);
     }
 
-    connect(m_colorState.data(), &EXColorState::sigColorModelChanged, this, [this]() {
-        m_settingsState->updateConnectedChannelPlanes();
+    connect(m_colorState.data(), &EXColorState::sigColorModelChanged, m_plane, [this]() {
+        m_settingsState->applySettingsToPlane(m_plane);
     });
+
+    updateSliders();
+    connect(m_colorState.data(), &EXColorState::sigColorModelChanged, this, &EXColorSelectorDock::updateSliders);
+    connect(m_settingsState.data(), &EXSettingsState::sigSettingsChanged, this, &EXColorSelectorDock::updateSliders);
 }
 
 void EXColorSelectorDock::setViewManager(KisViewManager *kisview)

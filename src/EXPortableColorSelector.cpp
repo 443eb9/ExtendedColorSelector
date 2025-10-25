@@ -34,6 +34,9 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
 
     connect(m_settingsState, &EXSettingsState::sigSettingsChanged, this, &EXPortableColorSelector::settingsChanged);
     connect(m_colorState.data(), &EXColorState::sigColorModelChanged, this, &EXPortableColorSelector::updateSliders);
+    connect(m_colorState.data(), &EXColorState::sigColorModelChanged, m_plane, [this]() {
+        m_settingsState->applySettingsToPlane(m_plane);
+    });
 }
 
 void EXPortableColorSelector::settingsChanged()

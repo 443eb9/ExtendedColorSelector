@@ -100,10 +100,10 @@ public:
 
     void setCanvas(KisCanvas2 *canvas);
     void setActive(bool active);
-    std::array<EXChannelSlider *, 3> sliders() const;
+    const QVector<EXChannelSlider *> &sliders() const;
 
 private:
-    std::array<EXChannelSlider *, 3> m_channelWidgets;
+    QVector<EXChannelSlider *> m_channelWidgets;
 };
 
 class EXChannelSlidersGroup : public QWidget

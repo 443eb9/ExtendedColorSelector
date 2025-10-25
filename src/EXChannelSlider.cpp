@@ -59,9 +59,9 @@ EXChannelSliders::EXChannelSliders(ColorModelSP colorModel, QWidget *parent)
     auto layout = new QVBoxLayout(this);
     auto group = new QButtonGroup(this);
     group->setExclusive(true);
-    for (int i = 0; i < 3; ++i) {
-        m_channelWidgets[i] = new EXChannelSlider(i, colorModel, group, this);
-        layout->addWidget(m_channelWidgets[i]);
+    for (quint32 i = 0; i < colorModel->channelCount(); ++i) {
+        m_channelWidgets.append(new EXChannelSlider(i, colorModel, group, this));
+        layout->addWidget(m_channelWidgets.last());
     }
     setLayout(layout);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -82,7 +82,7 @@ void EXChannelSliders::setActive(bool active)
     }
 }
 
-std::array<EXChannelSlider *, 3> EXChannelSliders::sliders() const
+const QVector<EXChannelSlider *> &EXChannelSliders::sliders() const
 {
     return m_channelWidgets;
 }
