@@ -12,8 +12,9 @@
 #include "EXChannelSlider.h"
 #include "EXColorModelSwitchers.h"
 #include "EXColorPatchPopup.h"
-#include "EXSettingsState.h"
 #include "EXColorState.h"
+#include "EXDynamicRangeSlider.h"
+#include "EXSettingsState.h"
 
 class EXPortableColorSelector : public QDialog
 {
@@ -37,6 +38,7 @@ private:
     EXColorModelSwitchers *m_colorModelSwitchers;
     KisAction *m_toggleAction;
     EXColorPatchPopup *m_colorPatchPopup;
+    EXDynamicRangeSlider *m_dynamicRangeSlider;
 
     EXColorStateSP m_colorState;
     EXSettingsStateSP m_settingsState;

@@ -8,7 +8,6 @@
 #include <kis_canvas_resource_provider.h>
 #include <kis_display_color_converter.h>
 #include <kis_icon_utils.h>
-#include <opengl/KisOpenGLModeProber.h>
 
 #include "EXColorModel.h"
 #include "EXColorSelectorDock.h"
@@ -19,7 +18,6 @@ EXColorSelectorDock::EXColorSelectorDock()
     , m_canvas(nullptr)
     , m_colorState(EXColorState::instance())
     , m_settingsState(EXSettingsState::instance())
-    , m_hasHardwareHDR(KisOpenGLModeProber::instance()->useHDRMode())
 {
     m_canvas = nullptr;
     auto mainLayout = new QVBoxLayout();
@@ -75,10 +73,15 @@ EXColorSelectorDock::EXColorSelectorDock()
 
     m_dynamicRangeSlider = new EXDynamicRangeSlider(this);
     mainLayout->addWidget(m_dynamicRangeSlider, 0);
-    m_dynamicRangeSlider->setEnabled(m_hasHardwareHDR);
-    connect(m_dynamicRangeSlider, &EXDynamicRangeSlider::sigDynamicRangeChanged, this, [this](float range) {
-        m_colorState->setDynamicRange(range);
-    });
+    m_dynamicRangeSlider->setVisible(m_colorState->hasHardwareHDR());
+    connect(m_dynamicRangeSlider,
+            &EXDynamicRangeSlider::sigDynamicRangeChanged,
+            m_colorState.data(),
+            &EXColorState::setDynamicRange);
+    connect(m_colorState.data(),
+            &EXColorState::sigDynamicRangeChanged,
+            m_dynamicRangeSlider,
+            &EXDynamicRangeSlider::setDynamicRange);
 
     mainLayout->addWidget(m_colorModelSwitchers);
     mainLayout->addWidget(m_sliders);

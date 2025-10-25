@@ -1,6 +1,8 @@
+#include <QtMath>
+
 #include <kis_canvas2.h>
 #include <kis_display_color_converter.h>
-#include <QtMath>
+#include <opengl/KisOpenGLModeProber.h>
 
 #include "EXColorState.h"
 #include "EXSettingsState.h"
@@ -29,6 +31,7 @@ EXColorState::EXColorState()
     , m_blockColorSync(false)
     , m_useLayerColorSpace(false)
     , m_dynamicRange(1.0f)
+    , m_hasHardwareHDR(KisOpenGLModeProber::instance()->useHDRMode())
 {
 }
 
@@ -244,6 +247,16 @@ void EXColorState::onDisplayConfigChanged()
     if (m_useLayerColorSpace && m_dcc) {
         setColorSpace(m_dcc->paintingColorSpace());
     }
+}
+
+float EXColorState::dynamicRange() const
+{
+    return m_hasHardwareHDR ? m_dynamicRange : 1.0f;
+}
+
+bool EXColorState::hasHardwareHDR() const
+{
+    return m_hasHardwareHDR;
 }
 
 void EXColorState::connectChannelPlane(EXChannelPlane *plane)

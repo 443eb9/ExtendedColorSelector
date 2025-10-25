@@ -42,7 +42,8 @@ public:
     const EXColorConverterSP koColorConverter() const;
     void setColorSpace(const KoColorSpace *colorSpace);
     void setDynamicRange(float dynamicRange);
-    float dynamicRange() const { return m_dynamicRange; }
+    float dynamicRange() const;
+    bool hasHardwareHDR() const;
 
     void setColorModel(ColorModelId model);
     const ColorModelSP colorModel() const;
@@ -54,7 +55,6 @@ public:
 
     void connectChannelPlane(EXChannelPlane *plane);
     void connectChannelSlider(EXChannelSlider *slider);
-    void clearConnectedChannelSliders();
 
     static EXColorState *instance();
 
@@ -80,6 +80,7 @@ private:
     bool m_blockColorSync;
     bool m_useLayerColorSpace;
     float m_dynamicRange;
+    bool m_hasHardwareHDR;
 };
 
 typedef KisSharedPtr<EXColorState> EXColorStateSP;

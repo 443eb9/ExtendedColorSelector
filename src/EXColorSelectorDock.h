@@ -54,7 +54,6 @@ private:
     KisColorSpaceSelector *m_colorSpaceSelector;
     QPushButton *m_useLayerColorSpaceButton;
     EXDynamicRangeSlider *m_dynamicRangeSlider;
-    bool m_hasHardwareHDR = false;
 
     void updateSliders();
 

@@ -24,6 +24,18 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
         m_colorPatchPopup->updateColor(m_colorState->qColor());
     });
 
+    m_dynamicRangeSlider = new EXDynamicRangeSlider(this);
+    mainLayout->addWidget(m_dynamicRangeSlider, 0);
+    m_dynamicRangeSlider->setVisible(m_colorState->hasHardwareHDR());
+    connect(m_dynamicRangeSlider,
+            &EXDynamicRangeSlider::sigDynamicRangeChanged,
+            m_colorState.data(),
+            &EXColorState::setDynamicRange);
+    connect(m_colorState.data(),
+            &EXColorState::sigDynamicRangeChanged,
+            m_dynamicRangeSlider,
+            &EXDynamicRangeSlider::setDynamicRange);
+
     m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
     m_sliders = new EXChannelSlidersGroup(QVector<ColorModelId>(), this);
     mainLayout->addWidget(m_plane);
