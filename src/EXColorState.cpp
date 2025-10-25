@@ -48,7 +48,7 @@ void EXColorState::setColorModel(ColorModelId model)
     m_color = m_colorModel->transferTo(newModel, m_color, m_color);
     ExtendedUtils::saturateColor(m_color);
     m_colorModel = newModel;
-    m_koColorConverter = new EXColorConverter(m_currentColorSpace);
+    m_koColorConverter = new EXKoColorConverter(m_currentColorSpace);
 
     Q_EMIT sigColorModelChanged(model);
     Q_EMIT sigColorChanged(m_color);
@@ -214,7 +214,7 @@ void EXColorState::setUseLayerColorSpace(bool use)
 void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
 {
     m_currentColorSpace = colorSpace;
-    m_koColorConverter = new EXColorConverter(colorSpace);
+    m_koColorConverter = new EXKoColorConverter(colorSpace);
 
     syncFromKrita();
     Q_EMIT sigColorSpaceChanged(m_currentColorSpace);

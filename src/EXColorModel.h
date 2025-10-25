@@ -1,5 +1,5 @@
-#ifndef EXTENDEDCOLOR_H
-#define EXTENDEDCOLOR_H
+#ifndef EXCOLORModel_H
+#define EXCOLORModel_H
 
 #include <array>
 
@@ -11,7 +11,7 @@
 #include <kis_shared.h>
 #include <kis_shared_ptr.h>
 
-typedef KisSharedPtr<class ColorModel> ColorModelSP;
+typedef KisSharedPtr<class EXColorModel> ColorModelSP;
 
 enum ColorModelId {
     Gray = 0,
@@ -29,10 +29,10 @@ enum ColorModelId {
     Normal = 12,
 };
 
-class ColorModel : public KisShared
+class EXColorModel : public KisShared
 {
 public:
-    virtual ~ColorModel() = default;
+    virtual ~EXColorModel() = default;
 
     virtual QVector3D toXyz(const QVector3D &color) const = 0;
     virtual QVector3D fromXyz(const QVector3D &color) const = 0;
@@ -98,11 +98,11 @@ public:
         return (normalized + mn) / (mx - mn);
     }
 
-    QVector3D transferTo(const ColorModel *toModel, const QVector3D &color) const;
-    QVector3D transferTo(const ColorModel *toModel, const QVector3D &color, const QVector3D &reference) const;
+    QVector3D transferTo(const EXColorModel *toModel, const QVector3D &color) const;
+    QVector3D transferTo(const EXColorModel *toModel, const QVector3D &color, const QVector3D &reference) const;
 };
 
-class GrayModel : public ColorModel
+class GrayModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -141,7 +141,7 @@ public:
     static ColorModelSP DesaturateModel;
 };
 
-class SRGBModel : public ColorModel
+class SRGBModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -179,7 +179,7 @@ public:
     }
 };
 
-class HSVModel : public ColorModel
+class HSVModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -229,7 +229,7 @@ public:
     }
 };
 
-class HSLModel : public ColorModel
+class HSLModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -279,7 +279,7 @@ public:
     }
 };
 
-class LinearRGBModel : public ColorModel
+class LinearRGBModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -317,7 +317,7 @@ public:
     }
 };
 
-class XYZModel : public ColorModel
+class XYZModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -349,7 +349,7 @@ public:
     }
 };
 
-class LABModel : public ColorModel
+class LABModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -388,7 +388,7 @@ public:
     }
 };
 
-class LCHModel : public ColorModel
+class LCHModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -426,7 +426,7 @@ public:
     }
 };
 
-class OKLABModel : public ColorModel
+class OKLABModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -465,7 +465,7 @@ public:
     }
 };
 
-class OKLCHModel : public ColorModel
+class OKLCHModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -503,7 +503,7 @@ public:
     }
 };
 
-class OKHSVModel : public ColorModel
+class OKHSVModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -547,7 +547,7 @@ public:
     }
 };
 
-class OKHSLModel : public ColorModel
+class OKHSLModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -590,7 +590,7 @@ public:
     }
 };
 
-class NormalModel : public ColorModel
+class NormalModel : public EXColorModel
 {
 public:
     QVector3D toXyz(const QVector3D &color) const override;
@@ -635,7 +635,7 @@ public:
 class ColorModelFactory
 {
 public:
-    static ColorModel *fromId(ColorModelId id)
+    static EXColorModel *fromId(ColorModelId id)
     {
         switch (id) {
         case ColorModelId::Gray:
@@ -669,7 +669,7 @@ public:
         }
     }
 
-    static ColorModel *fromName(const QString &name)
+    static EXColorModel *fromName(const QString &name)
     {
         for (auto id : AllModels) {
             auto model = fromId(id);
@@ -681,7 +681,7 @@ public:
         return nullptr;
     }
 
-    static ColorModel *fromKoColorSpace(const KoColorSpace *colorSpace)
+    static EXColorModel *fromKoColorSpace(const KoColorSpace *colorSpace)
     {
         auto id = colorSpace->colorModelId();
         if (id == RGBAColorModelID) {

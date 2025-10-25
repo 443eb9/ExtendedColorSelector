@@ -3,7 +3,7 @@
 
 #include "EXKoColorConverter.h"
 
-EXColorConverter::EXColorConverter(const KoColorSpace *cs)
+EXKoColorConverter::EXKoColorConverter(const KoColorSpace *cs)
     : m_colorSpace(cs)
     , m_colorModel(ColorModelFactory::fromKoColorSpace(cs))
 {
@@ -32,7 +32,7 @@ EXColorConverter::EXColorConverter(const KoColorSpace *cs)
     }
 }
 
-KoColor EXColorConverter::displayChannelsToKoColor(const QVector4D &channels) const
+KoColor EXKoColorConverter::displayChannelsToKoColor(const QVector4D &channels) const
 {
     KoColor c(m_colorSpace);
     QVector<float> channelVec(m_colorSpace->channelCount());
@@ -40,7 +40,7 @@ KoColor EXColorConverter::displayChannelsToKoColor(const QVector4D &channels) co
     return c;
 }
 
-void EXColorConverter::displayChannelsToKoColor(quint8 *target,
+void EXKoColorConverter::displayChannelsToKoColor(quint8 *target,
                                                 const QVector4D &channels,
                                                 QVector<float> &tempChannelBuffer) const
 {
@@ -53,13 +53,13 @@ void EXColorConverter::displayChannelsToKoColor(quint8 *target,
     m_colorSpace->fromNormalisedChannelsValue(target, tempChannelBuffer);
 }
 
-QVector4D EXColorConverter::koColorToDisplayChannels(const KoColor &c) const
+QVector4D EXKoColorConverter::koColorToDisplayChannels(const KoColor &c) const
 {
     QVector<float> channelVec(c.colorSpace()->channelCount());
     return koColorToDisplayChannels(c, channelVec);
 }
 
-QVector4D EXColorConverter::koColorToDisplayChannels(const KoColor &c, QVector<float> &tempChannelBuffer) const
+QVector4D EXKoColorConverter::koColorToDisplayChannels(const KoColor &c, QVector<float> &tempChannelBuffer) const
 {
     m_colorSpace->normalisedChannelsValue(c.data(), tempChannelBuffer);
     QVector4D channels(0, 0, 0, 0);
@@ -71,12 +71,12 @@ QVector4D EXColorConverter::koColorToDisplayChannels(const KoColor &c, QVector<f
     return channels;
 }
 
-const KoColorSpace *EXColorConverter::colorSpace() const
+const KoColorSpace *EXKoColorConverter::colorSpace() const
 {
     return m_colorSpace;
 }
 
-const ColorModelSP EXColorConverter::colorModel() const
+const ColorModelSP EXKoColorConverter::colorModel() const
 {
     return m_colorModel;
 }

@@ -22,7 +22,7 @@ const QVector<ColorModelId> ColorModelFactory::AllModels = {ColorModelId::Gray,
                                                             ColorModelId::Okhsl,
                                                             ColorModelId::Normal};
 
-QVector3D ColorModel::transferTo(const ColorModel *toModel, const QVector3D &color) const
+QVector3D EXColorModel::transferTo(const EXColorModel *toModel, const QVector3D &color) const
 {
     if (toModel->id() == id()) {
         return color;
@@ -31,7 +31,7 @@ QVector3D ColorModel::transferTo(const ColorModel *toModel, const QVector3D &col
     return toModel->fromXyz(toXyz(color));
 }
 
-QVector3D ColorModel::transferTo(const ColorModel *toModel, const QVector3D &color, const QVector3D &reference) const
+QVector3D EXColorModel::transferTo(const EXColorModel *toModel, const QVector3D &color, const QVector3D &reference) const
 {
     if (toModel->id() == id()) {
         return color;

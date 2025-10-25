@@ -1,5 +1,5 @@
-#ifndef EXTENDEDCOLORCONVERTER_H
-#define EXTENDEDCOLORCONVERTER_H
+#ifndef EXKOCOLORCONVERTER_H
+#define EXKOCOLORCONVERTER_H
 
 #include <array>
 
@@ -12,10 +12,10 @@
 
 #include "EXColorModel.h"
 
-class EXColorConverter : public KisShared
+class EXKoColorConverter : public KisShared
 {
 public:
-    EXColorConverter(const KoColorSpace *colorSpace);
+    EXKoColorConverter(const KoColorSpace *colorSpace);
     KoColor displayChannelsToKoColor(const QVector4D &channels) const;
     void displayChannelsToKoColor(quint8 *target, const QVector4D &channels, QVector<float> &tempChannelBuffer) const;
     QVector4D koColorToDisplayChannels(const KoColor &color) const;
@@ -33,6 +33,6 @@ private:
     ColorModelSP m_colorModel;
 };
 
-typedef KisSharedPtr<EXColorConverter> EXColorConverterSP;
+typedef KisSharedPtr<EXKoColorConverter> EXColorConverterSP;
 
 #endif
