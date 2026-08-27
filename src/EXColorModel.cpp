@@ -98,6 +98,14 @@ QVector3D RGBModel::fromXyz(const QVector3D &color) const
 
     m_profile->delinearizeFloatValue(components);
 
+    // This is a workaround that delinearizeFloatValue clamps value to [0, 1] but we
+    // need to preserve them for out of gamut detection
+    for (int i = 0; i < 3; i++) {
+        if (linearRgb[i] < 0.0f || linearRgb[i] > 1.0f) {
+            components[i] = linearRgb[i];
+        }
+    }
+
     return QVector3D(components[0], components[1], components[2]);
 }
 

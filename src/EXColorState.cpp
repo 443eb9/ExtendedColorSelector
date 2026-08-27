@@ -49,12 +49,16 @@ void EXColorState::setColorModel(ColorModelId model)
     Q_EMIT sigPrimaryChannelIndexChanged(m_primaryChannelIndex);
 
     auto newModel = ColorModelFactory::fromId(model);
-    newModel->updateProfile(m_currentColorSpace->profile());
-    m_colorModel = newModel;
+    if (m_currentColorSpace) {
+        newModel->updateProfile(m_currentColorSpace->profile());
+    }
 
     m_color = m_colorModel->transferTo(newModel, m_color, m_color);
     ExtendedUtils::saturateColor(m_color);
-    m_colorConverter = new EXKoColorConverter(m_currentColorSpace);
+    m_colorModel = newModel;
+    if (m_currentColorSpace) {
+        m_colorConverter = new EXKoColorConverter(m_currentColorSpace);
+    }
 
     Q_EMIT sigColorModelChanged(model);
     Q_EMIT sigColorChanged(m_color);
