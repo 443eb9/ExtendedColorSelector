@@ -6,6 +6,7 @@
 - HDR color picking.
 - Allow use linear rgb in `HSV` and `HSL` color models.
 - Removed `LinearRGB` and `SRGB` since they are incorrect for color management, and added plain `RGB` model.
+- White point compensation when converting color models.
 
 # v0.6.0
 
@@ -85,7 +86,7 @@ Global settings will be reset to default after update!
 
 - Fixed some OpenGL rendering issues on Linux platform.
 
-# v0.1.0 Initial release. 🥳 
+# v0.1.0 Initial release. 🥳
 
 - Color picking in 7 color models: `RGB`, `HSV`, `HSL`, `OkLab`, `XYZ`, `Lab`, `OkLch`
 - 3 wheel shapes: square, triangle, circle
