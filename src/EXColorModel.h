@@ -6,6 +6,8 @@
 
 #include <QVector3D>
 
+#include <Eigen/Core>
+
 #include <KoColorModelStandardIds.h>
 #include <KoColorProfile.h>
 #include <KoColorSpace.h>
@@ -28,8 +30,6 @@ enum ColorModelId {
     Okhsl = 10,
     Normal = 11,
 };
-
-// All color models are using D65 white point and 2 degree standard observer
 
 class EXColorModel : public KisShared
 {
@@ -152,10 +152,7 @@ class RGBModel : public EXColorModel
 public:
     RGBModel(const KoColorProfile *profile);
 
-    void updateProfile(const KoColorProfile *profile) override
-    {
-        m_profile = profile;
-    }
+    void updateProfile(const KoColorProfile *profile) override;
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
     bool isDesaturatable() const override
@@ -192,6 +189,10 @@ public:
 
 private:
     const KoColorProfile *m_profile;
+    Eigen::Matrix3f m_rgbToXyz;
+    Eigen::Matrix3f m_xyzToRgb;
+    Eigen::Matrix3f m_profileToD50;
+    Eigen::Matrix3f m_d50ToProfile;
 };
 
 class HSVModel : public EXColorModel
@@ -201,7 +202,7 @@ public:
 
     void updateProfile(const KoColorProfile *profile) override
     {
-        m_profile = profile;
+        m_rgbModel.updateProfile(profile);
     }
 
     QVector3D toXyz(const QVector3D &color) const override;
@@ -251,7 +252,7 @@ public:
     }
 
 private:
-    const KoColorProfile *m_profile;
+    RGBModel m_rgbModel;
 };
 
 class HSLModel : public EXColorModel
@@ -261,7 +262,7 @@ public:
 
     void updateProfile(const KoColorProfile *profile) override
     {
-        m_profile = profile;
+        m_hsvModel.updateProfile(profile);
     }
 
     QVector3D toXyz(const QVector3D &color) const override;
@@ -311,7 +312,7 @@ public:
     }
 
 private:
-    const KoColorProfile *m_profile;
+    HSVModel m_hsvModel;
 };
 
 class XYZModel : public EXColorModel

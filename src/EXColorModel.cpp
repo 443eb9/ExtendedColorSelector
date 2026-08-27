@@ -5,6 +5,8 @@
 #include <qmath.h>
 #include <qvector3d.h>
 
+#include <Eigen/LU>
+
 #include "EXColorModel.h"
 #include "ok_color.h"
 
@@ -44,30 +46,63 @@ EXColorModel::transferTo(const EXColorModel *toModel, const QVector3D &color, co
     return result;
 }
 
-const float D65_WHITE_XYZ[3]{0.95047, 1.0, 1.08883};
+const QVector3D D50_WHITE_XYZ(0.96422f, 1.0f, 0.82521f);
+const QVector3D D65_WHITE_XYZ(0.95047f, 1.0f, 1.08883f);
 const float CIE_EPSILON = 216.0 / 24389.0;
 const float CIE_KAPPA = 24389.0 / 27.0;
 
+static const Eigen::Matrix3f SRGB_TO_XYZ_D65 = (Eigen::Matrix3f() << 0.4124564f,
+                                                0.3575761f,
+                                                0.1804375f,
+                                                0.2126729f,
+                                                0.7151522f,
+                                                0.0721750f,
+                                                0.0193339f,
+                                                0.1191920f,
+                                                0.9503041f)
+                                                   .finished();
+static const Eigen::Matrix3f XYZ_TO_SRGB_D65 = SRGB_TO_XYZ_D65.inverse();
+
+static QVector3D multiplyMatrix(const Eigen::Matrix3f &matrix, const QVector3D &vector)
+{
+    const Eigen::Vector3f result = matrix * Eigen::Vector3f(vector.x(), vector.y(), vector.z());
+    return QVector3D(result.x(), result.y(), result.z());
+}
+
+static Eigen::Matrix3f createBradfordAdaptation(const QVector3D &sourceWhite, const QVector3D &destinationWhite)
+{
+    static const Eigen::Matrix3f bradford =
+        (Eigen::Matrix3f() << 0.8951f, 0.2664f, -0.1614f, -0.7502f, 1.7135f, 0.0367f, 0.0389f, -0.0685f, 1.0296f)
+            .finished();
+
+    const Eigen::Vector3f sourceCone = bradford * Eigen::Vector3f(sourceWhite.x(), sourceWhite.y(), sourceWhite.z());
+    const Eigen::Vector3f destinationCone =
+        bradford * Eigen::Vector3f(destinationWhite.x(), destinationWhite.y(), destinationWhite.z());
+    Eigen::Vector3f scale;
+
+    for (int i = 0; i < 3; i++) {
+        scale[i] = qAbs(sourceCone[i]) > 1e-8f ? destinationCone[i] / sourceCone[i] : 1.0f;
+    }
+
+    return bradford.inverse() * scale.asDiagonal() * bradford;
+}
+
+static QVector3D adaptWhitePointBradford(const QVector3D &color, const Eigen::Matrix3f &adaptation)
+{
+    return multiplyMatrix(adaptation, color);
+}
+
+static const Eigen::Matrix3f D50_TO_D65_BRADFORD = createBradfordAdaptation(D50_WHITE_XYZ, D65_WHITE_XYZ);
+static const Eigen::Matrix3f D65_TO_D50_BRADFORD = createBradfordAdaptation(D65_WHITE_XYZ, D50_WHITE_XYZ);
+
 static QVector3D linearRgbToXyz(const QVector3D &color)
 {
-    float r = color[0], g = color[1], b = color[2];
-
-    float x = r * 0.4124564 + g * 0.3575761 + b * 0.1804375;
-    float y = r * 0.2126729 + g * 0.7151522 + b * 0.072175;
-    float z = r * 0.0193339 + g * 0.119192 + b * 0.9503041;
-
-    return QVector3D(x, y, z);
+    return multiplyMatrix(SRGB_TO_XYZ_D65, color);
 }
 
 static QVector3D xyzToLinearRgb(const QVector3D &color)
 {
-    float x = color[0], y = color[1], z = color[2];
-
-    float r = x * 3.2404542 + y * -1.5371385 + z * -0.4985314;
-    float g = x * -0.969266 + y * 1.8760108 + z * 0.041556;
-    float b = x * 0.0556434 + y * -0.2040259 + z * 1.0572252;
-
-    return QVector3D(r, g, b);
+    return multiplyMatrix(XYZ_TO_SRGB_D65, color);
 }
 
 ColorModelSP GrayModel::DesaturateModel = new OKLABModel();
@@ -85,13 +120,43 @@ QVector3D GrayModel::fromXyz(const QVector3D &color) const
 }
 
 RGBModel::RGBModel(const KoColorProfile *profile)
-    : m_profile(profile)
 {
+    updateProfile(profile);
+}
+
+void RGBModel::updateProfile(const KoColorProfile *profile)
+{
+    m_profile = profile ? profile : KoColorSpaceRegistry::instance()->p709SRGBProfile();
+    m_rgbToXyz = SRGB_TO_XYZ_D65;
+    QVector3D sourceWhite = D65_WHITE_XYZ;
+
+    if (m_profile->hasColorants()) {
+        const QVector<qreal> colorants = m_profile->getColorantsXYZ();
+        if (colorants.size() == 9) {
+            m_rgbToXyz << colorants[0], colorants[3], colorants[6], colorants[1], colorants[4], colorants[7],
+                colorants[2], colorants[5], colorants[8];
+            sourceWhite = multiplyMatrix(m_rgbToXyz, QVector3D(1.0f, 1.0f, 1.0f));
+
+            const QVector<qreal> whitePoint = m_profile->getWhitePointXYZ();
+            if (whitePoint.size() >= 3) {
+                sourceWhite = QVector3D(whitePoint[0], whitePoint[1], whitePoint[2]);
+            }
+        }
+    }
+
+    if (qAbs(m_rgbToXyz.determinant()) < 1e-8f) {
+        m_rgbToXyz = SRGB_TO_XYZ_D65;
+        sourceWhite = D65_WHITE_XYZ;
+    }
+    m_xyzToRgb = m_rgbToXyz.inverse();
+    m_profileToD50 = createBradfordAdaptation(sourceWhite, D50_WHITE_XYZ);
+    m_d50ToProfile = createBradfordAdaptation(D50_WHITE_XYZ, sourceWhite);
 }
 
 QVector3D RGBModel::fromXyz(const QVector3D &color) const
 {
-    auto linearRgb = xyzToLinearRgb(color);
+    const QVector3D profileXyz = adaptWhitePointBradford(color, m_d50ToProfile);
+    const QVector3D linearRgb = multiplyMatrix(m_xyzToRgb, profileXyz);
 
     auto components = QVector<qreal>();
     components << linearRgb[0] << linearRgb[1] << linearRgb[2];
@@ -115,7 +180,8 @@ QVector3D RGBModel::toXyz(const QVector3D &color) const
     components << color[0] << color[1] << color[2];
     m_profile->linearizeFloatValue(components);
 
-    return linearRgbToXyz(QVector3D(components[0], components[1], components[2]));
+    const QVector3D profileXyz = multiplyMatrix(m_rgbToXyz, QVector3D(components[0], components[1], components[2]));
+    return adaptWhitePointBradford(profileXyz, m_profileToD50);
 }
 
 float RGBModel::desaturate(const QVector3D &color) const
@@ -199,13 +265,13 @@ QVector3D hwbToRgb(const QVector3D &color)
 }
 
 HSVModel::HSVModel(const KoColorProfile *profile)
-    : m_profile(profile)
+    : m_rgbModel(profile)
 {
 }
 
 QVector3D HSVModel::fromXyz(const QVector3D &color) const
 {
-    QVector3D hwb = srgbToHwb(RGBModel(m_profile).fromXyz(color));
+    QVector3D hwb = srgbToHwb(m_rgbModel.fromXyz(color));
     float value = 1. - hwb[2];
     float saturation = value != 0. ? 1. - (hwb[1] / value) : 0.;
     return QVector3D(hwb[0], saturation, value);
@@ -213,7 +279,7 @@ QVector3D HSVModel::fromXyz(const QVector3D &color) const
 
 QVector3D HSVModel::toXyz(const QVector3D &color) const
 {
-    return RGBModel(m_profile).toXyz(hwbToRgb(QVector3D(color[0], (1. - color[1]) * color[2], 1. - color[2])));
+    return m_rgbModel.toXyz(hwbToRgb(QVector3D(color[0], (1. - color[1]) * color[2], 1. - color[2])));
 }
 
 float HSVModel::desaturate(const QVector3D &color) const
@@ -247,13 +313,13 @@ void HSVModel::makeColorful(QVector3D &color, int channelIndex) const
 }
 
 HSLModel::HSLModel(const KoColorProfile *profile)
-    : m_profile(profile)
+    : m_hsvModel(profile)
 {
 }
 
 QVector3D HSLModel::fromXyz(const QVector3D &color) const
 {
-    auto hsv = HSVModel(m_profile).fromXyz(color);
+    auto hsv = m_hsvModel.fromXyz(color);
     float saturation = hsv[1], value = hsv[2];
     float lightness = value * (1. - saturation / 2.);
     saturation = (lightness == 0. || lightness == 1.) ? 0. : (value - lightness) / qMin(lightness, 1.f - lightness);
@@ -267,7 +333,7 @@ QVector3D HSLModel::toXyz(const QVector3D &color) const
     float value = lightness + saturation * qMin(lightness, 1.f - lightness);
     saturation = value == 0. ? 0. : 2. * (1. - (lightness / value));
 
-    return HSVModel(m_profile).toXyz(QVector3D(color[0], saturation, value));
+    return m_hsvModel.toXyz(QVector3D(color[0], saturation, value));
 }
 
 float HSLModel::desaturate(const QVector3D &color) const
@@ -312,9 +378,9 @@ QVector3D XYZModel::toXyz(const QVector3D &color) const
 
 QVector3D LABModel::fromXyz(const QVector3D &color) const
 {
-    float xr = color[0] / D65_WHITE_XYZ[0];
-    float yr = color[1] / D65_WHITE_XYZ[1];
-    float zr = color[2] / D65_WHITE_XYZ[2];
+    float xr = color[0] / D50_WHITE_XYZ[0];
+    float yr = color[1] / D50_WHITE_XYZ[1];
+    float zr = color[2] / D50_WHITE_XYZ[2];
     float fx = xr > CIE_EPSILON ? cbrtf(xr) : ((CIE_KAPPA * xr + 16.0) / 116.0);
     float fy = yr > CIE_EPSILON ? cbrtf(yr) : ((CIE_KAPPA * yr + 16.0) / 116.0);
     float fz = zr > CIE_EPSILON ? cbrtf(zr) : (CIE_KAPPA * zr + 16.0) / 116.0;
@@ -340,9 +406,9 @@ QVector3D LABModel::toXyz(const QVector3D &color) const
     float fz3 = powf(fz, 3.0);
     float zr = fz3 > CIE_EPSILON ? fz3 : ((116.0 * fz - 16.0) / CIE_KAPPA);
 
-    float x = xr * D65_WHITE_XYZ[0];
-    float y = yr * D65_WHITE_XYZ[1];
-    float z = zr * D65_WHITE_XYZ[2];
+    float x = xr * D50_WHITE_XYZ[0];
+    float y = yr * D50_WHITE_XYZ[1];
+    float z = zr * D50_WHITE_XYZ[2];
 
     return QVector3D(x, y, z);
 }
@@ -403,7 +469,8 @@ void LCHModel::resolveReference(QVector3D &color, const QVector3D &reference) co
 // https:#bottosson.github.io/posts/oklab/#converting-from-xyz-to-oklab
 QVector3D OKLABModel::fromXyz(const QVector3D &color) const
 {
-    float x = color[0], y = color[1], z = color[2];
+    const QVector3D d65Color = adaptWhitePointBradford(color, D50_TO_D65_BRADFORD);
+    float x = d65Color[0], y = d65Color[1], z = d65Color[2];
 
     float l_ = 0.8189330101 * x + 0.3618667424 * y - 0.1288597137 * z;
     float m_ = 0.0329845436 * x + 0.9293118715 * y + 0.0361456387 * z;
@@ -438,7 +505,7 @@ QVector3D OKLABModel::toXyz(const QVector3D &color) const
     float y = -0.0405801784 * l_ + 1.1122568696 * m_ - 0.0716766786 * s_;
     float z = -0.0763812845 * l_ - 0.4214819784 * m_ + 1.5861632204 * s_;
 
-    return QVector3D(x, y, z);
+    return adaptWhitePointBradford(QVector3D(x, y, z), D65_TO_D50_BRADFORD);
 }
 
 float OKLABModel::desaturate(const QVector3D &color) const
@@ -497,7 +564,8 @@ void OKLCHModel::resolveReference(QVector3D &color, const QVector3D &reference) 
 
 QVector3D OKHSVModel::fromXyz(const QVector3D &color) const
 {
-    auto rgb = xyzToLinearRgb(color);
+    const QVector3D d65Color = adaptWhitePointBradford(color, D50_TO_D65_BRADFORD);
+    auto rgb = xyzToLinearRgb(d65Color);
     auto okhsv = ok_color::linear_rgb_to_okhsv(ok_color::RGB{rgb[0], rgb[1], rgb[2]});
     // Avoid singularity
     okhsv.s = qBound(0.0f, okhsv.s, 1.0f - 1e-3f);
@@ -508,7 +576,7 @@ QVector3D OKHSVModel::toXyz(const QVector3D &color) const
 {
     auto rgb = ok_color::okhsv_to_linear_rgb(ok_color::HSV{color[0], qBound(0.0f, color[1], 1.0f - 1e-3f), color[2]});
     auto xyz = linearRgbToXyz(QVector3D(rgb.r, rgb.g, rgb.b));
-    return QVector3D(xyz[0], xyz[1], xyz[2]);
+    return adaptWhitePointBradford(xyz, D65_TO_D50_BRADFORD);
 }
 
 void OKHSVModel::resolveReference(QVector3D &color, const QVector3D &reference) const
@@ -533,7 +601,8 @@ void OKHSVModel::makeColorful(QVector3D &color, int channelIndex) const
 
 QVector3D OKHSLModel::fromXyz(const QVector3D &color) const
 {
-    auto rgb = xyzToLinearRgb(color);
+    const QVector3D d65Color = adaptWhitePointBradford(color, D50_TO_D65_BRADFORD);
+    auto rgb = xyzToLinearRgb(d65Color);
     auto okhsl = ok_color::linear_rgb_to_okhsl(ok_color::RGB{rgb[0], rgb[1], rgb[2]});
     return QVector3D(okhsl.h, okhsl.s, okhsl.l);
 }
@@ -542,7 +611,7 @@ QVector3D OKHSLModel::toXyz(const QVector3D &color) const
 {
     auto rgb = ok_color::okhsl_to_linear_rgb(ok_color::HSL{color[0], color[1], color[2]});
     auto xyz = linearRgbToXyz(QVector3D(rgb.r, rgb.g, rgb.b));
-    return QVector3D(xyz[0], xyz[1], xyz[2]);
+    return adaptWhitePointBradford(xyz, D65_TO_D50_BRADFORD);
 }
 
 void OKHSLModel::resolveReference(QVector3D &color, const QVector3D &reference) const
@@ -567,12 +636,14 @@ QVector3D NormalModel::toXyz(const QVector3D &color) const
     }
     float z = sqrtf(qBound(0.0f, 1.0f - lenSq, 1.0f));
     auto normal = QVector3D(normalXy.x(), normalXy.y(), z);
-    return linearRgbToXyz(normal * 0.5f + QVector3D(0.5f, 0.5f, 0.5f));
+    const QVector3D d65Color = linearRgbToXyz(normal * 0.5f + QVector3D(0.5f, 0.5f, 0.5f));
+    return adaptWhitePointBradford(d65Color, D65_TO_D50_BRADFORD);
 }
 
 QVector3D NormalModel::fromXyz(const QVector3D &color) const
 {
-    auto rgb = xyzToLinearRgb(color);
+    const QVector3D d65Color = adaptWhitePointBradford(color, D50_TO_D65_BRADFORD);
+    auto rgb = xyzToLinearRgb(d65Color);
     auto normal = rgb * 2.0f - QVector3D(1.0f, 1.0f, 1.0f);
     auto normalXy = normal.toVector2D();
     normalXy = (normalXy + QVector2D(1.0f, 1.0f)) * 0.5f;
