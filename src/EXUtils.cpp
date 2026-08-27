@@ -11,7 +11,10 @@
 #include "EXKoColorConverter.h"
 #include "EXUtils.h"
 
+#include <KisDisplayConfig.h>
 #include <KoColorModelStandardIds.h>
+#include <KoColorProfile.h>
+#include <KoColorSpaceRegistry.h>
 
 #include "kis_fixed_paint_device.h"
 #include <kis_display_color_converter.h>
@@ -156,7 +159,13 @@ KisGLImageF16 generateGLGradient(int width,
         }
     }
 
-    displayColorConverter->applyDisplayFilteringF32(device, Float16BitsColorDepthID);
+    const KoColorProfile *outputProfile = displayColorConverter->displayConfig().profile;
+    if (!outputProfile) {
+        outputProfile = KoColorSpaceRegistry::instance()->p709SRGBProfile();
+    }
+    const KoColorSpace *outputColorSpace = KoColorSpaceRegistry::instance()->colorSpace(
+        RGBAColorModelID.id(), Float16BitsColorDepthID.id(), outputProfile);
+    displayColorConverter->applyDisplayFilteringF32(device, outputColorSpace);
 
     KisGLImageF16 image(QSize(width, height));
     const KoColorSpace *outputSpace = device->colorSpace();

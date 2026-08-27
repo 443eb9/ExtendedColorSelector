@@ -80,7 +80,7 @@ const KoColorSpace *EXEditableImage::generationColorSpace(const KoColorSpace *pr
 {
     KoColorSpaceRegistry *registry = KoColorSpaceRegistry::instance();
     const KoColorProfile *outputProfile =
-        m_displayColorConverter ? m_displayColorConverter->openGLCanvasSurfaceDisplayConfig().profile : nullptr;
+        m_displayColorConverter ? m_displayColorConverter->displayConfig().profile : nullptr;
     const KoColorSpace *outputColorSpace = outputProfile
         ? registry->colorSpace(RGBAColorModelID.id(), Float32BitsColorDepthID.id(), outputProfile)
         : nullptr;
