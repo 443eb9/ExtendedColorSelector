@@ -5,6 +5,7 @@
 - Fixed sliders count don't match the channel count.
 - HDR color picking.
 - Allow use linear rgb in `HSV` and `HSL` color models.
+- Removed `LinearRGB` and `SRGB` since they are incorrect for color management, and added plain `RGB` model.
 
 # v0.6.0
 

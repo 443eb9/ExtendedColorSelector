@@ -1,7 +1,9 @@
 #include <cmath>
 
 #include <QVector2D>
+#include <qglobal.h>
 #include <qmath.h>
+#include <qvector3d.h>
 
 #include "EXColorModel.h"
 #include "ok_color.h"
@@ -9,11 +11,10 @@
 const float EPSILON = 1e-4f;
 
 const QVector<ColorModelId> ColorModelFactory::AllModels = {ColorModelId::Gray,
-                                                            ColorModelId::Srgb,
+                                                            ColorModelId::Rgb,
                                                             ColorModelId::Hsv,
                                                             ColorModelId::Hsl,
                                                             ColorModelId::Xyz,
-                                                            ColorModelId::LinearRgb,
                                                             ColorModelId::Lab,
                                                             ColorModelId::Lch,
                                                             ColorModelId::Oklab,
@@ -47,26 +48,29 @@ const float D65_WHITE_XYZ[3]{0.95047, 1.0, 1.08883};
 const float CIE_EPSILON = 216.0 / 24389.0;
 const float CIE_KAPPA = 24389.0 / 27.0;
 
+static QVector3D linearRgbToXyz(const QVector3D &color)
+{
+    float r = color[0], g = color[1], b = color[2];
+
+    float x = r * 0.4124564 + g * 0.3575761 + b * 0.1804375;
+    float y = r * 0.2126729 + g * 0.7151522 + b * 0.072175;
+    float z = r * 0.0193339 + g * 0.119192 + b * 0.9503041;
+
+    return QVector3D(x, y, z);
+}
+
+static QVector3D xyzToLinearRgb(const QVector3D &color)
+{
+    float x = color[0], y = color[1], z = color[2];
+
+    float r = x * 3.2404542 + y * -1.5371385 + z * -0.4985314;
+    float g = x * -0.969266 + y * 1.8760108 + z * 0.041556;
+    float b = x * 0.0556434 + y * -0.2040259 + z * 1.0572252;
+
+    return QVector3D(r, g, b);
+}
+
 ColorModelSP GrayModel::DesaturateModel = new OKLABModel();
-ColorModelSP SRGBModel::IntermediateModelForHsvAndHsl = new SRGBModel();
-
-float gammaFunction(float x)
-{
-    if (x <= 0) {
-        return x;
-    }
-
-    return x <= 0.04045 ? x / 12.92 : powf((x + 0.055) / 1.055, 2.4);
-}
-
-float gammaFunctionInverse(float x)
-{
-    if (x <= 0) {
-        return x;
-    }
-
-    return x <= 0.0031308 ? x * 12.92 : 1.055 * powf(x, 1.0 / 2.4) - 0.055;
-}
 
 QVector3D GrayModel::toXyz(const QVector3D &color) const
 {
@@ -80,24 +84,38 @@ QVector3D GrayModel::fromXyz(const QVector3D &color) const
     return QVector3D(DesaturateModel->desaturate(c), 0.0f, 0.0f);
 }
 
-QVector3D SRGBModel::fromXyz(const QVector3D &color) const
+RGBModel::RGBModel(const KoColorProfile *profile)
+    : m_profile(profile)
 {
-    QVector3D linear = LinearRGBModel().fromXyz(color);
-    return QVector3D(gammaFunctionInverse(linear[0]), gammaFunctionInverse(linear[1]), gammaFunctionInverse(linear[2]));
 }
 
-QVector3D SRGBModel::toXyz(const QVector3D &color) const
+QVector3D RGBModel::fromXyz(const QVector3D &color) const
 {
-    QVector3D linear = QVector3D(gammaFunction(color[0]), gammaFunction(color[1]), gammaFunction(color[2]));
-    return LinearRGBModel().toXyz(linear);
+    auto linearRgb = xyzToLinearRgb(color);
+
+    auto components = QVector<qreal>();
+    components << linearRgb[0] << linearRgb[1] << linearRgb[2];
+
+    m_profile->delinearizeFloatValue(components);
+
+    return QVector3D(components[0], components[1], components[2]);
 }
 
-float SRGBModel::desaturate(const QVector3D &color) const
+QVector3D RGBModel::toXyz(const QVector3D &color) const
+{
+    auto components = QVector<qreal>();
+    components << color[0] << color[1] << color[2];
+    m_profile->linearizeFloatValue(components);
+
+    return linearRgbToXyz(QVector3D(components[0], components[1], components[2]));
+}
+
+float RGBModel::desaturate(const QVector3D &color) const
 {
     return 0.2126f * color[0] + 0.7152f * color[1] + 0.0722f * color[2];
 }
 
-QVector3D SRGBModel::fromDesaturated(float desaturated) const
+QVector3D RGBModel::fromDesaturated(float desaturated) const
 {
     return QVector3D(desaturated, desaturated, desaturated);
 }
@@ -172,9 +190,14 @@ QVector3D hwbToRgb(const QVector3D &color)
     return QVector3D(red, green, blue);
 }
 
+HSVModel::HSVModel(const KoColorProfile *profile)
+    : m_profile(profile)
+{
+}
+
 QVector3D HSVModel::fromXyz(const QVector3D &color) const
 {
-    QVector3D hwb = srgbToHwb(SRGBModel::IntermediateModelForHsvAndHsl->fromXyz(color));
+    QVector3D hwb = srgbToHwb(RGBModel(m_profile).fromXyz(color));
     float value = 1. - hwb[2];
     float saturation = value != 0. ? 1. - (hwb[1] / value) : 0.;
     return QVector3D(hwb[0], saturation, value);
@@ -182,8 +205,7 @@ QVector3D HSVModel::fromXyz(const QVector3D &color) const
 
 QVector3D HSVModel::toXyz(const QVector3D &color) const
 {
-    return SRGBModel::IntermediateModelForHsvAndHsl->toXyz(
-        hwbToRgb(QVector3D(color[0], (1. - color[1]) * color[2], 1. - color[2])));
+    return RGBModel(m_profile).toXyz(hwbToRgb(QVector3D(color[0], (1. - color[1]) * color[2], 1. - color[2])));
 }
 
 float HSVModel::desaturate(const QVector3D &color) const
@@ -216,9 +238,14 @@ void HSVModel::makeColorful(QVector3D &color, int channelIndex) const
     }
 }
 
+HSLModel::HSLModel(const KoColorProfile *profile)
+    : m_profile(profile)
+{
+}
+
 QVector3D HSLModel::fromXyz(const QVector3D &color) const
 {
-    auto hsv = HSVModel().fromXyz(color);
+    auto hsv = HSVModel(m_profile).fromXyz(color);
     float saturation = hsv[1], value = hsv[2];
     float lightness = value * (1. - saturation / 2.);
     saturation = (lightness == 0. || lightness == 1.) ? 0. : (value - lightness) / qMin(lightness, 1.f - lightness);
@@ -232,7 +259,7 @@ QVector3D HSLModel::toXyz(const QVector3D &color) const
     float value = lightness + saturation * qMin(lightness, 1.f - lightness);
     saturation = value == 0. ? 0. : 2. * (1. - (lightness / value));
 
-    return HSVModel().toXyz(QVector3D(color[0], saturation, value));
+    return HSVModel(m_profile).toXyz(QVector3D(color[0], saturation, value));
 }
 
 float HSLModel::desaturate(const QVector3D &color) const
@@ -263,38 +290,6 @@ void HSLModel::makeColorful(QVector3D &color, int channelIndex) const
         color[1] = 1.0;
         color[2] = 0.5;
     }
-}
-
-QVector3D LinearRGBModel::toXyz(const QVector3D &color) const
-{
-    float r = color[0], g = color[1], b = color[2];
-
-    float x = r * 0.4124564 + g * 0.3575761 + b * 0.1804375;
-    float y = r * 0.2126729 + g * 0.7151522 + b * 0.072175;
-    float z = r * 0.0193339 + g * 0.119192 + b * 0.9503041;
-
-    return QVector3D(x, y, z);
-}
-
-QVector3D LinearRGBModel::fromXyz(const QVector3D &color) const
-{
-    float x = color[0], y = color[1], z = color[2];
-
-    float r = x * 3.2404542 + y * -1.5371385 + z * -0.4985314;
-    float g = x * -0.969266 + y * 1.8760108 + z * 0.041556;
-    float b = x * 0.0556434 + y * -0.2040259 + z * 1.0572252;
-
-    return QVector3D(r, g, b);
-}
-
-float LinearRGBModel::desaturate(const QVector3D &color) const
-{
-    return (color[0] + color[1] + color[2]) / 3.0f;
-}
-
-QVector3D LinearRGBModel::fromDesaturated(float desaturated) const
-{
-    return QVector3D(desaturated, desaturated, desaturated);
 }
 
 QVector3D XYZModel::fromXyz(const QVector3D &color) const
@@ -494,7 +489,7 @@ void OKLCHModel::resolveReference(QVector3D &color, const QVector3D &reference) 
 
 QVector3D OKHSVModel::fromXyz(const QVector3D &color) const
 {
-    auto rgb = LinearRGBModel().fromXyz(color);
+    auto rgb = xyzToLinearRgb(color);
     auto okhsv = ok_color::linear_rgb_to_okhsv(ok_color::RGB{rgb[0], rgb[1], rgb[2]});
     // Avoid singularity
     okhsv.s = qBound(0.0f, okhsv.s, 1.0f - 1e-3f);
@@ -504,7 +499,7 @@ QVector3D OKHSVModel::fromXyz(const QVector3D &color) const
 QVector3D OKHSVModel::toXyz(const QVector3D &color) const
 {
     auto rgb = ok_color::okhsv_to_linear_rgb(ok_color::HSV{color[0], qBound(0.0f, color[1], 1.0f - 1e-3f), color[2]});
-    auto xyz = LinearRGBModel().toXyz(QVector3D(rgb.r, rgb.g, rgb.b));
+    auto xyz = linearRgbToXyz(QVector3D(rgb.r, rgb.g, rgb.b));
     return QVector3D(xyz[0], xyz[1], xyz[2]);
 }
 
@@ -530,7 +525,7 @@ void OKHSVModel::makeColorful(QVector3D &color, int channelIndex) const
 
 QVector3D OKHSLModel::fromXyz(const QVector3D &color) const
 {
-    auto rgb = LinearRGBModel().fromXyz(color);
+    auto rgb = xyzToLinearRgb(color);
     auto okhsl = ok_color::linear_rgb_to_okhsl(ok_color::RGB{rgb[0], rgb[1], rgb[2]});
     return QVector3D(okhsl.h, okhsl.s, okhsl.l);
 }
@@ -538,7 +533,7 @@ QVector3D OKHSLModel::fromXyz(const QVector3D &color) const
 QVector3D OKHSLModel::toXyz(const QVector3D &color) const
 {
     auto rgb = ok_color::okhsl_to_linear_rgb(ok_color::HSL{color[0], color[1], color[2]});
-    auto xyz = LinearRGBModel().toXyz(QVector3D(rgb.r, rgb.g, rgb.b));
+    auto xyz = linearRgbToXyz(QVector3D(rgb.r, rgb.g, rgb.b));
     return QVector3D(xyz[0], xyz[1], xyz[2]);
 }
 
@@ -564,12 +559,12 @@ QVector3D NormalModel::toXyz(const QVector3D &color) const
     }
     float z = sqrtf(qBound(0.0f, 1.0f - lenSq, 1.0f));
     auto normal = QVector3D(normalXy.x(), normalXy.y(), z);
-    return LinearRGBModel().toXyz(normal * 0.5f + QVector3D(0.5f, 0.5f, 0.5f));
+    return linearRgbToXyz(normal * 0.5f + QVector3D(0.5f, 0.5f, 0.5f));
 }
 
 QVector3D NormalModel::fromXyz(const QVector3D &color) const
 {
-    auto rgb = LinearRGBModel().fromXyz(color);
+    auto rgb = xyzToLinearRgb(color);
     auto normal = rgb * 2.0f - QVector3D(1.0f, 1.0f, 1.0f);
     auto normalXy = normal.toVector2D();
     normalXy = (normalXy + QVector2D(1.0f, 1.0f)) * 0.5f;

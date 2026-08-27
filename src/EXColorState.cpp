@@ -52,7 +52,6 @@ void EXColorState::setColorModel(ColorModelId model)
 
     m_color = m_colorModel->transferTo(newModel, m_color, m_color);
     ExtendedUtils::saturateColor(m_color);
-    m_colorModel = newModel;
     m_colorConverter = new EXKoColorConverter(m_currentColorSpace);
 
     Q_EMIT sigColorModelChanged(model);
@@ -175,6 +174,9 @@ KoColor EXColorState::koColor() const
 
 QColor EXColorState::qColor() const
 {
+    if (m_colorConverter == nullptr) {
+        return QColor();
+    }
     return m_dri->toQColor(koColor());
 }
 
@@ -237,13 +239,6 @@ void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
 {
     m_currentColorSpace = colorSpace;
     m_colorConverter = new EXKoColorConverter(colorSpace);
-
-    if (EXSettingsState::instance()->globalSettings.alwaysUseSrgbModelForHsvAndHsl
-        || !colorSpace->profile()->isLinear()) {
-        SRGBModel::IntermediateModelForHsvAndHsl = ColorModelFactory::fromId(ColorModelId::Srgb);
-    } else {
-        SRGBModel::IntermediateModelForHsvAndHsl = ColorModelFactory::fromId(ColorModelId::LinearRgb);
-    }
 
     syncFromKrita();
     Q_EMIT sigColorSpaceChanged(m_currentColorSpace);

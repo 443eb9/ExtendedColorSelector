@@ -1,6 +1,7 @@
 #ifndef EXCOLORModel_H
 #define EXCOLORModel_H
 
+#include "KoColorSpaceRegistry.h"
 #include <array>
 
 #include <QVector3D>
@@ -15,19 +16,20 @@ typedef KisSharedPtr<class EXColorModel> ColorModelSP;
 
 enum ColorModelId {
     Gray = 0,
-    Srgb = 1,
+    Rgb = 1,
     Hsv = 2,
     Hsl = 3,
-    LinearRgb = 4,
-    Xyz = 5,
-    Lab = 6,
-    Lch = 7,
-    Oklab = 8,
-    Oklch = 9,
-    Okhsv = 10,
-    Okhsl = 11,
-    Normal = 12,
+    Xyz = 4,
+    Lab = 5,
+    Lch = 6,
+    Oklab = 7,
+    Oklch = 8,
+    Okhsv = 9,
+    Okhsl = 10,
+    Normal = 11,
 };
+
+// All color models are using D65 white point and 2 degree standard observer
 
 class EXColorModel : public KisShared
 {
@@ -85,6 +87,10 @@ public:
     virtual std::array<QString, 3> channelNames() const = 0;
     virtual std::array<QVector3D, 2> channelRanges() const = 0;
     virtual bool isSrgbBased() const = 0;
+    virtual void updateProfile(const KoColorProfile *profile)
+    {
+        Q_UNUSED(profile);
+    }
 
     virtual QVector3D unnormalize(const QVector3D &normalized)
     {
@@ -141,9 +147,15 @@ public:
     static ColorModelSP DesaturateModel;
 };
 
-class SRGBModel : public EXColorModel
+class RGBModel : public EXColorModel
 {
 public:
+    RGBModel(const KoColorProfile *profile);
+
+    void updateProfile(const KoColorProfile *profile) override
+    {
+        m_profile = profile;
+    }
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
     bool isDesaturatable() const override
@@ -155,12 +167,12 @@ public:
 
     ColorModelId id() const override
     {
-        return ColorModelId::Srgb;
+        return ColorModelId::Rgb;
     }
 
     QString displayName() const override
     {
-        return "SRGB";
+        return "RGB";
     }
 
     std::array<QString, 3> channelNames() const override
@@ -178,12 +190,20 @@ public:
         return true;
     }
 
-    static ColorModelSP IntermediateModelForHsvAndHsl; // Can be either LinearRGBModel or SRGBModel
+private:
+    const KoColorProfile *m_profile;
 };
 
 class HSVModel : public EXColorModel
 {
 public:
+    HSVModel(const KoColorProfile *profile);
+
+    void updateProfile(const KoColorProfile *profile) override
+    {
+        m_profile = profile;
+    }
+
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
     bool isDesaturatable() const override
@@ -229,11 +249,21 @@ public:
     {
         return 0b001;
     }
+
+private:
+    const KoColorProfile *m_profile;
 };
 
 class HSLModel : public EXColorModel
 {
 public:
+    HSLModel(const KoColorProfile *profile);
+
+    void updateProfile(const KoColorProfile *profile) override
+    {
+        m_profile = profile;
+    }
+
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
     bool isDesaturatable() const override
@@ -279,44 +309,9 @@ public:
     {
         return 0b001;
     }
-};
 
-class LinearRGBModel : public EXColorModel
-{
-public:
-    QVector3D toXyz(const QVector3D &color) const override;
-    QVector3D fromXyz(const QVector3D &color) const override;
-    bool isDesaturatable() const override
-    {
-        return true;
-    }
-    float desaturate(const QVector3D &color) const override;
-    QVector3D fromDesaturated(float desaturated) const override;
-
-    ColorModelId id() const override
-    {
-        return ColorModelId::LinearRgb;
-    }
-
-    QString displayName() const override
-    {
-        return "LinearRGB";
-    }
-
-    std::array<QString, 3> channelNames() const override
-    {
-        return {"R", "G", "B"};
-    }
-
-    std::array<QVector3D, 2> channelRanges() const override
-    {
-        return {QVector3D(0, 0, 0), QVector3D(100, 100, 100)};
-    }
-
-    bool isSrgbBased() const override
-    {
-        return true;
-    }
+private:
+    const KoColorProfile *m_profile;
 };
 
 class XYZModel : public EXColorModel
@@ -642,14 +637,12 @@ public:
         switch (id) {
         case ColorModelId::Gray:
             return new GrayModel();
-        case ColorModelId::Srgb:
-            return new SRGBModel();
+        case ColorModelId::Rgb:
+            return new RGBModel(KoColorSpaceRegistry::instance()->p709SRGBProfile());
         case ColorModelId::Hsv:
-            return new HSVModel();
+            return new HSVModel(KoColorSpaceRegistry::instance()->p709SRGBProfile());
         case ColorModelId::Hsl:
-            return new HSLModel();
-        case ColorModelId::LinearRgb:
-            return new LinearRGBModel();
+            return new HSLModel(KoColorSpaceRegistry::instance()->p709SRGBProfile());
         case ColorModelId::Xyz:
             return new XYZModel();
         case ColorModelId::Lab:
@@ -687,12 +680,7 @@ public:
     {
         auto id = colorSpace->colorModelId();
         if (id == RGBAColorModelID) {
-            if (colorSpace->profile()->isLinear()) {
-                return new LinearRGBModel();
-            } else {
-                return new SRGBModel();
-            }
-            return new LinearRGBModel();
+            return new RGBModel(colorSpace->profile());
         } else if (id == LABAColorModelID) {
             return new LABModel();
         } else if (id == XYZAColorModelID) {
