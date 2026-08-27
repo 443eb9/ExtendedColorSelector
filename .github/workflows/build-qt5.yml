@@ -331,14 +331,22 @@ jobs:
         run: |
           set -euo pipefail
 
-          QT_MAJOR="$(sed -n 's/^QT_MAJOR_VERSION:INTERNAL=//p' "$BUILD_DIR_UNIX/CMakeCache.txt" | tr -d '\r')"
+          QT5_DIR="$(sed -n 's/^Qt5_DIR:PATH=//p' "$BUILD_DIR_UNIX/CMakeCache.txt" | tr -d '\r')"
+          QT5_CORE_DIR="$(sed -n 's/^Qt5Core_DIR:PATH=//p' "$BUILD_DIR_UNIX/CMakeCache.txt" | tr -d '\r')"
+          QT6_DIR="$(sed -n 's/^Qt6_DIR:PATH=//p' "$BUILD_DIR_UNIX/CMakeCache.txt" | tr -d '\r')"
           QT6_FLAG="$(sed -n 's/^BUILD_WITH_QT6:BOOL=//p' "$BUILD_DIR_UNIX/CMakeCache.txt" | tr -d '\r')"
 
-          echo "QT_MAJOR_VERSION=${QT_MAJOR:-<unset>}"
+          echo "Qt5_DIR=${QT5_DIR:-<unset>}"
+          echo "Qt5Core_DIR=${QT5_CORE_DIR:-<unset>}"
+          echo "Qt6_DIR=${QT6_DIR:-<unset>}"
           echo "BUILD_WITH_QT6=${QT6_FLAG:-<unset>}"
 
-          if [ "$QT_MAJOR" != "5" ]; then
-            echo "::error::The build did not use Qt5 (QT_MAJOR_VERSION=${QT_MAJOR:-unset})"
+          if [ -z "$QT5_DIR" ] || [ -z "$QT5_CORE_DIR" ]; then
+            echo "::error::Qt5 was not found in CMakeCache.txt (Qt5_DIR or Qt5Core_DIR is unset)"
+            exit 1
+          fi
+          if [ -n "$QT6_DIR" ]; then
+            echo "::error::Qt6 was configured unexpectedly (Qt6_DIR=${QT6_DIR})"
             exit 1
           fi
           if [ "$QT6_FLAG" != "OFF" ]; then
