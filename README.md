@@ -17,13 +17,6 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 - `Shift` and `Alt` modifiers to shift slowly.
 - Out of gamut hinting.
 
-## Known issues
-
-- `YCbCr` color space layers/images causes crash.
-- Performance issue when altering primary channel if HDR is used, really, really, reeeeeeeeeeally lag.
-- Alias issue on visual selector image.
-- Clipping to SRGB gamut looks weird under Grayscale color space.
-
 ## How to use
 
 Go to Releases, download the latest package.
@@ -43,6 +36,24 @@ Go to `Settings -> Configure Krita -> Python Plugin Manager`, find `Extended Col
 ## Why the name
 
 To make it looks/sounds like a native Krita docker, just like wide-gamut color selector and advanced color selector.
+
+## How to download unreleased versions
+
+Sometimes, you may want to download unreleased versions of this plugin. For example there's a bug fix, or a new feature.
+
+- Go to [Actions](https://github.com/443eb9/ExtendedColorSelector/actions) tab.
+- Click on the top most workflow run that has the name "Build Extended Color Selector (Qt5)".
+- Scroll down to find the "Artifacts" section, and download the `ExtendedColorSelector-{plugin-hash}-{krita-hash}-{os}.zip` file.
+
+And in more uncommon cases, you are using a different Krita version than the one used in CI, and even more uncommonly, the library version is changed that this plugin cannot link to it, you can
+
+- Fork this repo.
+- Modify `target_krita_commit` to the one you are using.
+- Push and wait the CI.
+
+If you are lucky enough, when internal APIs don't change, the CI will success and you can get your plugin in the "Artifacts" section.
+
+Well, in even even more uncommon case, the internal APIs change, uhhh, you likely have to modify the source code yourself, or wait for the next Krita release. This plugin will follow the latest Krita release.
 
 ## How to build
 
