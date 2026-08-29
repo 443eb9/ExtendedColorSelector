@@ -150,7 +150,6 @@ void EXChannelSlider::setActive(bool active)
 void EXChannelSlider::setColor(QVector3D color, ColorModelSP colorModel)
 {
     m_bar->m_colorAtCurrentModel = colorModel->transferTo(m_colorModel.data(), color, m_bar->m_colorAtCurrentModel);
-    m_bar->updateImage();
     updateSpinBoxRangeAndValue();
 }
 
