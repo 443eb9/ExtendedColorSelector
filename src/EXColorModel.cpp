@@ -1,11 +1,19 @@
+#include <array>
 #include <cmath>
+#include <memory>
+#include <vector>
 
+#include <QDebug>
 #include <QVector2D>
 #include <qglobal.h>
 #include <qmath.h>
 #include <qvector3d.h>
 
 #include <Eigen/LU>
+
+#include <KoChannelInfo.h>
+#include <KoColor.h>
+#include <KoColorConversionTransformation.h>
 
 #include "EXColorModel.h"
 #include "ok_color.h"
@@ -24,6 +32,112 @@ const QVector<ColorModelId> ColorModelFactory::AllModels = {ColorModelId::Gray,
                                                             ColorModelId::Okhsv,
                                                             ColorModelId::Okhsl,
                                                             ColorModelId::Normal};
+
+namespace
+{
+constexpr float GAMUT_EPSILON = 1e-5f;
+constexpr float GAMUT_PROBE_OFFSET = 2e-5f;
+
+std::array<int, 4> logicalToMemoryPositions(const KoColorSpace *colorSpace)
+{
+    std::array<int, 4> positions{-1, -1, -1, -1};
+    const QList<KoChannelInfo *> channels = colorSpace->channels();
+    for (int memoryPosition = 0; memoryPosition < channels.size(); ++memoryPosition) {
+        const int logicalPosition = channels[memoryPosition]->displayPosition();
+        if (logicalPosition >= 0 && logicalPosition < static_cast<int>(positions.size())) {
+            positions[logicalPosition] = memoryPosition;
+        }
+    }
+    return positions;
+}
+
+class ThreadColorConverter
+{
+public:
+    ThreadColorConverter(const KoColorSpace *source, const KoColorSpace *destination)
+        : m_sourceSpace(source)
+        , m_destinationSpace(destination)
+        , m_transform(source->createColorConverter(destination,
+                                                   KoColorConversionTransformation::IntentRelativeColorimetric,
+                                                   KoColorConversionTransformation::ConversionFlags()))
+        , m_sourceColor(source)
+        , m_destinationColor(destination)
+        , m_sourceChannels(source->channelCount())
+        , m_destinationChannels(destination->channelCount())
+        , m_sourcePositions(logicalToMemoryPositions(source))
+        , m_destinationPositions(logicalToMemoryPositions(destination))
+    {
+    }
+
+    bool matches(const KoColorSpace *source, const KoColorSpace *destination) const
+    {
+        return source == m_sourceSpace && destination == m_destinationSpace;
+    }
+
+    bool convert(const QVector3D &source, QVector3D &destination)
+    {
+        if (!m_transform) {
+            return false;
+        }
+
+        m_sourceChannels.fill(0.0f);
+        for (int i = 0; i < 3; ++i) {
+            if (m_sourcePositions[i] >= 0) {
+                m_sourceChannels[m_sourcePositions[i]] = source[i];
+            }
+        }
+        if (m_sourcePositions[3] >= 0) {
+            m_sourceChannels[m_sourcePositions[3]] = 1.0f;
+        }
+
+        m_sourceSpace->fromNormalisedChannelsValue(m_sourceColor.data(), m_sourceChannels);
+        m_transform->transform(m_sourceColor.data(), m_destinationColor.data(), 1);
+        m_destinationSpace->normalisedChannelsValue(m_destinationColor.data(), m_destinationChannels);
+
+        destination = QVector3D();
+        for (int i = 0; i < 3; ++i) {
+            if (m_destinationPositions[i] >= 0) {
+                destination[i] = m_destinationChannels[m_destinationPositions[i]];
+            }
+        }
+        return true;
+    }
+
+private:
+    const KoColorSpace *m_sourceSpace;
+    const KoColorSpace *m_destinationSpace;
+    std::unique_ptr<KoColorConversionTransformation> m_transform;
+    KoColor m_sourceColor;
+    KoColor m_destinationColor;
+    QVector<float> m_sourceChannels;
+    QVector<float> m_destinationChannels;
+    std::array<int, 4> m_sourcePositions;
+    std::array<int, 4> m_destinationPositions;
+};
+
+ThreadColorConverter *threadColorConverter(const KoColorSpace *source, const KoColorSpace *destination)
+{
+    static thread_local std::vector<std::unique_ptr<ThreadColorConverter>> converters;
+    for (const auto &converter : converters) {
+        if (converter->matches(source, destination)) {
+            return converter.get();
+        }
+    }
+
+    converters.push_back(std::make_unique<ThreadColorConverter>(source, destination));
+    return converters.back().get();
+}
+} // namespace
+
+bool EXColorModel::isOutOfGamut(const QVector3D &color) const
+{
+    for (int i = 0; i < 3; ++i) {
+        if (!qIsFinite(color[i]) || color[i] < -GAMUT_EPSILON || color[i] > 1.0f + GAMUT_EPSILON) {
+            return true;
+        }
+    }
+    return false;
+}
 
 QVector3D EXColorModel::transferTo(const EXColorModel *toModel, const QVector3D &color) const
 {
@@ -118,62 +232,48 @@ RGBModel::RGBModel(const KoColorProfile *profile)
 
 void RGBModel::updateProfile(const KoColorProfile *profile)
 {
-    m_profile = profile ? profile : KoColorSpaceRegistry::instance()->p709SRGBProfile();
-    m_rgbToXyz = SRGB_TO_XYZ_D65;
-    QVector3D sourceWhite = D65_WHITE_XYZ;
+    KoColorSpaceRegistry *registry = KoColorSpaceRegistry::instance();
+    m_profile = profile ? profile : registry->p709SRGBProfile();
+    m_rgbColorSpace = registry->colorSpace(RGBAColorModelID.id(), Float32BitsColorDepthID.id(), m_profile);
+    m_xyzColorSpace = registry->colorSpace(XYZAColorModelID.id(), Float32BitsColorDepthID.id());
 
-    if (m_profile->hasColorants()) {
-        const QVector<qreal> colorants = m_profile->getColorantsXYZ();
-        if (colorants.size() == 9) {
-            m_rgbToXyz << colorants[0], colorants[3], colorants[6], colorants[1], colorants[4], colorants[7],
-                colorants[2], colorants[5], colorants[8];
-            sourceWhite = multiplyMatrix(m_rgbToXyz, QVector3D(1.0f, 1.0f, 1.0f));
-
-            const QVector<qreal> whitePoint = m_profile->getWhitePointXYZ();
-            if (whitePoint.size() >= 3) {
-                sourceWhite = QVector3D(whitePoint[0], whitePoint[1], whitePoint[2]);
-            }
-        }
+    if (!m_rgbColorSpace || !m_xyzColorSpace) {
+        qWarning() << "ExtendedColorSelector: failed to create managed RGB/XYZ color spaces for profile"
+                   << (m_profile ? m_profile->name() : QString());
     }
-
-    if (qAbs(m_rgbToXyz.determinant()) < 1e-8f) {
-        m_rgbToXyz = SRGB_TO_XYZ_D65;
-        sourceWhite = D65_WHITE_XYZ;
-    }
-    m_xyzToRgb = m_rgbToXyz.inverse();
-    m_profileToD50 = createBradfordAdaptation(sourceWhite, D50_WHITE_XYZ);
-    m_d50ToProfile = createBradfordAdaptation(D50_WHITE_XYZ, sourceWhite);
 }
 
 QVector3D RGBModel::fromXyz(const QVector3D &color) const
 {
-    const QVector3D profileXyz = adaptWhitePointBradford(color, m_d50ToProfile);
-    const QVector3D linearRgb = multiplyMatrix(m_xyzToRgb, profileXyz);
-
-    auto components = QVector<qreal>();
-    components << linearRgb[0] << linearRgb[1] << linearRgb[2];
-
-    m_profile->delinearizeFloatValue(components);
-
-    // This is a workaround that delinearizeFloatValue clamps value to [0, 1] but we
-    // need to preserve them for out of gamut detection
-    for (int i = 0; i < 3; i++) {
-        if (linearRgb[i] < 0.0f || linearRgb[i] > 1.0f) {
-            components[i] = linearRgb[i];
-        }
+    QVector3D result;
+    if (!m_rgbColorSpace || !m_xyzColorSpace
+        || !threadColorConverter(m_xyzColorSpace, m_rgbColorSpace)->convert(color, result)) {
+        return QVector3D();
     }
-
-    return QVector3D(components[0], components[1], components[2]);
+    return result;
 }
 
 QVector3D RGBModel::toXyz(const QVector3D &color) const
 {
-    auto components = QVector<qreal>();
-    components << color[0] << color[1] << color[2];
-    m_profile->linearizeFloatValue(components);
+    QVector3D result;
+    if (!m_rgbColorSpace || !m_xyzColorSpace
+        || !threadColorConverter(m_rgbColorSpace, m_xyzColorSpace)->convert(color, result)) {
+        return QVector3D();
+    }
+    return result;
+}
 
-    const QVector3D profileXyz = multiplyMatrix(m_rgbToXyz, QVector3D(components[0], components[1], components[2]));
-    return adaptWhitePointBradford(profileXyz, m_profileToD50);
+bool RGBModel::isOutOfGamut(const QVector3D &color) const
+{
+    QVector3D c = color;
+    for (int i = 0; i < 3; ++i) {
+        if (c[i] <= GAMUT_EPSILON) {
+            c[i] = -GAMUT_PROBE_OFFSET;
+        } else if (c[i] >= 1.0f - GAMUT_EPSILON) {
+            c[i] = 1.0f + GAMUT_PROBE_OFFSET;
+        }
+    }
+    return EXColorModel::isOutOfGamut(c);
 }
 
 float RGBModel::desaturate(const QVector3D &color) const

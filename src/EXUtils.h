@@ -42,7 +42,7 @@ KisGLImageF16 generateGLGradient(int width,
                                  std::function<QVector4D(float, float)> pixelGet,
                                  bool useParallel = true);
 
-void sanitizeOutOfGamutColor(QVector3D &color, const QVector3D &outOfGamutColor);
+void sanitizeOutOfGamutColor(QVector3D &color, const QVector3D &outOfGamutColor, const EXColorModel *colorModel);
 void saturateColor(QVector3D &color);
 float getRingValue(QPointF widgetCoordCentered, float rotationOffset);
 QString colorToString(QVector3D color);

@@ -30,13 +30,13 @@ void loadImageIntoEditableWidget(EXEditableImage *editable,
                                  const KisDisplayColorConverter *displayConverter,
                                  std::function<QVector4D(float, float)> pixelGet)
 {
-        QImage image = generateGradient(width,
-                                        height,
-                                        useParallel,
-                                        colorConverter,
-                                        displayConverter->displayRendererInterface(),
-                                        pixelGet);
-        editable->loadQImage(image);
+    QImage image = generateGradient(width,
+                                    height,
+                                    useParallel,
+                                    colorConverter,
+                                    displayConverter->displayRendererInterface(),
+                                    pixelGet);
+    editable->loadQImage(image);
     // if (editable->useGLImage()) {
     //     KisGLImageF16 image = generateGLGradient(width,
     //                                              height,
@@ -163,8 +163,9 @@ KisGLImageF16 generateGLGradient(int width,
     if (!outputProfile) {
         outputProfile = KoColorSpaceRegistry::instance()->p709SRGBProfile();
     }
-    const KoColorSpace *outputColorSpace = KoColorSpaceRegistry::instance()->colorSpace(
-        RGBAColorModelID.id(), Float16BitsColorDepthID.id(), outputProfile);
+    const KoColorSpace *outputColorSpace = KoColorSpaceRegistry::instance()->colorSpace(RGBAColorModelID.id(),
+                                                                                        Float16BitsColorDepthID.id(),
+                                                                                        outputProfile);
     displayColorConverter->applyDisplayFilteringF32(device, outputColorSpace);
 
     KisGLImageF16 image(QSize(width, height));
@@ -178,11 +179,9 @@ KisGLImageF16 generateGLGradient(int width,
     return image;
 }
 
-void sanitizeOutOfGamutColor(QVector3D &color, const QVector3D &outOfGamutColor)
+void sanitizeOutOfGamutColor(QVector3D &color, const QVector3D &outOfGamutColor, const EXColorModel *colorModel)
 {
-    const float EPSILON = 1e-5;
-    if (color[0] < -EPSILON || color[0] > 1 + EPSILON || color[1] < -EPSILON || color[1] > 1 + EPSILON
-        || color[2] < -EPSILON || color[2] > 1 + EPSILON) {
+    if (colorModel && colorModel->isOutOfGamut(color)) {
         color = outOfGamutColor;
     }
 }

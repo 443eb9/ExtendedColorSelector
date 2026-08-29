@@ -92,6 +92,8 @@ public:
         Q_UNUSED(profile);
     }
 
+    virtual bool isOutOfGamut(const QVector3D &color) const;
+
     virtual QVector3D unnormalize(const QVector3D &normalized) const
     {
         auto [mn, mx] = channelRanges();
@@ -155,6 +157,7 @@ public:
     void updateProfile(const KoColorProfile *profile) override;
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
+    bool isOutOfGamut(const QVector3D &color) const override;
     bool isDesaturatable() const override
     {
         return true;
@@ -189,10 +192,8 @@ public:
 
 private:
     const KoColorProfile *m_profile;
-    Eigen::Matrix3f m_rgbToXyz;
-    Eigen::Matrix3f m_xyzToRgb;
-    Eigen::Matrix3f m_profileToD50;
-    Eigen::Matrix3f m_d50ToProfile;
+    const KoColorSpace *m_rgbColorSpace;
+    const KoColorSpace *m_xyzColorSpace;
 };
 
 class HSVModel : public EXColorModel

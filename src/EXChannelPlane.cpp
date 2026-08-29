@@ -267,7 +267,7 @@ void EXChannelPlane::updateImage()
 
         color = m_colorModel->transferTo(m_converter->colorModel(), color);
         if (!m_colorModel->isSrgbBased() && m_sanitizeOutOfGamut) {
-            ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor);
+            ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor, m_converter->colorModel().data());
         }
         color *= m_dynamicRange;
         auto colorWithAlpha = color.toVector4D();
@@ -307,8 +307,8 @@ void EXChannelPlane::updateImage()
         }
 
         color = m_colorModel->transferTo(m_converter->colorModel(), color);
-        if (!m_colorModel->isSrgbBased() && m_sanitizeOutOfGamut) {
-            ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor);
+        if (m_sanitizeOutOfGamut) {
+            ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor, m_converter->colorModel().data());
         }
         color *= m_dynamicRange;
         auto colorWithAlpha = color.toVector4D();
