@@ -12,7 +12,6 @@
 #include <QVector>
 #include <QWidget>
 
-#include "KisGLImageF16.h"
 #include <KoColorDisplayRendererInterface.h>
 #include <KoColorSpace.h>
 #include <kis_canvas2.h>
@@ -34,7 +33,6 @@ public:
 
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
 
     void startEdit(QMouseEvent *event, bool isShift) override;
     void edit(QMouseEvent *event) override;

@@ -336,15 +336,8 @@ void EXChannelSliderBar::startEdit(QMouseEvent *event, bool isShift)
 
     if (!isShift) {
         edit(event);
+        Q_EMIT sigValueChanging();
     }
-
-    Q_EMIT sigValueChangeStarted();
-}
-
-void EXChannelSliderBar::mouseReleaseEvent(QMouseEvent *event)
-{
-    EXEditableImage::mouseReleaseEvent(event);
-    Q_EMIT sigValueFinalized();
 }
 
 void EXChannelSliderBar::edit(QMouseEvent *event)
@@ -353,7 +346,6 @@ void EXChannelSliderBar::edit(QMouseEvent *event)
 
     float value = qBound(0.f, (float)event->pos().x() / width(), 1.f);
     m_colorAtCurrentModel[m_channelIndex] = value;
-    Q_EMIT sigValueChanging();
 }
 
 void EXChannelSliderBar::shift(QMouseEvent *event, QVector2D delta)
@@ -368,7 +360,6 @@ void EXChannelSliderBar::shift(QMouseEvent *event, QVector2D delta)
     }
 
     m_colorAtCurrentModel[m_channelIndex] = value;
-    Q_EMIT sigValueChanging();
 }
 
 float EXChannelSliderBar::currentWidgetCoord()
