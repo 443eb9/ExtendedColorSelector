@@ -229,6 +229,7 @@ EXChannelSliderBar::EXChannelSliderBar(int channelIndex, ColorModelSP colorModel
     , m_sanitizeOutOfGamut(false)
     , m_outOfGamutColor(QVector3D())
     , m_dynamicRange(1.0f)
+    , m_imageDirty(true)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
@@ -250,12 +251,14 @@ void EXChannelSliderBar::setCanvas(KisCanvas2 *canvas)
 
 void EXChannelSliderBar::updateImage()
 {
-    if (!m_converter || !m_colorModel || !displayColorConverter() || !displayRenderer()) {
+    if (!isVisible() || !m_converter || !m_colorModel || !displayColorConverter() || !displayRenderer()) {
+        m_imageDirty = true;
         return;
     }
 
     const ColorModelSP converterModel = m_converter->colorModel();
     if (!converterModel) {
+        m_imageDirty = true;
         return;
     }
 
@@ -285,6 +288,7 @@ void EXChannelSliderBar::updateImage()
 
     if (!generationCS) {
         loadImage(KisGLImageF16());
+        m_imageDirty = false;
         return;
     }
 
@@ -296,7 +300,16 @@ void EXChannelSliderBar::updateImage()
                                                m_converter,
                                                displayColorConverter(),
                                                pixelGet);
+    m_imageDirty = false;
     update();
+}
+
+void EXChannelSliderBar::showEvent(QShowEvent *event)
+{
+    EXEditableImage::showEvent(event);
+    if (m_imageDirty) {
+        updateImage();
+    }
 }
 
 void EXChannelSliderBar::resizeEvent(QResizeEvent *event)

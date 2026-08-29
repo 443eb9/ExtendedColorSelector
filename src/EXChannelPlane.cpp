@@ -20,6 +20,7 @@ EXChannelPlane::EXChannelPlane(QWidget *parent)
     , m_lastPrimaryChannelValue(-1.0f)
     , m_primaryChannelIndex(0)
     , m_dynamicRange(1.0f)
+    , m_imageDirty(true)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumSize(100, 100);
@@ -214,7 +215,8 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
 
 void EXChannelPlane::updateImage()
 {
-    if (!displayRenderer() || !m_shape || !m_converter || !displayColorConverter() || !m_colorModel) {
+    if (!isVisible() || !displayRenderer() || !m_shape || !m_converter || !displayColorConverter() || !m_colorModel) {
+        m_imageDirty = true;
         return;
     }
 
@@ -339,7 +341,16 @@ void EXChannelPlane::updateImage()
         break;
     }
 
+    m_imageDirty = false;
     update();
+}
+
+void EXChannelPlane::showEvent(QShowEvent *event)
+{
+    EXEditableImage::showEvent(event);
+    if (m_imageDirty) {
+        updateImage();
+    }
 }
 
 void EXChannelPlane::startEdit(QMouseEvent *event, bool isShift)

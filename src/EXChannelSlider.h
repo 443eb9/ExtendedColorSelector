@@ -33,6 +33,7 @@ public:
 
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 
     void startEdit(QMouseEvent *event, bool isShift) override;
     void edit(QMouseEvent *event) override;
@@ -52,6 +53,7 @@ private:
     bool m_sanitizeOutOfGamut;
     QVector3D m_outOfGamutColor;
     float m_dynamicRange;
+    bool m_imageDirty;
 
     void updateImage();
 };

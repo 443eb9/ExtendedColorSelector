@@ -67,6 +67,7 @@ private:
     bool m_sanitizeOutOfGamut;
     QVector3D m_outOfGamutColor;
     float m_dynamicRange;
+    bool m_imageDirty;
 
     void handleCursorEdit(const QPointF &widgetCoord);
     void sendPlaneColor(const QPointF &widgetCoord);
@@ -81,6 +82,7 @@ private:
 
     void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 
     void startEdit(QMouseEvent *event, bool isShift) override;
     void edit(QMouseEvent *event) override;
