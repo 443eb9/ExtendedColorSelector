@@ -262,10 +262,7 @@ void EXChannelSliderBar::updateImage()
         return;
     }
 
-    const bool sanitizeOutOfGamut =
-        converterModel->isSrgbBased() && !m_colorModel->isSrgbBased() && m_sanitizeOutOfGamut;
-
-    auto pixelGet = [this, converterModel, sanitizeOutOfGamut](float x, float y) -> QVector4D {
+    auto pixelGet = [this, converterModel](float x, float y) -> QVector4D {
         Q_UNUSED(y);
 
         QVector3D color = m_colorAtCurrentModel;
@@ -274,7 +271,7 @@ void EXChannelSliderBar::updateImage()
             m_colorModel->makeColorful(color, m_channelIndex);
         }
         color = m_colorModel->transferTo(converterModel, color);
-        if (sanitizeOutOfGamut) {
+        if (m_sanitizeOutOfGamut) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor, converterModel.data());
         }
 

@@ -266,7 +266,7 @@ void EXChannelPlane::updateImage()
         }
 
         color = m_colorModel->transferTo(m_converter->colorModel(), color);
-        if (!m_colorModel->isSrgbBased() && m_sanitizeOutOfGamut) {
+        if (m_sanitizeOutOfGamut) {
             ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor, m_converter->colorModel().data());
         }
         color *= m_dynamicRange;
