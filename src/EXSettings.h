@@ -47,7 +47,6 @@ public:
     EXGlobalSettings();
     void writeAll();
 
-    bool recordLastColorWhenMouseRelease;
     bool showChannelSpinBoxes;
     QVector<ColorModelId> displayOrder;
     bool outOfGamutColorEnabled;

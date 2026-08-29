@@ -290,13 +290,6 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
     setWindowTitle("Extended Color Selector - Global Settings");
     auto &settings = m_settingsState->globalSettings;
 
-    auto recordLastColorWhenMouseReleaseBox = new QCheckBox("Record Last Color When Mouse Release");
-    recordLastColorWhenMouseReleaseBox->setChecked(settings.recordLastColorWhenMouseRelease);
-    connect(recordLastColorWhenMouseReleaseBox, &QCheckBox::clicked, [this, &settings](bool checked) {
-        settings.recordLastColorWhenMouseRelease = checked;
-        Q_EMIT m_settingsState->sigSettingsChanged();
-    });
-
     auto channelSpinBoxesEnabled = new QCheckBox("Show Channel Spin Boxes");
     channelSpinBoxesEnabled->setChecked(settings.showChannelSpinBoxes);
     connect(channelSpinBoxesEnabled, &QCheckBox::clicked, [this, &settings](bool checked) {
@@ -382,7 +375,6 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
     pSettingsLayout->addLayout(pSettingsButtons);
     pSettingsLayout->addLayout(pSettingForm);
 
-    mainLayout->addWidget(recordLastColorWhenMouseReleaseBox);
     mainLayout->addWidget(channelSpinBoxesEnabled);
     mainLayout->addLayout(grayModelDesaturateLayout);
     mainLayout->addWidget(outOfGamutColorPicker);

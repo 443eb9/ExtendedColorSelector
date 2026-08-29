@@ -9,6 +9,7 @@
 - White point compensation when converting color models.
 - Fix incorrect gamut clipping interpolation.
 - Fix incorrect channel ranges for `LAB` and `LCH` models.
+- Record color when foreground color is used, and removed `recordLastColorWhenMouseRelease` setting.
 
 # v0.6.0
 
