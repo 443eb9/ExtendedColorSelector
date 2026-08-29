@@ -27,20 +27,12 @@ const QVector<ColorModelId> ColorModelFactory::AllModels = {ColorModelId::Gray,
 
 QVector3D EXColorModel::transferTo(const EXColorModel *toModel, const QVector3D &color) const
 {
-    if (toModel->id() == id()) {
-        return color;
-    }
-
     return toModel->fromXyz(toXyz(color));
 }
 
 QVector3D
 EXColorModel::transferTo(const EXColorModel *toModel, const QVector3D &color, const QVector3D &reference) const
 {
-    if (toModel->id() == id()) {
-        return color;
-    }
-
     auto result = toModel->fromXyz(toXyz(color));
     toModel->resolveReference(result, reference);
     return result;
