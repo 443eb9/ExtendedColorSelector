@@ -92,16 +92,16 @@ public:
         Q_UNUSED(profile);
     }
 
-    virtual QVector3D unnormalize(const QVector3D &normalized)
+    virtual QVector3D unnormalize(const QVector3D &normalized) const
     {
         auto [mn, mx] = channelRanges();
         return normalized * (mx - mn) + mn;
     }
 
-    virtual QVector3D normalize(const QVector3D &normalized)
+    virtual QVector3D normalize(const QVector3D &value) const
     {
         auto [mn, mx] = channelRanges();
-        return (normalized + mn) / (mx - mn);
+        return (value - mn) / (mx - mn);
     }
 
     QVector3D transferTo(const EXColorModel *toModel, const QVector3D &color) const;
@@ -359,6 +359,8 @@ public:
     float desaturate(const QVector3D &color) const override;
     QVector3D fromDesaturated(float desaturated) const override;
     void resolveReference(QVector3D &color, const QVector3D &reference) const override;
+    QVector3D unnormalize(const QVector3D &normalized) const override;
+    QVector3D normalize(const QVector3D &value) const override;
 
     ColorModelId id() const override
     {
@@ -377,7 +379,7 @@ public:
 
     std::array<QVector3D, 2> channelRanges() const override
     {
-        return {QVector3D(0, -100, -100), QVector3D(100, 100, 100)};
+        return {QVector3D(0, -128, -128), QVector3D(100, 127, 127)};
     }
 
     bool isSrgbBased() const override
@@ -410,7 +412,7 @@ public:
 
     std::array<QVector3D, 2> channelRanges() const override
     {
-        return {QVector3D(0, 0, 0), QVector3D(100, 100, 360)};
+        return {QVector3D(0, 0, 0), QVector3D(100, 181.01934f, 360)};
     }
 
     bool isSrgbBased() const override

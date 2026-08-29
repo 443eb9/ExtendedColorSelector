@@ -127,8 +127,30 @@ define_transfer_function!(
     map_oklxx
 );
 define_transfer_function!(Xyza, xyz_transfer, [[0.0, 1.0], [0.0, 1.0], [0.0, 1.0]]);
-define_transfer_function!(Laba, lab_transfer, [[0.0, 1.5], [-1.5, 1.5], [-1.5, 1.5]]);
-define_transfer_function!(Lcha, lch_transfer, [[0.0, 1.5], [0.0, 1.5], [0.0, 360.0]]);
+
+fn normalized_lab_ab(value: f32) -> f32 {
+    if value <= 0.5 {
+        value * 2.56 - 1.28
+    } else {
+        (value - 0.5) * 2.54
+    }
+}
+
+fn lab_transfer(color: [f32; 3]) -> [f32; 3] {
+    LinearRgba::from(Laba::new(
+        color[0],
+        normalized_lab_ab(color[1]),
+        normalized_lab_ab(color[2]),
+        1.0,
+    ))
+    .to_f32_array_no_alpha()
+}
+
+define_transfer_function!(
+    Lcha,
+    lch_transfer,
+    [[0.0, 1.0], [0.0, 1.8101934], [0.0, 360.0]]
+);
 define_transfer_function!(
     Oklcha,
     oklch_transfer,

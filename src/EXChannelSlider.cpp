@@ -117,9 +117,9 @@ EXChannelSlider::EXChannelSlider(int channelIndex, ColorModelSP colorModel, QBut
     setLayout(layout);
 
     connect(m_spinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [this](double value) mutable {
-        auto [chmn, chmx] = m_colorModel->channelRanges();
-        auto channel = (value - chmn[m_channelIndex]) / (chmx[m_channelIndex] - chmn[m_channelIndex]);
-        m_bar->m_colorAtCurrentModel[m_channelIndex] = channel;
+        QVector3D channelValues = m_colorModel->unnormalize(m_bar->m_colorAtCurrentModel);
+        channelValues[m_channelIndex] = value;
+        m_bar->m_colorAtCurrentModel = m_colorModel->normalize(channelValues);
         Q_EMIT m_bar->sigValueChanging();
         Q_EMIT m_bar->sigValueFinalized();
     });
@@ -156,10 +156,10 @@ void EXChannelSlider::setColor(QVector3D color, ColorModelSP colorModel)
 void EXChannelSlider::updateSpinBoxRangeAndValue()
 {
     auto [chmn, chmx] = m_colorModel->channelRanges();
+    const QVector3D channelValues = m_colorModel->unnormalize(m_bar->m_colorAtCurrentModel);
     m_spinBox->blockSignals(true);
     m_spinBox->setRange(chmn[m_channelIndex], chmx[m_channelIndex]);
-    m_spinBox->setValue(m_bar->m_colorAtCurrentModel[m_channelIndex] * (chmx[m_channelIndex] - chmn[m_channelIndex])
-                        + chmn[m_channelIndex]);
+    m_spinBox->setValue(channelValues[m_channelIndex]);
     m_spinBox->blockSignals(false);
 }
 

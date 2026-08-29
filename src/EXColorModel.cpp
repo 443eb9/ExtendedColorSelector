@@ -376,41 +376,48 @@ QVector3D XYZModel::toXyz(const QVector3D &color) const
     return color;
 }
 
+static float normalizeLabAB(float value)
+{
+    return value <= 0.0f ? (value + 128.0f) / 256.0f : 0.5f + value / 254.0f;
+}
+
+static float unnormalizeLabAB(float normalized)
+{
+    return normalized <= 0.5f ? normalized * 256.0f - 128.0f : (normalized - 0.5f) * 254.0f;
+}
+
 QVector3D LABModel::fromXyz(const QVector3D &color) const
 {
-    float xr = color[0] / D50_WHITE_XYZ[0];
-    float yr = color[1] / D50_WHITE_XYZ[1];
-    float zr = color[2] / D50_WHITE_XYZ[2];
-    float fx = xr > CIE_EPSILON ? cbrtf(xr) : ((CIE_KAPPA * xr + 16.0) / 116.0);
-    float fy = yr > CIE_EPSILON ? cbrtf(yr) : ((CIE_KAPPA * yr + 16.0) / 116.0);
-    float fz = zr > CIE_EPSILON ? cbrtf(zr) : (CIE_KAPPA * zr + 16.0) / 116.0;
-    float l = 1.16 * fy - 0.16;
-    float a = 5.00 * (fx - fy);
-    float b = 2.00 * (fy - fz);
+    const float xr = color[0] / D50_WHITE_XYZ[0];
+    const float yr = color[1] / D50_WHITE_XYZ[1];
+    const float zr = color[2] / D50_WHITE_XYZ[2];
+    const float fx = xr > CIE_EPSILON ? cbrtf(xr) : ((CIE_KAPPA * xr + 16.0f) / 116.0f);
+    const float fy = yr > CIE_EPSILON ? cbrtf(yr) : ((CIE_KAPPA * yr + 16.0f) / 116.0f);
+    const float fz = zr > CIE_EPSILON ? cbrtf(zr) : ((CIE_KAPPA * zr + 16.0f) / 116.0f);
+    const float l = 116.0f * fy - 16.0f;
+    const float a = 500.0f * (fx - fy);
+    const float b = 200.0f * (fy - fz);
 
-    return QVector3D(l / 1.5, (a + 1.5) / 3, (b + 1.5) / 3);
+    return normalize(QVector3D(l, a, b));
 }
 
 QVector3D LABModel::toXyz(const QVector3D &color) const
 {
-    float l = 100. * color[0] * 1.5;
-    float a = 100. * (color[1] * 3 - 1.5);
-    float b = 100. * (color[2] * 3 - 1.5);
+    const QVector3D lab = unnormalize(color);
+    const float l = lab[0];
+    const float a = lab[1];
+    const float b = lab[2];
 
-    float fy = (l + 16.0) / 116.0;
-    float fx = a / 500.0 + fy;
-    float fz = fy - b / 200.0;
-    float fx3 = powf(fx, 3.0);
-    float xr = fx3 > CIE_EPSILON ? fx3 : ((116.0 * fx - 16.0) / CIE_KAPPA);
-    float yr = (l > CIE_EPSILON * CIE_KAPPA) ? powf((l + 16.0) / 116.0, 3.0) : (l / CIE_KAPPA);
-    float fz3 = powf(fz, 3.0);
-    float zr = fz3 > CIE_EPSILON ? fz3 : ((116.0 * fz - 16.0) / CIE_KAPPA);
+    const float fy = (l + 16.0f) / 116.0f;
+    const float fx = a / 500.0f + fy;
+    const float fz = fy - b / 200.0f;
+    const float fx3 = powf(fx, 3.0f);
+    const float xr = fx3 > CIE_EPSILON ? fx3 : ((116.0f * fx - 16.0f) / CIE_KAPPA);
+    const float yr = (l > CIE_EPSILON * CIE_KAPPA) ? powf(fy, 3.0f) : (l / CIE_KAPPA);
+    const float fz3 = powf(fz, 3.0f);
+    const float zr = fz3 > CIE_EPSILON ? fz3 : ((116.0f * fz - 16.0f) / CIE_KAPPA);
 
-    float x = xr * D50_WHITE_XYZ[0];
-    float y = yr * D50_WHITE_XYZ[1];
-    float z = zr * D50_WHITE_XYZ[2];
-
-    return QVector3D(x, y, z);
+    return QVector3D(xr * D50_WHITE_XYZ[0], yr * D50_WHITE_XYZ[1], zr * D50_WHITE_XYZ[2]);
 }
 
 float LABModel::desaturate(const QVector3D &color) const
@@ -431,26 +438,38 @@ void LABModel::resolveReference(QVector3D &color, const QVector3D &reference) co
     }
 }
 
+QVector3D LABModel::unnormalize(const QVector3D &normalized) const
+{
+    return QVector3D(normalized[0] * 100.0f, unnormalizeLabAB(normalized[1]), unnormalizeLabAB(normalized[2]));
+}
+
+QVector3D LABModel::normalize(const QVector3D &value) const
+{
+    return QVector3D(value[0] / 100.0f, normalizeLabAB(value[1]), normalizeLabAB(value[2]));
+}
+
 QVector3D LCHModel::fromXyz(const QVector3D &color) const
 {
-    auto lab = LABModel().fromXyz(color);
-    float a = lab[1] * 3 - 1.5, b = lab[2] * 3 - 1.5;
-    float c = hypotf(a, b);
-    float h = qRadiansToDegrees(atan2f(b, a));
-    if (h < 0.0) {
-        h += 360.0;
+    LABModel labModel;
+    const QVector3D lab = labModel.unnormalize(labModel.fromXyz(color));
+    const float c = hypotf(lab[1], lab[2]);
+    float h = qRadiansToDegrees(atan2f(lab[2], lab[1]));
+    if (h < 0.0f) {
+        h += 360.0f;
     }
 
-    return QVector3D(lab[0] / 1.5, c / 1.5, h / 360);
+    return normalize(QVector3D(lab[0], c, h));
 }
 
 QVector3D LCHModel::toXyz(const QVector3D &color) const
 {
-    float h = color[2] * 2 * M_PI;
-    float a = color[1] * cosf(h);
-    float b = color[1] * sinf(h);
+    const QVector3D lch = unnormalize(color);
+    const float h = qDegreesToRadians(lch[2]);
+    const float a = lch[1] * cosf(h);
+    const float b = lch[1] * sinf(h);
 
-    return LABModel().toXyz(QVector3D(color[0] * 1.5, a / 3 + 0.5, b / 3 + 0.5));
+    LABModel labModel;
+    return labModel.toXyz(labModel.normalize(QVector3D(lch[0], a, b)));
 }
 
 void LCHModel::resolveReference(QVector3D &color, const QVector3D &reference) const

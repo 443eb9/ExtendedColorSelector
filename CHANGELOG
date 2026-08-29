@@ -8,6 +8,7 @@
 - Removed `LinearRGB` and `SRGB` since they are incorrect for color management, and added plain `RGB` model.
 - White point compensation when converting color models.
 - Fix incorrect gamut clipping interpolation.
+- Fix incorrect channel ranges for `LAB` and `LCH` models.
 
 # v0.6.0
 
