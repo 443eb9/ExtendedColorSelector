@@ -78,7 +78,7 @@ EXGamutClipping::getAxesLimitsInterpolated(ColorModelId colorModel, int primary,
     float a = primaryValue * Segments;
     auto [min1, max1] = getAxesLimits(colorModel, primary, qFloor(a));
     auto [min2, max2] = getAxesLimits(colorModel, primary, qCeil(a));
-    int t = a - int(a);
+    float t = a - int(a);
     auto minInterpolated = min1 * (1 - t) + min2 * t;
     auto maxInterpolated = max1 * (1 - t) + max2 * t;
 
