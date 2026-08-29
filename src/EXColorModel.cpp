@@ -280,7 +280,7 @@ QVector3D RGBModel::fromDesaturated(float desaturated) const
     return QVector3D(desaturated, desaturated, desaturated);
 }
 
-QVector3D srgbToHwb(const QVector3D &color)
+QVector3D rgbToHwb(const QVector3D &color)
 {
     float red = color[0], green = color[1], blue = color[2];
     float x_max = qMax((float)0, qMax(red, qMax(green, blue)));
@@ -352,7 +352,7 @@ QVector3D hwbToRgb(const QVector3D &color)
 
 QVector3D HSVModel::fromXyz(const QVector3D &color) const
 {
-    QVector3D hwb = srgbToHwb(m_rgbModel.fromXyz(color));
+    QVector3D hwb = rgbToHwb(m_rgbModel.fromXyz(color));
     float value = 1. - hwb[2];
     float saturation = value != 0. ? 1. - (hwb[1] / value) : 0.;
     return QVector3D(hwb[0], saturation, value);
