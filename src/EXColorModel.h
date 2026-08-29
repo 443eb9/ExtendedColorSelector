@@ -38,6 +38,11 @@ public:
 
     virtual QVector3D toXyz(const QVector3D &color) const = 0;
     virtual QVector3D fromXyz(const QVector3D &color) const = 0;
+    virtual QVector3D fromXyz(const QVector3D &color, const QVector3D &outOfGamutFallback) const
+    {
+        Q_UNUSED(outOfGamutFallback);
+        return fromXyz(color);
+    }
 
     virtual bool isDesaturatable() const
     {
@@ -86,13 +91,10 @@ public:
     }
     virtual std::array<QString, 3> channelNames() const = 0;
     virtual std::array<QVector3D, 2> channelRanges() const = 0;
-    virtual bool isSrgbBased() const = 0;
-    virtual void updateProfile(const KoColorProfile *profile)
+    virtual void setProfile(const KoColorProfile *profile)
     {
         Q_UNUSED(profile);
     }
-
-    virtual bool isOutOfGamut(const QVector3D &color) const;
 
     virtual QVector3D unnormalize(const QVector3D &normalized) const
     {
@@ -108,6 +110,9 @@ public:
 
     QVector3D transferTo(const EXColorModel *toModel, const QVector3D &color) const;
     QVector3D transferTo(const EXColorModel *toModel, const QVector3D &color, const QVector3D &reference) const;
+    QVector3D transferToWithGamutWarning(const EXColorModel *toModel,
+                                         const QVector3D &color,
+                                         const QVector3D &outOfGamutColor) const;
 };
 
 class GrayModel : public EXColorModel
@@ -141,23 +146,17 @@ public:
         return {QVector3D(0, 0, 0), QVector3D(100, 0, 0)};
     }
 
-    bool isSrgbBased() const override
-    {
-        return true;
-    }
-
     static ColorModelSP DesaturateModel;
 };
 
 class RGBModel : public EXColorModel
 {
 public:
-    RGBModel(const KoColorProfile *profile);
-
-    void updateProfile(const KoColorProfile *profile) override;
+    void setProfile(const KoColorProfile *profile) override;
     QVector3D toXyz(const QVector3D &color) const override;
     QVector3D fromXyz(const QVector3D &color) const override;
-    bool isOutOfGamut(const QVector3D &color) const override;
+    QVector3D fromXyz(const QVector3D &color, const QVector3D &outOfGamutFallback) const override;
+
     bool isDesaturatable() const override
     {
         return true;
@@ -185,25 +184,18 @@ public:
         return {QVector3D(0, 0, 0), QVector3D(100, 100, 100)};
     }
 
-    bool isSrgbBased() const override
-    {
-        return true;
-    }
-
 private:
-    const KoColorProfile *m_profile;
-    const KoColorSpace *m_rgbColorSpace;
-    const KoColorSpace *m_xyzColorSpace;
+    const KoColorProfile *m_profile = nullptr;
+    const KoColorSpace *m_rgbColorSpace = nullptr;
+    const KoColorSpace *m_xyzColorSpace = nullptr;
 };
 
 class HSVModel : public EXColorModel
 {
 public:
-    HSVModel(const KoColorProfile *profile);
-
-    void updateProfile(const KoColorProfile *profile) override
+    void setProfile(const KoColorProfile *profile) override
     {
-        m_rgbModel.updateProfile(profile);
+        m_rgbModel.setProfile(profile);
     }
 
     QVector3D toXyz(const QVector3D &color) const override;
@@ -237,11 +229,6 @@ public:
         return {QVector3D(0, 0, 0), QVector3D(360, 100, 100)};
     }
 
-    bool isSrgbBased() const override
-    {
-        return true;
-    }
-
     int colorfulableChannelIndexBits() const override
     {
         return 0b001;
@@ -259,11 +246,9 @@ private:
 class HSLModel : public EXColorModel
 {
 public:
-    HSLModel(const KoColorProfile *profile);
-
-    void updateProfile(const KoColorProfile *profile) override
+    void setProfile(const KoColorProfile *profile) override
     {
-        m_hsvModel.updateProfile(profile);
+        m_hsvModel.setProfile(profile);
     }
 
     QVector3D toXyz(const QVector3D &color) const override;
@@ -295,11 +280,6 @@ public:
     std::array<QVector3D, 2> channelRanges() const override
     {
         return {QVector3D(0, 0, 0), QVector3D(360, 100, 100)};
-    }
-
-    bool isSrgbBased() const override
-    {
-        return true;
     }
 
     int colorfulableChannelIndexBits() const override
@@ -341,11 +321,6 @@ public:
     {
         return {QVector3D(0, 0, 0), QVector3D(100, 100, 100)};
     }
-
-    bool isSrgbBased() const override
-    {
-        return false;
-    }
 };
 
 class LABModel : public EXColorModel
@@ -382,11 +357,6 @@ public:
     {
         return {QVector3D(0, -128, -128), QVector3D(100, 127, 127)};
     }
-
-    bool isSrgbBased() const override
-    {
-        return false;
-    }
 };
 
 class LCHModel : public EXColorModel
@@ -414,11 +384,6 @@ public:
     std::array<QVector3D, 2> channelRanges() const override
     {
         return {QVector3D(0, 0, 0), QVector3D(100, 181.01934f, 360)};
-    }
-
-    bool isSrgbBased() const override
-    {
-        return false;
     }
 
     int wrappableChannelIndexBits() const override
@@ -459,11 +424,6 @@ public:
     {
         return {QVector3D(0, -100, -100), QVector3D(100, 100, 100)};
     }
-
-    bool isSrgbBased() const override
-    {
-        return false;
-    }
 };
 
 class OKLCHModel : public EXColorModel
@@ -491,11 +451,6 @@ public:
     std::array<QVector3D, 2> channelRanges() const override
     {
         return {QVector3D(0, 0, 0), QVector3D(100, 100, 360)};
-    }
-
-    bool isSrgbBased() const override
-    {
-        return false;
     }
 
     int wrappableChannelIndexBits() const override
@@ -530,11 +485,6 @@ public:
     std::array<QVector3D, 2> channelRanges() const override
     {
         return {QVector3D(0, 0, 0), QVector3D(360, 100, 100)};
-    }
-
-    bool isSrgbBased() const override
-    {
-        return true;
     }
 
     int colorfulableChannelIndexBits() const override
@@ -573,11 +523,6 @@ public:
     std::array<QVector3D, 2> channelRanges() const override
     {
         return {QVector3D(0, 0, 0), QVector3D(360, 100, 100)};
-    }
-
-    bool isSrgbBased() const override
-    {
-        return true;
     }
 
     int colorfulableChannelIndexBits() const override
@@ -622,11 +567,6 @@ public:
         return {QVector3D(-100, -100, 0), QVector3D(100, 100, 0)};
     }
 
-    bool isSrgbBased() const override
-    {
-        return true;
-    }
-
     int wrappableChannelIndexBits() const override
     {
         return 0b011;
@@ -642,11 +582,11 @@ public:
         case ColorModelId::Gray:
             return new GrayModel();
         case ColorModelId::Rgb:
-            return new RGBModel(KoColorSpaceRegistry::instance()->p709SRGBProfile());
+            return new RGBModel();
         case ColorModelId::Hsv:
-            return new HSVModel(KoColorSpaceRegistry::instance()->p709SRGBProfile());
+            return new HSVModel();
         case ColorModelId::Hsl:
-            return new HSLModel(KoColorSpaceRegistry::instance()->p709SRGBProfile());
+            return new HSLModel();
         case ColorModelId::Xyz:
             return new XYZModel();
         case ColorModelId::Lab:
@@ -684,7 +624,7 @@ public:
     {
         auto id = colorSpace->colorModelId();
         if (id == RGBAColorModelID) {
-            return new RGBModel(colorSpace->profile());
+            return new RGBModel();
         } else if (id == LABAColorModelID) {
             return new LABModel();
         } else if (id == XYZAColorModelID) {

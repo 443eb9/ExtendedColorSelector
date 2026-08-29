@@ -7,6 +7,10 @@ EXKoColorConverter::EXKoColorConverter(const KoColorSpace *cs)
     : m_colorSpace(cs)
     , m_colorModel(ColorModelFactory::fromKoColorSpace(cs))
 {
+    if (m_colorModel) {
+        m_colorModel->setProfile(cs->profile());
+    }
+
     const QList<KoChannelInfo *> channelList = cs->channels();
 
     for (int i = 0; i < channelList.size(); i++) {
@@ -41,8 +45,8 @@ KoColor EXKoColorConverter::displayChannelsToKoColor(const QVector4D &channels) 
 }
 
 void EXKoColorConverter::displayChannelsToKoColor(quint8 *target,
-                                                const QVector4D &channels,
-                                                QVector<float> &tempChannelBuffer) const
+                                                  const QVector4D &channels,
+                                                  QVector<float> &tempChannelBuffer) const
 {
     QVector4D baseValues(channels);
 

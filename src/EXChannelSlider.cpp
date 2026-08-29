@@ -270,9 +270,10 @@ void EXChannelSliderBar::updateImage()
         if (m_colorful) {
             m_colorModel->makeColorful(color, m_channelIndex);
         }
-        color = m_colorModel->transferTo(converterModel, color);
         if (m_sanitizeOutOfGamut) {
-            ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor, converterModel.data());
+            color = m_colorModel->transferToWithGamutWarning(converterModel, color, m_outOfGamutColor);
+        } else {
+            color = m_colorModel->transferTo(converterModel, color);
         }
 
         color *= m_dynamicRange;

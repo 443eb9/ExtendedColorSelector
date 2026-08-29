@@ -38,6 +38,15 @@ EXColorState::EXColorState()
     , m_dynamicRange(1.0f)
     , m_hasHardwareHDR(KisOpenGLModeProber::instance()->useHDRMode())
 {
+    const KoColorProfile *defaultProfile = KoColorSpaceRegistry::instance()->p709SRGBProfile();
+    m_colorModel->setProfile(defaultProfile);
+    GrayModel::DesaturateModel->setProfile(defaultProfile);
+
+    connect(EXSettingsState::instance(), &EXSettingsState::sigSettingsChanged, this, [this, defaultProfile]() {
+        const KoColorProfile *profile =
+            isSupportedColorSpace(m_currentColorSpace) ? m_currentColorSpace->profile() : defaultProfile;
+        GrayModel::DesaturateModel->setProfile(profile);
+    });
 }
 
 void EXColorState::setColorModel(ColorModelId model)
@@ -54,9 +63,10 @@ void EXColorState::setColorModel(ColorModelId model)
     Q_EMIT sigPrimaryChannelIndexChanged(m_primaryChannelIndex);
 
     auto newModel = ColorModelFactory::fromId(model);
-    if (isSupportedColorSpace(m_currentColorSpace)) {
-        newModel->updateProfile(m_currentColorSpace->profile());
-    }
+    const KoColorProfile *profile = isSupportedColorSpace(m_currentColorSpace)
+        ? m_currentColorSpace->profile()
+        : KoColorSpaceRegistry::instance()->p709SRGBProfile();
+    newModel->setProfile(profile);
 
     m_color = m_colorModel->transferTo(newModel, m_color, m_color);
     ExtendedUtils::saturateColor(m_color);
@@ -267,7 +277,8 @@ void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
         return;
     }
 
-    m_colorModel->updateProfile(colorSpace->profile());
+    m_colorModel->setProfile(colorSpace->profile());
+    GrayModel::DesaturateModel->setProfile(colorSpace->profile());
     m_colorConverter = new EXKoColorConverter(colorSpace);
 
     syncFromKrita();
@@ -333,9 +344,10 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
     auto result = slider->colorModelAndChannelIndex();
     auto colorModel = result.first;
     auto channelIndex = result.second;
-    if (isSupportedColorSpace(m_currentColorSpace)) {
-        colorModel->updateProfile(m_currentColorSpace->profile());
-    }
+    const KoColorProfile *profile = isSupportedColorSpace(m_currentColorSpace)
+        ? m_currentColorSpace->profile()
+        : KoColorSpaceRegistry::instance()->p709SRGBProfile();
+    colorModel->setProfile(profile);
     slider->setColorConverter(m_colorConverter);
     slider->setColor(m_color, m_colorModel);
     slider->setActive(colorModel->id() == m_colorModel->id());
@@ -368,7 +380,7 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
             slider,
             [this, colorModel, slider](const KoColorSpace *colorSpace) mutable {
                 if (isSupportedColorSpace(colorSpace)) {
-                    colorModel->updateProfile(colorSpace->profile());
+                    colorModel->setProfile(colorSpace->profile());
                     slider->setColor(m_color, m_colorModel);
                 }
                 slider->setColorConverter(m_colorConverter);

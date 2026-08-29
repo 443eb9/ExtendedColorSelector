@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 #include <qmath.h>
 
+#include "EXGamutClipping.h"
 #include "EXSettings.h"
 #include "EXSettingsDialog.h"
 #include "EXSettingsState.h"
@@ -198,10 +199,12 @@ EXPerColorModelSettingsDialog::EXPerColorModelSettingsDialog(EXSettingsStateSP s
         } else {
             colorfulPrimaryChannel->deleteLater();
         }
-        if (colorModel->isSrgbBased()) {
-            clipGamutBox->deleteLater();
-        } else {
+        const ColorModelId modelId = colorModel->id();
+        const bool gamutClippingSupported = EXGamutClipping::getColorModelOffset(modelId) != -1;
+        if (gamutClippingSupported) {
             pageLayout->addWidget(clipGamutBox);
+        } else {
+            clipGamutBox->deleteLater();
         }
         pageLayout->addLayout(shapeButtonsAndRotLayout);
         pageLayout->addLayout(axesSettingsLayout);

@@ -179,13 +179,6 @@ KisGLImageF16 generateGLGradient(int width,
     return image;
 }
 
-void sanitizeOutOfGamutColor(QVector3D &color, const QVector3D &outOfGamutColor, const EXColorModel *colorModel)
-{
-    if (colorModel && colorModel->isOutOfGamut(color)) {
-        color = outOfGamutColor;
-    }
-}
-
 void saturateColor(QVector3D &color)
 {
     color[0] = qBound(0.0f, color[0], 1.0f);

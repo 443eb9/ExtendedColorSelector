@@ -35,9 +35,6 @@ const QVector<ColorModelId> ColorModelFactory::AllModels = {ColorModelId::Gray,
 
 namespace
 {
-constexpr float GAMUT_EPSILON = 1e-5f;
-constexpr float GAMUT_PROBE_OFFSET = 2e-5f;
-
 std::array<int, 4> logicalToMemoryPositions(const KoColorSpace *colorSpace)
 {
     std::array<int, 4> positions{-1, -1, -1, -1};
@@ -129,16 +126,6 @@ ThreadColorConverter *threadColorConverter(const KoColorSpace *source, const KoC
 }
 } // namespace
 
-bool EXColorModel::isOutOfGamut(const QVector3D &color) const
-{
-    for (int i = 0; i < 3; ++i) {
-        if (!qIsFinite(color[i]) || color[i] < -GAMUT_EPSILON || color[i] > 1.0f + GAMUT_EPSILON) {
-            return true;
-        }
-    }
-    return false;
-}
-
 QVector3D EXColorModel::transferTo(const EXColorModel *toModel, const QVector3D &color) const
 {
     return toModel->fromXyz(toXyz(color));
@@ -150,6 +137,13 @@ EXColorModel::transferTo(const EXColorModel *toModel, const QVector3D &color, co
     auto result = toModel->fromXyz(toXyz(color));
     toModel->resolveReference(result, reference);
     return result;
+}
+
+QVector3D EXColorModel::transferToWithGamutWarning(const EXColorModel *toModel,
+                                                   const QVector3D &color,
+                                                   const QVector3D &outOfGamutColor) const
+{
+    return toModel->fromXyz(toXyz(color), outOfGamutColor);
 }
 
 const QVector3D D50_WHITE_XYZ(0.96422f, 1.0f, 0.82521f);
@@ -225,12 +219,7 @@ QVector3D GrayModel::fromXyz(const QVector3D &color) const
     return QVector3D(DesaturateModel->desaturate(c), 0.0f, 0.0f);
 }
 
-RGBModel::RGBModel(const KoColorProfile *profile)
-{
-    updateProfile(profile);
-}
-
-void RGBModel::updateProfile(const KoColorProfile *profile)
+void RGBModel::setProfile(const KoColorProfile *profile)
 {
     KoColorSpaceRegistry *registry = KoColorSpaceRegistry::instance();
     m_profile = profile ? profile : registry->p709SRGBProfile();
@@ -253,6 +242,24 @@ QVector3D RGBModel::fromXyz(const QVector3D &color) const
     return result;
 }
 
+QVector3D RGBModel::fromXyz(const QVector3D &color, const QVector3D &outOfGamutFallback) const
+{
+    QVector3D result;
+    QVector3D roundtripXyz;
+    if (!m_rgbColorSpace || !m_xyzColorSpace
+        || !threadColorConverter(m_xyzColorSpace, m_rgbColorSpace)->convert(color, result)
+        || !threadColorConverter(m_rgbColorSpace, m_xyzColorSpace)->convert(result, roundtripXyz)) {
+        return QVector3D();
+    }
+
+    LABModel labModel;
+    const QVector3D sourceLab = labModel.unnormalize(labModel.fromXyz(color));
+    const QVector3D roundtripLab = labModel.unnormalize(labModel.fromXyz(roundtripXyz));
+    const float deltaE = (sourceLab - roundtripLab).length();
+
+    return !qIsFinite(deltaE) || deltaE > 0.1f ? outOfGamutFallback : result;
+}
+
 QVector3D RGBModel::toXyz(const QVector3D &color) const
 {
     QVector3D result;
@@ -261,19 +268,6 @@ QVector3D RGBModel::toXyz(const QVector3D &color) const
         return QVector3D();
     }
     return result;
-}
-
-bool RGBModel::isOutOfGamut(const QVector3D &color) const
-{
-    QVector3D c = color;
-    for (int i = 0; i < 3; ++i) {
-        if (c[i] <= GAMUT_EPSILON) {
-            c[i] = -GAMUT_PROBE_OFFSET;
-        } else if (c[i] >= 1.0f - GAMUT_EPSILON) {
-            c[i] = 1.0f + GAMUT_PROBE_OFFSET;
-        }
-    }
-    return EXColorModel::isOutOfGamut(c);
 }
 
 float RGBModel::desaturate(const QVector3D &color) const
@@ -356,11 +350,6 @@ QVector3D hwbToRgb(const QVector3D &color)
     return QVector3D(red, green, blue);
 }
 
-HSVModel::HSVModel(const KoColorProfile *profile)
-    : m_rgbModel(profile)
-{
-}
-
 QVector3D HSVModel::fromXyz(const QVector3D &color) const
 {
     QVector3D hwb = srgbToHwb(m_rgbModel.fromXyz(color));
@@ -402,11 +391,6 @@ void HSVModel::makeColorful(QVector3D &color, int channelIndex) const
         color[1] = 1.0;
         color[2] = 1.0;
     }
-}
-
-HSLModel::HSLModel(const KoColorProfile *profile)
-    : m_hsvModel(profile)
-{
 }
 
 QVector3D HSLModel::fromXyz(const QVector3D &color) const

@@ -190,7 +190,7 @@ void EXChannelPlane::paintEvent(QPaintEvent *event)
         displayRenderer()->toQColor(m_converter->displayChannelsToKoColor(QVector4D(displayColor, 1.0f))));
     painter.setPen(QPen(contrastColor, 1));
 
-    if (!m_colorModel->isSrgbBased() && m_clipToSrgbGamut) {
+    if (m_clipToSrgbGamut) {
         planeValues = EXGamutClipping::instance()->unmapAxesFromLimited(m_colorModel->id(),
                                                                         m_primaryChannelIndex,
                                                                         m_color[m_primaryChannelIndex],
@@ -265,9 +265,10 @@ void EXChannelPlane::updateImage()
             }
         }
 
-        color = m_colorModel->transferTo(m_converter->colorModel(), color);
         if (m_sanitizeOutOfGamut) {
-            ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor, m_converter->colorModel().data());
+            color = m_colorModel->transferToWithGamutWarning(m_converter->colorModel(), color, m_outOfGamutColor);
+        } else {
+            color = m_colorModel->transferTo(m_converter->colorModel(), color);
         }
         color *= m_dynamicRange;
         auto colorWithAlpha = color.toVector4D();
@@ -306,9 +307,10 @@ void EXChannelPlane::updateImage()
             color[1] = axes.y();
         }
 
-        color = m_colorModel->transferTo(m_converter->colorModel(), color);
         if (m_sanitizeOutOfGamut) {
-            ExtendedUtils::sanitizeOutOfGamutColor(color, m_outOfGamutColor, m_converter->colorModel().data());
+            color = m_colorModel->transferToWithGamutWarning(m_converter->colorModel(), color, m_outOfGamutColor);
+        } else {
+            color = m_colorModel->transferTo(m_converter->colorModel(), color);
         }
         color *= m_dynamicRange;
         auto colorWithAlpha = color.toVector4D();
@@ -374,7 +376,7 @@ void EXChannelPlane::startEdit(QMouseEvent *event, bool isShift)
         if (isShift) {
             QVector2D values = m_secondaryChannelValues;
 
-            if (!m_colorModel->isSrgbBased() && m_clipToSrgbGamut) {
+            if (m_clipToSrgbGamut) {
                 values = EXGamutClipping::instance()->unmapAxesFromLimited(m_colorModel->id(),
                                                                            m_primaryChannelIndex,
                                                                            m_color[m_primaryChannelIndex],
@@ -432,7 +434,7 @@ void EXChannelPlane::sendPlaneColor(const QPointF &widgetCoord)
     shapeCoord.setX(qBound(0.0, shapeCoord.x(), 1.0));
     shapeCoord.setY(qBound(0.0, shapeCoord.y(), 1.0));
 
-    if (!m_colorModel->isSrgbBased() && m_clipToSrgbGamut) {
+    if (m_clipToSrgbGamut) {
         QVector2D clipped = EXGamutClipping::instance()->mapAxesToLimited(m_colorModel->id(),
                                                                           m_primaryChannelIndex,
                                                                           m_color[m_primaryChannelIndex],
