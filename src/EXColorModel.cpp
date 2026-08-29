@@ -446,10 +446,9 @@ QVector3D LCHModel::fromXyz(const QVector3D &color) const
 
 QVector3D LCHModel::toXyz(const QVector3D &color) const
 {
-    float sin, cos;
-    sincosf(color[2] * 2 * M_PI, &sin, &cos);
-    float a = color[1] * cos;
-    float b = color[1] * sin;
+    float h = color[2] * 2 * M_PI;
+    float a = color[1] * cosf(h);
+    float b = color[1] * sinf(h);
 
     return LABModel().toXyz(QVector3D(color[0] * 1.5, a / 3 + 0.5, b / 3 + 0.5));
 }
@@ -542,10 +541,9 @@ QVector3D OKLCHModel::fromXyz(const QVector3D &color) const
 
 QVector3D OKLCHModel::toXyz(const QVector3D &color) const
 {
-    float sin, cos;
-    sincosf(qDegreesToRadians(color[2] * 360), &sin, &cos);
-    float a = color[1] * cos;
-    float b = color[1] * sin;
+    float h = qDegreesToRadians(color[2] * 360);
+    float a = color[1] * cosf(h);
+    float b = color[1] * sinf(h);
 
     return OKLABModel().toXyz(QVector3D(color[0], a * 0.5 + 0.5, b * 0.5 + 0.5));
 }

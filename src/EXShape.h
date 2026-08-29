@@ -4,6 +4,7 @@
 #include <QPointF>
 #include <QVector>
 
+#include <cmath>
 #include <kis_shared.h>
 #include <kis_shared_ptr.h>
 
@@ -58,7 +59,8 @@ public:
     void setRotation(float rotation)
     {
         m_rotation = rotation;
-        sincosf(rotation, &m_rotSin, &m_rotCos);
+        m_rotCos = cos(rotation);
+        m_rotSin = sin(rotation);
     }
 
     EXPrimaryChannelRing ring;
