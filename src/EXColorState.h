@@ -66,6 +66,7 @@ Q_SIGNALS:
     void sigColorModelChanged(ColorModelId id);
     void sigColorSpaceChanged(const KoColorSpace *colorSpace);
     void sigDynamicRangeChanged(float dynamicRange);
+    void sigFGColorUsed(const KoColor &color);
 
 public Q_SLOTS:
     void onDisplayConfigChanged();

@@ -11,6 +11,7 @@
 
 #include "EXColorModel.h"
 #include "EXColorSelectorDock.h"
+#include "EXColorState.h"
 #include "kis_slider_spin_box.h"
 
 EXColorSelectorDock::EXColorSelectorDock()
@@ -25,6 +26,9 @@ EXColorSelectorDock::EXColorSelectorDock()
     m_colorPatchPopup = new EXColorPatchPopup(this);
     connect(m_colorState.data(), &EXColorState::sigColorChanged, this, [this]() {
         m_colorPatchPopup->updateColor(m_colorState->qColor());
+    });
+    connect(m_colorState.data(), &EXColorState::sigFGColorUsed, this, [this]() {
+        m_colorPatchPopup->recordColor(m_colorState->qColor());
     });
 
     auto colorSpaceLayout = new QHBoxLayout(this);
@@ -150,12 +154,6 @@ void EXColorSelectorDock::unsetCanvas()
     m_sliders->setCanvas(nullptr);
     m_colorState->setCanvas(nullptr);
     m_portableSelector->setCanvas(nullptr);
-}
-
-void EXColorSelectorDock::enterEvent(QEvent *event)
-{
-    QDockWidget::enterEvent(event);
-    m_colorPatchPopup->recordColor(m_colorState->qColor());
 }
 
 void EXColorSelectorDock::leaveEvent(QEvent *event)

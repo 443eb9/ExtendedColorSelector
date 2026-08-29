@@ -3,10 +3,12 @@
 #include <kis_canvas2.h>
 #include <kis_display_color_converter.h>
 #include <opengl/KisOpenGLModeProber.h>
+#include <qobjectdefs.h>
 
 #include "EXColorState.h"
 #include "EXSettingsState.h"
 #include "EXUtils.h"
+#include "KoColor.h"
 
 static EXColorState *s_instance = nullptr;
 
@@ -121,6 +123,9 @@ void EXColorState::setCanvas(KisCanvas2 *canvas)
         m_dri = canvas->displayColorConverter()->displayRendererInterface();
 
         connect(m_resourceProvider, &KisCanvasResourceProvider::sigFGColorChanged, this, &EXColorState::syncFromKrita);
+        connect(m_resourceProvider, &KisCanvasResourceProvider::sigFGColorUsed, this, [this](const KoColor &color) {
+            Q_EMIT sigFGColorUsed(color);
+        });
 
         if (m_useLayerColorSpace) {
             setColorSpace(m_dcc->paintingColorSpace());
@@ -132,6 +137,8 @@ void EXColorState::setCanvas(KisCanvas2 *canvas)
         } else {
             syncFromKrita();
         }
+
+        Q_EMIT sigFGColorUsed(m_resourceProvider->fgColor());
     }
 }
 

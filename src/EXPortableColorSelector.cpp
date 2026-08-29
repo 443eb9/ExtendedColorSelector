@@ -20,8 +20,12 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
     m_colorState->connectChannelPlane(m_plane);
     m_settingsState->connectChannelPlane(m_plane);
     m_colorPatchPopup->connectToWidget(m_plane);
+
     connect(m_colorState.data(), &EXColorState::sigColorChanged, this, [this]() {
         m_colorPatchPopup->updateColor(m_colorState->qColor());
+    });
+    connect(m_colorState.data(), &EXColorState::sigFGColorUsed, this, [this]() {
+        m_colorPatchPopup->recordColor(m_colorState->qColor());
     });
 
     m_dynamicRangeSlider = new EXDynamicRangeSlider(this);
@@ -84,7 +88,6 @@ void EXPortableColorSelector::toggle()
     if (isVisible()) {
         hide();
     } else {
-        m_colorPatchPopup->recordColor(m_colorState->qColor());
         move(QCursor::pos() - QPoint(width() / 2, height() / 2));
         activateWindow();
         show();
