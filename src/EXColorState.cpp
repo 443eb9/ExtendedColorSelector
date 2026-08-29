@@ -10,6 +10,11 @@
 
 static EXColorState *s_instance = nullptr;
 
+static bool isSupportedColorSpace(const KoColorSpace *colorSpace)
+{
+    return colorSpace && colorSpace->colorModelId() == RGBAColorModelID;
+}
+
 EXColorState *EXColorState::instance()
 {
     if (!s_instance) {
@@ -49,14 +54,14 @@ void EXColorState::setColorModel(ColorModelId model)
     Q_EMIT sigPrimaryChannelIndexChanged(m_primaryChannelIndex);
 
     auto newModel = ColorModelFactory::fromId(model);
-    if (m_currentColorSpace) {
+    if (isSupportedColorSpace(m_currentColorSpace)) {
         newModel->updateProfile(m_currentColorSpace->profile());
     }
 
     m_color = m_colorModel->transferTo(newModel, m_color, m_color);
     ExtendedUtils::saturateColor(m_color);
     m_colorModel = newModel;
-    if (m_currentColorSpace) {
+    if (isSupportedColorSpace(m_currentColorSpace)) {
         m_colorConverter = new EXKoColorConverter(m_currentColorSpace);
     }
 
@@ -71,6 +76,10 @@ const ColorModelSP EXColorState::colorModel() const
 
 void EXColorState::sendToKrita()
 {
+    if (!m_resourceProvider || !m_colorConverter || !m_colorConverter->colorModel()) {
+        return;
+    }
+
     QVector3D currentColor = m_colorModel->transferTo(kritaColorModel(), m_color);
     ExtendedUtils::saturateColor(currentColor);
     currentColor *= dynamicRange();
@@ -82,7 +91,8 @@ void EXColorState::sendToKrita()
 
 void EXColorState::syncFromKrita()
 {
-    if (m_blockColorSync || !m_resourceProvider || !m_currentColorSpace || !m_colorModel) {
+    if (m_blockColorSync || !m_resourceProvider || !m_currentColorSpace || !m_colorModel || !m_colorConverter
+        || !m_colorConverter->colorModel()) {
         return;
     }
 
@@ -173,6 +183,10 @@ QVector3D EXColorState::color() const
 
 KoColor EXColorState::koColor() const
 {
+    if (!m_colorConverter || !m_colorConverter->colorModel()) {
+        return KoColor();
+    }
+
     auto kritaColor = m_colorModel->transferTo(kritaColorModel(), m_color);
     kritaColor *= dynamicRange();
     return m_colorConverter->displayChannelsToKoColor(QVector4D(kritaColor, 1.0f));
@@ -199,7 +213,7 @@ const KoColorSpace *EXColorState::colorSpace() const
 
 const ColorModelSP EXColorState::kritaColorModel() const
 {
-    return m_colorConverter->colorModel();
+    return m_colorConverter ? m_colorConverter->colorModel() : ColorModelSP();
 }
 
 const EXColorConverterSP EXColorState::koColorConverter() const
@@ -244,6 +258,16 @@ void EXColorState::setUseLayerColorSpace(bool use)
 void EXColorState::setColorSpace(const KoColorSpace *colorSpace)
 {
     m_currentColorSpace = colorSpace;
+
+    if (!isSupportedColorSpace(colorSpace)) {
+        m_colorConverter = nullptr;
+        if (colorSpace) {
+            Q_EMIT sigColorSpaceChanged(m_currentColorSpace);
+        }
+        return;
+    }
+
+    m_colorModel->updateProfile(colorSpace->profile());
     m_colorConverter = new EXKoColorConverter(colorSpace);
 
     syncFromKrita();
@@ -309,6 +333,9 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
     auto result = slider->colorModelAndChannelIndex();
     auto colorModel = result.first;
     auto channelIndex = result.second;
+    if (isSupportedColorSpace(m_currentColorSpace)) {
+        colorModel->updateProfile(m_currentColorSpace->profile());
+    }
     slider->setColorConverter(m_colorConverter);
     slider->setColor(m_color, m_colorModel);
     slider->setActive(colorModel->id() == m_colorModel->id());
@@ -336,12 +363,19 @@ void EXColorState::connectChannelSlider(EXChannelSlider *slider)
         slider->setDynamicRange(dynamicRange());
         slider->updateImage();
     });
-    connect(this, &EXColorState::sigColorSpaceChanged, slider, [this, slider](const KoColorSpace *) {
-        slider->setColorConverter(m_colorConverter);
-        slider->setDynamicRange(dynamicRange());
-        slider->setUseHdr(hdrSupported());
-        slider->updateImage();
-    });
+    connect(this,
+            &EXColorState::sigColorSpaceChanged,
+            slider,
+            [this, colorModel, slider](const KoColorSpace *colorSpace) mutable {
+                if (isSupportedColorSpace(colorSpace)) {
+                    colorModel->updateProfile(colorSpace->profile());
+                    slider->setColor(m_color, m_colorModel);
+                }
+                slider->setColorConverter(m_colorConverter);
+                slider->setDynamicRange(dynamicRange());
+                slider->setUseHdr(hdrSupported());
+                slider->updateImage();
+            });
     connect(this, &EXColorState::sigPrimaryChannelIndexChanged, slider, [channelIndex, slider](quint32 index) {
         slider->setSelected(channelIndex == index);
         slider->updateImage();
