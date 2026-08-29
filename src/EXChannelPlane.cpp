@@ -56,7 +56,7 @@ void EXChannelPlane::setPrimaryChannelIndex(int index)
 
 void EXChannelPlane::setColor(QVector3D color, ColorModelSP colorModel)
 {
-    m_color = colorModel->transferTo(m_colorModel, color);
+    m_color = colorModel->transferTo(m_colorModel, color, m_color);
     updateSecondaryChannelValues();
 
     if (m_lastPrimaryChannelValue != color[m_primaryChannelIndex]) {
