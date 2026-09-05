@@ -1,10 +1,11 @@
 # Unreleased
 
+# v0.7.0
+
 - Added `Normal` color model for normal map painting.
-- Allow use different color models for gray model. (`SRGB`, `HSV`, `HSL`, `LinearRGB`, `LAB`, `OKLAB`)
+- Allow use different color models for gray model. (`RGB`, `HSV`, `HSL`, `LAB`, `OKLAB`)
 - Fixed sliders count don't match the channel count.
 - HDR color picking.
-- Allow use linear rgb in `HSV` and `HSL` color models.
 - Removed `LinearRGB` and `SRGB` since they are incorrect for color management, and added plain `RGB` model.
 - White point compensation when converting color models.
 - Fix incorrect gamut clipping interpolation.

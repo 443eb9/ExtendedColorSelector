@@ -4,7 +4,7 @@ A powerful color selector for [`Krita`](https://krita.org/) 5.
 
 ## Features
 
-- Supports color picking in 11 color models. (`Gray`, `SRGB`, `HSV`, `HSL`, `LinearRGB`, `XYZ`, `Lab`, `OkLab`, `OkLch`, `OkHsv`, `OkHsl`, `Normal`(Normal map))
+- Supports color picking in 11 color models. (`Gray`, `RGB`, `HSV`, `HSL`, `XYZ`, `Lab`, `OkLab`, `OkLch`, `OkHsv`, `OkHsl`, `Normal`(Normal map))
 - Support HDR color picking.
 - Integrated with color management from Krita. Display the correct color under specific color profile.
 - Fully modular, and highly customizable.
