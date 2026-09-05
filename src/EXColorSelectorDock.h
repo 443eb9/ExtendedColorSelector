@@ -33,6 +33,7 @@ public:
     void setViewManager(KisViewManager *kisview) override;
     void setCanvas(KoCanvasBase *canvas) override;
     void unsetCanvas() override;
+    void enterEvent(QEvent *event) override;
     void leaveEvent(QEvent *event) override;
 
 private:

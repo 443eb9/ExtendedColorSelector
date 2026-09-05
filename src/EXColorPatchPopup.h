@@ -16,14 +16,17 @@ public:
     explicit EXColorPatchPopup(QWidget *parent = nullptr);
     ~EXColorPatchPopup() override = default;
 
-    void updateColor(QColor color);
-    void recordColor(QColor color);
+    void updateCurrentColor(QColor color);
+    void updateLastUsedColor(QColor color);
+    void updateLastConfirmedColor(QColor color);
     void connectToWidget(const EXEditableImage *widget);
 
 private:
     QFrame *m_currentColorBox;
-    QFrame *m_lastColorBox;
-    QColor m_lastColor;
+    QFrame *m_lastUsedColorBox;
+    QFrame *m_lastConfirmedColorBox;
+    QColor m_lastUsedColor;
+    QColor m_lastConfirmedColor;
 };
 
 #endif

@@ -1,4 +1,5 @@
 #include <QFrame>
+#include <QHBoxLayout>
 #include <QVBoxLayout>
 
 #include "EXColorPatchPopup.h"
@@ -15,21 +16,34 @@ EXColorPatchPopup::EXColorPatchPopup(QWidget *parent)
     setFocusPolicy(Qt::FocusPolicy::NoFocus);
 
     m_currentColorBox = new QFrame(this);
-    m_lastColorBox = new QFrame(this);
+    m_lastUsedColorBox = new QFrame(this);
+    m_lastConfirmedColorBox = new QFrame(this);
 
-    mainLayout->addWidget(m_currentColorBox, 1);
-    mainLayout->addWidget(m_lastColorBox, 1);
+    auto historyColorLayout = new QHBoxLayout();
+    historyColorLayout->setContentsMargins(0, 0, 0, 0);
+    historyColorLayout->setSpacing(0);
+    historyColorLayout->addWidget(m_lastConfirmedColorBox, 1);
+    historyColorLayout->addWidget(m_lastUsedColorBox, 1);
+
+    mainLayout->addWidget(m_currentColorBox, 2);
+    mainLayout->addLayout(historyColorLayout, 1);
 }
 
-void EXColorPatchPopup::updateColor(QColor color)
+void EXColorPatchPopup::updateCurrentColor(QColor color)
 {
     m_currentColorBox->setStyleSheet(QString("background-color: %1").arg(color.name()));
 }
 
-void EXColorPatchPopup::recordColor(QColor color)
+void EXColorPatchPopup::updateLastConfirmedColor(QColor color)
 {
-    m_lastColor = color;
-    m_lastColorBox->setStyleSheet(QString("background-color: %1").arg(m_lastColor.name()));
+    m_lastConfirmedColor = color;
+    m_lastConfirmedColorBox->setStyleSheet(QString("background-color: %1").arg(m_lastConfirmedColor.name()));
+}
+
+void EXColorPatchPopup::updateLastUsedColor(QColor color)
+{
+    m_lastUsedColor = color;
+    m_lastUsedColorBox->setStyleSheet(QString("background-color: %1").arg(m_lastUsedColor.name()));
 }
 
 void EXColorPatchPopup::connectToWidget(const EXEditableImage *widget)

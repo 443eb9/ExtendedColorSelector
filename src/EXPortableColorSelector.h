@@ -26,6 +26,7 @@ public:
     void setViewManager(KisViewManager *kisview);
     void setCanvas(KisCanvas2 *canvas);
     void toggle();
+    void enterEvent(QEvent *event) override;
     void leaveEvent(QEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
 
