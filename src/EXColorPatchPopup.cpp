@@ -1,8 +1,11 @@
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <qglobal.h>
+#include <qwidget.h>
 
 #include "EXColorPatchPopup.h"
+#include "EXEditable.h"
 
 EXColorPatchPopup::EXColorPatchPopup(QWidget *parent)
     : QDialog(parent)
@@ -46,14 +49,26 @@ void EXColorPatchPopup::updateLastUsedColor(QColor color)
     m_lastUsedColorBox->setStyleSheet(QString("background-color: %1").arg(m_lastUsedColor.name()));
 }
 
-void EXColorPatchPopup::connectToWidget(const EXEditableImage *widget)
+void EXColorPatchPopup::setSide(EXColorPatchPopupSide side)
 {
-    if (!widget) {
+    m_side = side;
+}
+
+void EXColorPatchPopup::connectToWidget(const EXEditableImage *bar, const QWidget *around)
+{
+    if (!bar || !around) {
         return;
     }
 
-    connect(widget, &EXEditableImage::sigValueChangeStarted, widget, [this, widget]() {
-        move(widget->mapToGlobal(QPoint(0, 0)) - QPoint(width(), 0));
+    connect(bar, &EXEditableImage::sigValueChangeStarted, bar, [this, around]() {
+        switch (m_side) {
+        case Left:
+            move(around->mapToGlobal(QPoint(0, 0)) - QPoint(width(), 0));
+            break;
+        case Right:
+            move(around->mapToGlobal(QPoint(0, 0)) + QPoint(around->width(), 0));
+            break;
+        }
         show();
     });
 }

@@ -68,7 +68,7 @@ EXColorSelectorDock::EXColorSelectorDock()
     m_plane->setColorModel(ColorModelFactory::fromId((ColorModelId)m_settingsState->globalSettings.currentColorModel));
     m_colorState->connectChannelPlane(m_plane);
     m_settingsState->connectChannelPlane(m_plane);
-    m_colorPatchPopup->connectToWidget(m_plane);
+    m_colorPatchPopup->connectToWidget(m_plane, m_plane);
 
     m_sliders = new EXChannelSlidersGroup(QVector<ColorModelId>(), this);
     m_colorModelSwitchers = new EXColorModelSwitchers(m_colorState, m_settingsState, this);
@@ -127,7 +127,10 @@ EXColorSelectorDock::EXColorSelectorDock()
 
     updateSliders();
     connect(m_colorState.data(), &EXColorState::sigColorModelChanged, this, &EXColorSelectorDock::updateSliders);
-    connect(m_settingsState.data(), &EXSettingsState::sigSettingsChanged, this, &EXColorSelectorDock::updateSliders);
+    connect(m_settingsState.data(), &EXSettingsState::sigSettingsChanged, this, [this]() {
+        updateSliders();
+        m_colorPatchPopup->setSide(m_settingsState->globalSettings.colorPatchPopupSide);
+    });
 }
 
 void EXColorSelectorDock::setViewManager(KisViewManager *kisview)
@@ -193,7 +196,7 @@ void EXColorSelectorDock::updateSliders()
         for (auto slider : sliders->sliders()) {
             m_colorState->connectChannelSlider(slider);
             m_settingsState->connectChannelSlider(slider);
-            m_colorPatchPopup->connectToWidget(slider->bar());
+            m_colorPatchPopup->connectToWidget(slider->bar(), slider);
         }
     }
 }

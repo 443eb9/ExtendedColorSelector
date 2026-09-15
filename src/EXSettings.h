@@ -8,6 +8,7 @@
 #include <kconfiggroup.h>
 
 #include "EXColorModel.h"
+#include "EXColorPatchPopup.h"
 #include "EXShape.h"
 
 const QString EXSettingsGroupName = "Extended Color Selector CPP";
@@ -51,6 +52,7 @@ public:
     QVector<ColorModelId> displayOrder;
     bool outOfGamutColorEnabled;
     QVector3D outOfGamutColor;
+    EXColorPatchPopupSide colorPatchPopupSide;
     float pWidth;
     bool pEnableChannelPlane;
     bool pEnableSliders;

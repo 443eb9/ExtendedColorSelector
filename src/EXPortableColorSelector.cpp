@@ -19,7 +19,7 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
     m_plane->setColorModel(ColorModelFactory::fromId((ColorModelId)m_settingsState->globalSettings.currentColorModel));
     m_colorState->connectChannelPlane(m_plane);
     m_settingsState->connectChannelPlane(m_plane);
-    m_colorPatchPopup->connectToWidget(m_plane);
+    m_colorPatchPopup->connectToWidget(m_plane, m_plane);
 
     connect(m_colorState.data(), &EXColorState::sigColorChanged, this, [this]() {
         m_colorPatchPopup->updateCurrentColor(m_colorState->qColor());
@@ -50,6 +50,7 @@ EXPortableColorSelector::EXPortableColorSelector(QWidget *parent)
 void EXPortableColorSelector::settingsChanged()
 {
     auto &settings = m_settingsState->globalSettings;
+    m_colorPatchPopup->setSide(settings.colorPatchPopupSide);
     m_plane->setMinimumSize(settings.pWidth, settings.pWidth);
     if (settings.pEnableChannelPlane) {
         m_plane->show();
@@ -137,7 +138,7 @@ void EXPortableColorSelector::updateSliders()
         for (auto slider : sliders->sliders()) {
             m_colorState->connectChannelSlider(slider);
             m_settingsState->connectChannelSlider(slider);
-            m_colorPatchPopup->connectToWidget(slider->bar());
+            m_colorPatchPopup->connectToWidget(slider->bar(), slider);
         }
     }
 }

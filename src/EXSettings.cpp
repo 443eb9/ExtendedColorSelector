@@ -68,6 +68,7 @@ EXGlobalSettings::EXGlobalSettings()
     pEnableColorModelSwitcher = m_configGroup.readEntry("pEnableColorModelSwitcher", true);
     pEnableSliders = m_configGroup.readEntry("pEnableSliders", true);
     currentColorModel = m_configGroup.readEntry("currentColorModel", 0);
+    colorPatchPopupSide = static_cast<EXColorPatchPopupSide>(m_configGroup.readEntry("colorPatchPopupSide", 0));
 
     auto displayOrder = m_configGroup.readEntry("displayOrder", "");
     this->displayOrder = ExtendedUtils::stringToVector<ColorModelId>(displayOrder, [](const QString &str) {
@@ -101,6 +102,7 @@ void EXGlobalSettings::writeAll()
         }));
     m_configGroup.writeEntry("outOfGamutColorEnabled", outOfGamutColorEnabled);
     m_configGroup.writeEntry("outOfGamutColor", ExtendedUtils::colorToString(outOfGamutColor));
+    m_configGroup.writeEntry("colorPatchPopupSide", static_cast<int>(colorPatchPopupSide));
     m_configGroup.writeEntry("pWidth", pWidth);
     m_configGroup.writeEntry("pEnableChannelPlane", pEnableChannelPlane);
     m_configGroup.writeEntry("pEnableSliders", pEnableSliders);

@@ -334,6 +334,22 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
                 Q_EMIT m_settingsState->sigSettingsChanged();
             });
 
+    auto colorPathPopupSideLayout = new QHBoxLayout();
+    auto colorPatchPopupSideLabel = new QLabel("Color Patch Popup Side");
+    auto colorPatchPopupSide = new QComboBox();
+    colorPatchPopupSide->addItem("Left", static_cast<int>(EXColorPatchPopupSide::Left));
+    colorPatchPopupSide->addItem("Right", static_cast<int>(EXColorPatchPopupSide::Right));
+    colorPatchPopupSide->setCurrentIndex(static_cast<int>(settings.colorPatchPopupSide));
+    connect(colorPatchPopupSide,
+            QOverload<int>::of(&QComboBox::currentIndexChanged),
+            [this, &settings, colorPatchPopupSide](int index) {
+                settings.colorPatchPopupSide =
+                    static_cast<EXColorPatchPopupSide>(colorPatchPopupSide->itemData(index).toInt());
+                Q_EMIT m_settingsState->sigSettingsChanged();
+            });
+    colorPathPopupSideLayout->addWidget(colorPatchPopupSideLabel);
+    colorPathPopupSideLayout->addWidget(colorPatchPopupSide);
+
     auto pSettingsGroup = new QGroupBox("Portable Color Selector");
     auto pSettingsLayout = new QVBoxLayout();
     pSettingsGroup->setLayout(pSettingsLayout);
@@ -378,6 +394,7 @@ EXGlobalSettingsDialog::EXGlobalSettingsDialog(EXSettingsStateSP settingsState, 
     mainLayout->addWidget(channelSpinBoxesEnabled);
     mainLayout->addLayout(grayModelDesaturateLayout);
     mainLayout->addWidget(outOfGamutColorPicker);
+    mainLayout->addLayout(colorPathPopupSideLayout);
     mainLayout->addWidget(pSettingsGroup);
     mainLayout->addStretch(1);
 }

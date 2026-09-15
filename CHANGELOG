@@ -7,7 +7,7 @@
 - Fixed sliders count don't match the channel count.
 - HDR color picking.
 - Removed `LinearRGB` and `SRGB` since they are incorrect for color management, and added plain `RGB` model.
-- White point compensation when converting color models.
+- Use builtin color management pipeline when converting into/from RGB/HSV/HSL.
 - Fix incorrect gamut clipping interpolation.
 - Fix incorrect channel ranges for `LAB` and `LCH` models.
 - Record color when foreground color is used, and removed `recordLastColorWhenMouseRelease` setting.

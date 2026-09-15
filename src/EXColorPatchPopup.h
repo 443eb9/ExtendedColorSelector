@@ -5,8 +5,14 @@
 #include <QDialog>
 #include <QFrame>
 #include <QWidget>
+#include <qwidget.h>
 
 #include "EXEditable.h"
+
+enum EXColorPatchPopupSide {
+    Left = 0,
+    Right = 1,
+};
 
 class EXColorPatchPopup : public QDialog
 {
@@ -19,7 +25,8 @@ public:
     void updateCurrentColor(QColor color);
     void updateLastUsedColor(QColor color);
     void updateLastConfirmedColor(QColor color);
-    void connectToWidget(const EXEditableImage *widget);
+    void connectToWidget(const EXEditableImage *bar, const QWidget *around);
+    void setSide(EXColorPatchPopupSide side);
 
 private:
     QFrame *m_currentColorBox;
@@ -27,6 +34,7 @@ private:
     QFrame *m_lastConfirmedColorBox;
     QColor m_lastUsedColor;
     QColor m_lastConfirmedColor;
+    EXColorPatchPopupSide m_side;
 };
 
 #endif
