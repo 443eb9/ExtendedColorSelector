@@ -1,5 +1,8 @@
 # Unreleased
 
+- Added `Color Patch Popup Side` setting to make the popup left-handed friendly.
+- On MacOS, fixed python script looking for library with wrong extension.
+
 # v0.7.0
 
 - Added `Normal` color model for normal map painting.

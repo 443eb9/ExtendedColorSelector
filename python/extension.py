@@ -32,7 +32,7 @@ class ExtendedColorSelector(Extension):
     def __init__(self, parent):
         super().__init__(parent)
 
-        ext = {"windows": ".dll", "linux": ".so", "macos": ".dylib"}[platform]
+        ext = {"windows": ".dll", "linux": ".so", "macos": ".so"}[platform]
         lib_dir = Path(__file__).parent / "lib"
         lib_file = lib_dir / f"extendedcolorselector{ext}"
 
