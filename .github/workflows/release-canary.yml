@@ -106,4 +106,4 @@ jobs:
               [ -n "$asset_id" ] && gh api -X DELETE "repos/$REPO/releases/assets/$asset_id"
             done
 
-          gh release upload canary dist/*.zip --clobber
+          gh release upload canary dist/*.zip --clobber --repo "$REPO"
