@@ -1,0 +1,109 @@
+name: Publish Canary Release
+
+on:
+  workflow_run:
+    workflows:
+      - Build Extended Color Selector (Qt5)
+    types:
+      - completed
+    branches:
+      - main-cpp
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: extended-color-selector-canary-release
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Publish canary assets
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-22.04
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+
+    steps:
+      - name: Download build artifacts unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          artifacts_json="$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts?per_page=100")"
+          artifact_count="$(jq '[.artifacts[] | select(.expired == false and (.name | startswith("ExtendedColorSelector-")))] | length' <<< "$artifacts_json")"
+
+          if [ "$artifact_count" -ne 3 ]; then
+            echo "::error::Expected exactly 3 build artifacts, found $artifact_count"
+            jq -r '.artifacts[] | "- \(.name) (expired=\(.expired))"' <<< "$artifacts_json"
+            exit 1
+          fi
+
+          for suffix in linux windows macos; do
+            count="$(jq --arg suffix "$suffix" '[.artifacts[] | select(.expired == false and (.name | startswith("ExtendedColorSelector-")) and (.name | endswith("-" + $suffix)))] | length' <<< "$artifacts_json")"
+            if [ "$count" -ne 1 ]; then
+              echo "::error::Expected one $suffix artifact, found $count"
+              exit 1
+            fi
+          done
+
+          mkdir -p dist
+          while IFS=$'\t' read -r artifact_id artifact_name; do
+            echo "Downloading $artifact_name"
+            gh api "repos/$REPO/actions/artifacts/$artifact_id/zip" > "dist/$artifact_name.zip"
+          done < <(
+            jq -r '.artifacts[] | select(.expired == false and (.name | startswith("ExtendedColorSelector-"))) | [.id, .name] | @tsv' <<< "$artifacts_json"
+          )
+
+          test "$(find dist -maxdepth 1 -type f -name '*.zip' | wc -l)" -eq 3
+          ls -lh dist
+
+      - name: Move canary tag and replace release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh api "repos/$REPO/git/ref/tags/canary" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$REPO/git/refs/tags/canary" \
+              -f sha="$COMMIT_SHA" \
+              -F force=true >/dev/null
+            echo "Moved canary tag to $COMMIT_SHA"
+          else
+            gh api -X POST "repos/$REPO/git/refs" \
+              -f ref='refs/tags/canary' \
+              -f sha="$COMMIT_SHA" >/dev/null
+            echo "Created canary tag at $COMMIT_SHA"
+          fi
+
+          release_body="Automated canary build for commit [$COMMIT_SHA](https://github.com/$REPO/commit/$COMMIT_SHA)."
+          if release_json="$(gh api "repos/$REPO/releases/tags/canary" 2>/dev/null)"; then
+            release_id="$(jq -r '.id' <<< "$release_json")"
+            gh api -X PATCH "repos/$REPO/releases/$release_id" \
+              -f tag_name='canary' \
+              -f name='canary' \
+              -f body="$release_body" \
+              -F prerelease=true \
+              -F draft=false >/dev/null
+          else
+            release_json="$(gh api -X POST "repos/$REPO/releases" \
+              -f tag_name='canary' \
+              -f name='canary' \
+              -f body="$release_body" \
+              -F prerelease=true \
+              -F draft=false)"
+            release_id="$(jq -r '.id' <<< "$release_json")"
+          fi
+
+          gh api "repos/$REPO/releases/$release_id/assets?per_page=100" \
+            --jq '.[].id' | while read -r asset_id; do
+              [ -n "$asset_id" ] && gh api -X DELETE "repos/$REPO/releases/assets/$asset_id"
+            done
+
+          gh release upload canary dist/*.zip --clobber
